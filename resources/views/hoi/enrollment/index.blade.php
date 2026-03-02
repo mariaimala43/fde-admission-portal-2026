@@ -84,7 +84,7 @@
 
                                 {{-- 2. Number of Sections --}}
                                 <td class="px-4 py-3 text-center text-gray-600">
-                                    <span class="font-medium">{{ $secCount }}</span>
+                                    <span class="font-medium">{{ max(1, $secCount) }}</span>
                                     @if ($secs !== '-')
                                         <div class="text-xs text-gray-400">({{ $secs }})</div>
                                     @endif
@@ -148,7 +148,7 @@
                         <tr>
                             <td class="px-4 py-3 text-gray-700">TOTAL</td>
                             <td class="px-4 py-3 text-center text-gray-600">
-                                {{ $classes->sum(fn($ic) => ($sections[$ic->class_id] ?? collect())->count()) }}
+                                {{ $classes->sum(fn($ic) => max(1, ($sections[$ic->class_id] ?? collect())->count())) }}
                             </td>
                             <td class="px-4 py-3 text-center text-orange-600">
                                 {{ number_format($totalEnrolled) }}

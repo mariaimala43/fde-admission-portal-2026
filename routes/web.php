@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\SectorController;
 use App\Http\Controllers\Admin\UnionCouncilController;
 use App\Http\Controllers\Admin\InstitutionController;
@@ -28,6 +30,12 @@ Route::get('/', function () {
 
 Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+
+// ── Forgot & Reset Password ──────────────────────────────
+Route::get('/forgot-password',  [ForgotPasswordController::class, 'showForm'])->name('password.request');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password',   [ResetPasswordController::class, 'showForm'])->name('password.reset');
+Route::post('/reset-password',  [ResetPasswordController::class, 'reset'])->name('password.update');
 
 // ── Protected routes ───────────────────────────────────────
 Route::middleware(['auth'])->group(function () {

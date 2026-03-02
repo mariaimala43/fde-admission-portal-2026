@@ -23,10 +23,12 @@ class AdmissionReportController extends Controller
 
         $academicYear = AcademicYear::where('is_active', true)->first();
 
-        // Date range — default: start of current month to today
+        // Date range — default: full academic year (admission_start to today)
         $from = $request->input('from')
             ? Carbon::parse($request->input('from'))->startOfDay()
-            : now()->startOfMonth();
+            : ($academicYear?->admission_start
+                ? Carbon::parse($academicYear->admission_start)->startOfDay()
+                : now()->startOfYear());
 
         $to = $request->input('to')
             ? Carbon::parse($request->input('to'))->endOfDay()
@@ -34,6 +36,7 @@ class AdmissionReportController extends Controller
 
         // ── Day-by-day breakdown ──────────────────────────
         $dailyRows = DailyAdmission::where('institution_id', $institution->id)
+            ->when($academicYear, fn($q) => $q->where('academic_year_id', $academicYear->id))
             ->whereBetween('admission_date', [$from->toDateString(), $to->toDateString()])
             ->with('classModel')
             ->orderBy('admission_date')
@@ -42,6 +45,7 @@ class AdmissionReportController extends Controller
 
         // ── Class-wise cumulative summary ─────────────────
         $classSummary = DailyAdmission::where('institution_id', $institution->id)
+            ->when($academicYear, fn($q) => $q->where('academic_year_id', $academicYear->id))
             ->whereBetween('admission_date', [$from->toDateString(), $to->toDateString()])
             ->selectRaw('
                 class_id,

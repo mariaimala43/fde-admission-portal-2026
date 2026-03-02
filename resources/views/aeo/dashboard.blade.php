@@ -171,7 +171,7 @@
                                             <span class="ml-1 text-xs bg-purple-100 text-purple-700 px-1.5 rounded-full">ECE</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-2.5 text-center text-gray-500">{{ $secCount }}</td>
+                                    <td class="px-4 py-2.5 text-center text-gray-500">{{ max(1, $secCount) }}</td>
                                     <td class="px-4 py-2.5 text-center text-orange-600">{{ number_format($ic->existing_enrollment) }}</td>
                                     <td class="px-4 py-2.5 text-center text-gray-700">{{ number_format($ic->total_seats) }}</td>
                                     <td class="px-4 py-2.5 text-center font-medium {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">

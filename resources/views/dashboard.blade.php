@@ -132,7 +132,7 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 text-center text-gray-600">
-                                            {{ $secCount }}
+                                            {{ max(1, $secCount) }}
                                             @if ($secs->isNotEmpty())
                                                 <div class="text-xs text-gray-400">({{ $secs->pluck('name')->join(', ') }})</div>
                                             @endif
@@ -149,7 +149,7 @@
                                 <tr>
                                     <td class="px-4 py-3 text-gray-700">TOTAL</td>
                                     <td class="px-4 py-3 text-center text-gray-600">
-                                        {{ $classes->sum(fn($ic) => ($sectionsMap[$ic->class_id] ?? collect())->count()) }}
+                                        {{ $classes->sum(fn($ic) => max(1, ($sectionsMap[$ic->class_id] ?? collect())->count())) }}
                                     </td>
                                     <td class="px-4 py-3 text-center text-orange-600">{{ number_format($totalEnrolled) }}</td>
                                     <td class="px-4 py-3 text-center text-blue-900">{{ number_format($totalSeats) }}</td>

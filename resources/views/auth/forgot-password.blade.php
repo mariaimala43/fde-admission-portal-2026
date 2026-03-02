@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FDE Admission Portal 2026 — Login</title>
+    <title>FDE Admission Portal 2026 — Forgot Password</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -22,7 +22,21 @@
             </p>
         </div>
 
-        {{-- Success Message (e.g. after password reset) --}}
+        {{-- Title --}}
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-14 h-14 bg-blue-100 rounded-full mb-3">
+                <svg class="w-7 h-7 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <h2 class="text-lg font-semibold text-gray-800">Forgot Password?</h2>
+            <p class="text-sm text-gray-500 mt-1">
+                Enter your email address and we'll send you a link to reset your password.
+            </p>
+        </div>
+
+        {{-- Success Message --}}
         @if (session('success'))
             <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm flex items-start gap-2">
                 <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,52 +48,39 @@
 
         {{-- Errors --}}
         @if ($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 text-sm">
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
                 {{ $errors->first() }}
             </div>
         @endif
 
         {{-- Form --}}
-        <form method="POST" action="{{ route('login.post') }}">
+        <form method="POST" action="{{ route('password.email') }}">
             @csrf
 
             <div class="mb-5">
                 <label class="block text-sm font-medium text-gray-700 mb-1">
                     Email Address
                 </label>
-                <input type="email" name="email" value="{{ old('email') }}" required
+                <input type="email" name="email" value="{{ old('email') }}" required autofocus
                     class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your email" />
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Password
-                </label>
-                <input type="password" name="password" required
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your password" />
-            </div>
-
-            {{-- Remember Me & Forgot Password --}}
-            <div class="flex items-center justify-between mb-6">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="remember" value="1"
-                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-                    <span class="text-sm text-gray-600">Remember Me</span>
-                </label>
-                <a href="{{ route('password.request') }}"
-                    class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                    Forgot Password?
-                </a>
+                    placeholder="Enter your registered email" />
             </div>
 
             <button type="submit"
                 class="w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-800 transition">
-                Login
+                Send Reset Link
             </button>
-
         </form>
+
+        {{-- Back to Login --}}
+        <div class="mt-6 text-center">
+            <a href="{{ route('login') }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Login
+            </a>
+        </div>
 
     </div>
 
