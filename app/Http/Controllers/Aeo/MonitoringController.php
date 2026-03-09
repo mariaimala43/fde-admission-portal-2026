@@ -14,20 +14,31 @@ use Illuminate\Support\Facades\Auth;
 
 class MonitoringController extends Controller
 {
-    // ── Resolve AEO's sector — abort if none assigned ─────────────────
-    private function sector(): Sector
+    // ── Resolve AEO's sector via pivot ────────────────────────────────
+    private function resolveSector(): ?Sector
     {
-        $sector = Sector::find(Auth::user()->sector_id);
+        return Auth::user()->sectors()->first();
+    }
 
-        abort_if(! $sector, 403, 'No sector assigned to your account. Contact FDE Cell.');
+    // ── Redirect to login when no sector assigned ─────────────────────
+    private function noSectorRedirect(): \Illuminate\Http\RedirectResponse
+    {
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
 
-        return $sector;
+        return redirect()->route('login')
+            ->with('error', 'No sector assigned to your account. Please contact FDE Cell.');
     }
 
     // ── Index — all monitoring records in this AEO's sector ───────────
     public function index(Request $request)
     {
-        $sector       = $this->sector();
+        $sector = $this->resolveSector();
+
+        if (! $sector) {
+            return $this->noSectorRedirect();
+        }
         $academicYear = AcademicYear::where('is_active', true)->first();
 
         // All institution IDs in this sector
@@ -82,7 +93,11 @@ class MonitoringController extends Controller
     // ── Show — single record (read-only, sector-scoped) ───────────────
     public function show(AdmissionMonitoring $monitoring)
     {
-        $sector = $this->sector();
+        $sector = $this->resolveSector();
+
+        if (! $sector) {
+            return $this->noSectorRedirect();
+        }
 
         // Ensure record belongs to a school in this AEO's sector
         abort_if(

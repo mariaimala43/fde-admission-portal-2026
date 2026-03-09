@@ -15,16 +15,8 @@ use App\Models\Sector;
  * SAVE AS: app/Http/Controllers/Aeo/DashboardController.php
  *
  * Handles TWO roles:
- *   AEO      → scoped to single sector (users.sector_id column)
+ *   AEO      → scoped to single sector via aeo_sectors pivot (sectors() belongsToMany)
  *   Director → sees ALL sectors system-wide (no sector restriction)
- *
- * FIXES from original:
- *   1. Was using $user->sectors() many-to-many — doesn't exist on this model.
- *      AEO uses a single sector_id column on the users table.
- *   2. $sectorSummary was a collection looped over $sectors — now unified
- *      so the same blade works for both AEO (1 sector) and Director (all).
- *   3. $grand used $sectorSummary->sum() which only works on Eloquent collections
- *      not plain objects — now safely uses ->sum() on the mapped collection.
  */
 class DashboardController extends Controller
 {
@@ -36,7 +28,7 @@ class DashboardController extends Controller
 
         // ── Scope ─────────────────────────────────────────────────────
         // Director → all sectors + all institutions
-        // AEO      → single sector via users.sector_id
+        // AEO      → single sector via aeo_sectors pivot
         // ─────────────────────────────────────────────────────────────
         if ($isDirector) {
             $sectors      = Sector::orderBy('name')->get();
@@ -48,13 +40,16 @@ class DashboardController extends Controller
 
             $currentSector = null; // Director has no single sector
         } else {
-            $currentSector = Sector::find($user->sector_id);
+            $currentSector = $user->sectors()->first();
 
-            abort_if(
-                ! $currentSector,
-                403,
-                'No sector assigned to your account. Please contact FDE Cell.'
-            );
+            if (! $currentSector) {
+                Auth::logout();
+                request()->session()->invalidate();
+                request()->session()->regenerateToken();
+
+                return redirect()->route('login')
+                    ->with('error', 'No sector assigned to your account. Please contact FDE Cell.');
+            }
 
             $sectors      = collect([$currentSector]);
             $institutions = Institution::where('sector_id', $currentSector->id)

@@ -145,6 +145,12 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="mb-5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+                    ⚠️ {{ session('error') }}
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('login.post') }}">
                 @csrf
 
