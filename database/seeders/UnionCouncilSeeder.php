@@ -18,6 +18,7 @@ class UnionCouncilSeeder extends Seeder
         // Sihala:   UC-14, UC-15, UC-16, UC-21
         // Nilore:   UC-12, UC-13, UC-17, UC-18
 
+
         $ucSectorMap = [
             'UC-01' => 'B.K',    'UC-02' => 'B.K',    'UC-03' => 'B.K',
             'UC-04' => 'B.K',    'UC-05' => 'B.K',    'UC-06' => 'B.K',
@@ -38,6 +39,11 @@ class UnionCouncilSeeder extends Seeder
             'UC-43' => 'Urban-II','UC-44' => 'Urban-II',
             'UC-45' => 'Tarnol', 'UC-46' => 'Tarnol', 'UC-47' => 'Tarnol',
             'UC-48' => 'Tarnol', 'UC-49' => 'Tarnol', 'UC-50' => 'Tarnol',
+            // New UCs from Nilore schools
+            'UC-51' => 'Nilore', 'UC-52' => 'Nilore', 'UC-53' => 'Nilore',
+            'UC-54' => 'Nilore', 'UC-55' => 'Nilore', 'UC-56' => 'Nilore',
+            'UC-57' => 'Nilore', 'UC-58' => 'Nilore', 'UC-59' => 'Nilore',
+            'UC-60' => 'Nilore', 'UC-61' => 'Nilore',
         ];
 
         $ucs = [
@@ -91,6 +97,18 @@ class UnionCouncilSeeder extends Seeder
             ['name' => 'UC-48 Sarai Kharbuza', 'code' => 'UC-48'],
             ['name' => 'UC-49 Shah Allah Ditta', 'code' => 'UC-49'],
             ['name' => 'UC-50 Golra Sharif', 'code' => 'UC-50'],
+            // New UCs from Nilore schools (custom mappings)
+            ['name' => 'UC-11 Thanda Pani', 'code' => 'UC-51'],
+            ['name' => 'UC-20 Pind Begwal', 'code' => 'UC-52'],
+            ['name' => 'UC-21 New Shakrial', 'code' => 'UC-53'],
+            ['name' => 'UC-21 Tumair', 'code' => 'UC-54'],
+            ['name' => 'UC-22 Thanda Pani', 'code' => 'UC-55'],
+            ['name' => 'UC-23 Alipur', 'code' => 'UC-56'],
+            ['name' => 'UC-24 Chirrah', 'code' => 'UC-57'],
+            ['name' => 'UC-25 Kirpa', 'code' => 'UC-58'],
+            ['name' => 'UC-47 Tarlai', 'code' => 'UC-59'],
+            ['name' => 'UC-Dhoke Kala Khan RWP', 'code' => 'UC-60'],
+            ['name' => 'UC-Khana Dak II RWP', 'code' => 'UC-61'],
         ];
 
         // Cache sectors

@@ -98,12 +98,7 @@
                             {{ $institution->sector?->name ?? '—' }}
                         </td>
                         <td class="px-6 py-4 text-gray-600">
-                            @php
-                                $ucs = $institution->sector
-                                    ? $institution->sector->unionCouncils->pluck('code')->join(', ')
-                                    : '—';
-                            @endphp
-                            {{ $ucs ?: '—' }}
+                            {{ $institution->unionCouncil?->code ?? '—' }}
                         </td>
                         <td class="px-6 py-4 text-gray-600 capitalize">
                             {{ $institution->shift }}

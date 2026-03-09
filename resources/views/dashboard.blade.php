@@ -51,19 +51,43 @@
                 $academicYear = \App\Models\AcademicYear::where('is_active', true)->first();
                 $newlyAdmitted = \App\Models\DailyAdmission::where('institution_id', $institution->id)
                     ->where('academic_year_id', $academicYear?->id)
-                    ->selectRaw('class_id, SUM(boys_count + girls_count + oosc_boys + oosc_girls + p2p_boys + p2p_girls) as total')
+                    ->selectRaw(
+                        'class_id, SUM(
+                                    morning_boys +
+                                    evening_boys +
+                                    morning_girls +
+                                    evening_girls +
+                                    oosc_boys +
+                                    oosc_girls +
+                                    p2p_boys +
+                                    p2p_girls
+                                ) as total',
+                    )
                     ->groupBy('class_id')
                     ->pluck('total', 'class_id');
 
-                $totalSeats    = $classes->sum('total_seats');
+                $totalSeats = $classes->sum('total_seats');
                 $totalEnrolled = $classes->sum('existing_enrollment');
                 $totalNewAdmit = $newlyAdmitted->sum();
-                $totalAvailable = $classes->sum(fn($c) => max(0, $c->total_seats - $c->existing_enrollment - ($newlyAdmitted[$c->class_id] ?? 0)));
+                $totalAvailable = $classes->sum(
+                    fn($c) => max(0, $c->total_seats - $c->existing_enrollment - ($newlyAdmitted[$c->class_id] ?? 0)),
+                );
 
                 $todayTotal =
                     \App\Models\DailyAdmission::where('institution_id', $institution->id)
                         ->where('admission_date', now()->toDateString())
-                        ->selectRaw('SUM(boys_count + girls_count + oosc_boys + oosc_girls + p2p_boys + p2p_girls) as total')
+                        ->selectRaw(
+                            'SUM(
+                                morning_boys +
+                                evening_boys +
+                                morning_girls +
+                                evening_girls +
+                                oosc_boys +
+                                oosc_girls +
+                                p2p_boys +
+                                p2p_girls
+                            ) as total',
+                        )
                         ->value('total') ?? 0;
             @endphp
 
@@ -100,7 +124,8 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
                     <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
                         <h3 class="text-sm font-semibold text-gray-800">Class-wise Enrollment Summary</h3>
-                        <a href="{{ route('hoi.classes.setup') }}" class="text-xs text-blue-600 hover:underline">Edit Classes</a>
+                        <a href="{{ route('hoi.classes.setup') }}" class="text-xs text-blue-600 hover:underline">Edit
+                            Classes</a>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
@@ -118,9 +143,9 @@
                             <tbody class="divide-y divide-gray-50">
                                 @foreach ($classes as $ic)
                                     @php
-                                        $secs      = $sectionsMap[$ic->class_id] ?? collect();
-                                        $secCount  = $secs->count();
-                                        $admitted  = $newlyAdmitted[$ic->class_id] ?? 0;
+                                        $secs = $sectionsMap[$ic->class_id] ?? collect();
+                                        $secCount = $secs->count();
+                                        $admitted = $newlyAdmitted[$ic->class_id] ?? 0;
                                         $available = max(0, $ic->total_seats - $ic->existing_enrollment - $admitted);
                                         $totalEnrl = $ic->existing_enrollment + $admitted;
                                     @endphp
@@ -128,20 +153,28 @@
                                         <td class="px-4 py-3 font-semibold text-gray-800">
                                             {{ $ic->classModel?->name }}
                                             @if ($ic->classModel?->is_ece)
-                                                <span class="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">ECE</span>
+                                                <span
+                                                    class="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">ECE</span>
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 text-center text-gray-600">
                                             {{ max(1, $secCount) }}
                                             @if ($secs->isNotEmpty())
-                                                <div class="text-xs text-gray-400">({{ $secs->pluck('name')->join(', ') }})</div>
+                                                <div class="text-xs text-gray-400">({{ $secs->pluck('name')->join(', ') }})
+                                                </div>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-3 text-center text-orange-600 font-medium">{{ number_format($ic->existing_enrollment) }}</td>
-                                        <td class="px-4 py-3 text-center font-medium text-gray-700">{{ number_format($ic->total_seats) }}</td>
-                                        <td class="px-4 py-3 text-center font-bold {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">{{ number_format($available) }}</td>
-                                        <td class="px-4 py-3 text-center font-medium text-blue-700">{{ number_format($admitted) }}</td>
-                                        <td class="px-4 py-3 text-center font-bold text-blue-900 bg-blue-50">{{ number_format($totalEnrl) }}</td>
+                                        <td class="px-4 py-3 text-center text-orange-600 font-medium">
+                                            {{ number_format($ic->existing_enrollment) }}</td>
+                                        <td class="px-4 py-3 text-center font-medium text-gray-700">
+                                            {{ number_format($ic->total_seats) }}</td>
+                                        <td
+                                            class="px-4 py-3 text-center font-bold {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">
+                                            {{ number_format($available) }}</td>
+                                        <td class="px-4 py-3 text-center font-medium text-blue-700">
+                                            {{ number_format($admitted) }}</td>
+                                        <td class="px-4 py-3 text-center font-bold text-blue-900 bg-blue-50">
+                                            {{ number_format($totalEnrl) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -153,9 +186,12 @@
                                     </td>
                                     <td class="px-4 py-3 text-center text-orange-600">{{ number_format($totalEnrolled) }}</td>
                                     <td class="px-4 py-3 text-center text-blue-900">{{ number_format($totalSeats) }}</td>
-                                    <td class="px-4 py-3 text-center {{ $totalAvailable > 0 ? 'text-green-600' : 'text-red-500' }}">{{ number_format($totalAvailable) }}</td>
+                                    <td
+                                        class="px-4 py-3 text-center {{ $totalAvailable > 0 ? 'text-green-600' : 'text-red-500' }}">
+                                        {{ number_format($totalAvailable) }}</td>
                                     <td class="px-4 py-3 text-center text-blue-700">{{ number_format($totalNewAdmit) }}</td>
-                                    <td class="px-4 py-3 text-center text-blue-900 bg-blue-100">{{ number_format($totalEnrolled + $totalNewAdmit) }}</td>
+                                    <td class="px-4 py-3 text-center text-blue-900 bg-blue-100">
+                                        {{ number_format($totalEnrolled + $totalNewAdmit) }}</td>
                                 </tr>
                             </tfoot>
                         </table>

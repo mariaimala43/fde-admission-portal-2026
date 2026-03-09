@@ -1,107 +1,176 @@
+{{-- SAVE AS: resources/views/admin/users/edit.blade.php --}}
 @extends('layouts.app')
 @section('title', 'Edit User')
+
 @section('content')
 
     <div class="mb-6">
         <h2 class="text-2xl font-bold text-gray-800">Edit User</h2>
         <p class="text-sm text-gray-500 mt-1">
-            <a href="{{ route('admin.users.index') }}" class="text-blue-600 hover:underline">Users</a> / Edit
+            <a href="{{ route('admin.users.index') }}" class="text-blue-600 hover:underline">Users</a>
+            / {{ $user->name }}
         </p>
     </div>
 
+    @if ($errors->any())
+        <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 mb-5 text-sm">
+            @foreach ($errors->all() as $e)
+                <p>❌ {{ $e }}</p>
+            @endforeach
+        </div>
+    @endif
+
+    @if (!$user->is_active)
+        <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5 flex items-center gap-3 text-sm">
+            <span class="text-red-500 text-lg">⛔</span>
+            <div>
+                <p class="font-semibold text-red-700">This user is currently deactivated</p>
+                <p class="text-red-500 text-xs">They cannot log in. Use the Activate button on the users list to restore
+                    access.</p>
+            </div>
+        </div>
+    @endif
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-2xl" x-data="{ role: '{{ old('role', $userRole) }}' }">
+
         <form method="POST" action="{{ route('admin.users.update', $user) }}">
             @csrf
             @method('PUT')
 
+            {{-- Name + Phone --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input type="text" name="name" value="{{ old('name', $user->name) }}"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required />
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Full Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-blue-500
+                               @error('name') border-red-400 @enderror" />
                     @error('name')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                     <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        placeholder="e.g. 0300-1234567"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
             </div>
 
+            {{-- Email --}}
             <div class="mb-5">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <input type="email" name="email" value="{{ old('email', $user->email) }}"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required />
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address <span class="text-red-500">*</span>
+                </label>
+                <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-blue-500
+                           @error('email') border-red-400 @enderror" />
                 @error('email')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
+            {{-- Password (optional reset) --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         New Password
-                        <span class="text-gray-400 font-normal">(leave blank to keep current)</span>
+                        <span class="text-gray-400 font-normal text-xs">(leave blank to keep current)</span>
                     </label>
-                    <input type="password" name="password"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="password" name="password" placeholder="Min 8 characters"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-blue-500
+                               @error('password') border-red-400 @enderror" />
                     @error('password')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
                     <input type="password" name="password_confirmation"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
             </div>
 
+            {{-- Role --}}
             <div class="mb-5">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Role <span class="text-red-500">*</span>
+                </label>
                 <select name="role" x-model="role" required
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="hoi" {{ old('role', $userRole) == 'hoi' ? 'selected' : '' }}>HoI (Principal)</option>
-                    <option value="aeo" {{ old('role', $userRole) == 'aeo' ? 'selected' : '' }}>AEO</option>
-                    <option value="fde_cell" {{ old('role', $userRole) == 'fde_cell' ? 'selected' : '' }}>FDE Cell</option>
-                    <option value="director" {{ old('role', $userRole) == 'director' ? 'selected' : '' }}>Director</option>
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="hoi" {{ old('role', $userRole) === 'hoi' ? 'selected' : '' }}>HOI — Head of
+                        Institution (Principal)</option>
+                    <option value="aeo" {{ old('role', $userRole) === 'aeo' ? 'selected' : '' }}>AEO — Area
+                        Education Officer</option>
+                    <option value="fde_cell" {{ old('role', $userRole) === 'fde_cell' ? 'selected' : '' }}>FDE Cell
+                    </option>
+                    <option value="director" {{ old('role', $userRole) === 'director' ? 'selected' : '' }}>Director / DG /
+                        Secretary</option>
                 </select>
+                <p class="text-xs text-orange-500 mt-1">⚠️ Changing the role clears the institution/sector assignment.</p>
             </div>
 
+            {{-- Institution — HOI only --}}
             <div class="mb-5" x-show="role === 'hoi'" x-cloak>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Assign Institution</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Assign Institution <span class="text-red-500">*</span>
+                </label>
                 <select name="institution_id"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-blue-500
+                           @error('institution_id') border-red-400 @enderror">
                     <option value="">— Select Institution —</option>
                     @foreach ($institutions as $inst)
                         <option value="{{ $inst->id }}"
                             {{ old('institution_id', $user->institution_id) == $inst->id ? 'selected' : '' }}>
-                            {{ $inst->name }}
+                            {{ $inst->name }}{{ $inst->code ? ' (' . $inst->code . ')' : '' }}
                         </option>
                     @endforeach
                 </select>
+                @error('institution_id')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
+            {{-- Sector — AEO only (single dropdown, not checkboxes) --}}
             <div class="mb-5" x-show="role === 'aeo'" x-cloak>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Assign Sectors</label>
-                <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Assign Sector <span class="text-red-500">*</span>
+                </label>
+                <select name="sector_id"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-blue-500
+                           @error('sector_id') border-red-400 @enderror">
+                    <option value="">— Select Sector —</option>
                     @foreach ($sectors as $sector)
-                        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                            <input type="checkbox" name="sector_ids[]" value="{{ $sector->id }}"
-                                {{ in_array($sector->id, old('sector_ids', $userSectorIds)) ? 'checked' : '' }}
-                                class="w-4 h-4 text-blue-600 rounded" />
-                            {{ $sector->name }} ({{ $sector->code }})
-                        </label>
+                        <option value="{{ $sector->id }}"
+                            {{ old('sector_id', $user->sectors->first()?->id) == $sector->id ? 'selected' : '' }}
+                            {{ $sector->has_aeo ? 'disabled' : '' }}>
+                            {{ $sector->name }}
+                            @if ($sector->has_aeo)
+                                (AEO already assigned)
+                            @endif
+                        </option>
                     @endforeach
-                </div>
+                </select>
+                <p class="text-xs text-blue-600 mt-1">ℹ️ Each sector can only have one active AEO.</p>
+                @error('sector_id')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
-            <div class="flex gap-3 mt-6">
+            {{-- Submit --}}
+            <div class="flex gap-3 mt-6 pt-6 border-t border-gray-100">
                 <button type="submit"
-                    class="bg-blue-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-800 transition">
+                    class="bg-blue-900 text-white px-8 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-800 transition">
                     Update User
                 </button>
                 <a href="{{ route('admin.users.index') }}"

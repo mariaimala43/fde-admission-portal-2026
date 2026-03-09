@@ -1,199 +1,253 @@
 @extends('layouts.app')
 @section('title', 'Baseline Enrollment')
+
 @section('content')
 
-    <div class="flex justify-between items-center mb-6">
+    {{-- ── Page Header ──────────────────────────────────────────────── --}}
+    <div class="page-header">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Baseline Enrollment</h2>
-            <p class="text-sm text-gray-500 mt-1">
+            <h2 class="page-title">Baseline Enrollment</h2>
+            <p class="page-sub">
                 {{ $institution->name }} — Enter how many students are currently enrolled in each class.
             </p>
         </div>
         @if ($allSubmitted)
-            <span class="bg-green-100 text-green-700 text-sm font-semibold px-4 py-2 rounded-full">
-                All Submitted
-            </span>
+            <span class="badge badge-green" style="font-size:13px;padding:6px 16px;">✅ All Submitted</span>
         @endif
     </div>
 
-    {{-- Stats Row --}}
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 text-center">
-            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Intake Capacity</p>
-            <p class="text-2xl font-bold text-blue-900">{{ number_format($totalSeats) }}</p>
+    {{-- ── Over-Capacity Warning Banner ────────────────────────────── --}}
+    @if ($isOverCapacity)
+        <div class="capacity-warning">
+            <svg class="capacity-warning__icon" width="20" height="20" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <div>
+                <p class="capacity-warning__title">⚠️ Intake Capacity Exceeded</p>
+                <p class="capacity-warning__body">
+                    Total enrollment <strong>({{ number_format($totalEnrollment) }})</strong> exceeds
+                    intake capacity <strong>({{ number_format($totalSeats) }})</strong> by
+                    <strong>{{ number_format($overBy) }} student(s)</strong>.
+                    No further admissions can be entered until capacity is reviewed by FDE.
+                </p>
+            </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 text-center">
-            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Existing Enrollment</p>
-            <p class="text-2xl font-bold text-orange-600">{{ number_format($totalEnrolled) }}</p>
+    @endif
+
+    {{-- ── Stats Cards ──────────────────────────────────────────────── --}}
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+
+        {{-- Intake Capacity --}}
+        <div class="stat-card stat-card--green">
+            <p class="stat-label">Intake Capacity</p>
+            <p class="stat-num stat-num--green">{{ number_format($totalSeats) }}</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 text-center">
-            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Seats Available</p>
-            <p class="text-2xl font-bold text-green-600">{{ number_format($totalAvailable) }}</p>
+
+        {{-- Existing Enrollment --}}
+        <div class="stat-card stat-card--orange">
+            <p class="stat-label">Existing Enrollment</p>
+            <p class="stat-num stat-num--orange">{{ number_format($totalEnrolled) }}</p>
         </div>
-        <div class="bg-white rounded-xl border border-blue-100 shadow-sm p-5 text-center">
-            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Newly Admitted</p>
-            <p class="text-2xl font-bold text-blue-700">{{ number_format($totalNewAdmit) }}</p>
+
+        {{-- Seats Available --}}
+        <div class="stat-card {{ $totalAvailable > 0 ? 'stat-card--green' : 'stat-card--red' }}">
+            <p class="stat-label">Seats Available</p>
+            <p class="stat-num {{ $totalAvailable > 0 ? 'stat-num--green' : 'stat-num--red' }}">
+                {{ number_format($totalAvailable) }}
+            </p>
+            @if ($isOverCapacity)
+                <p class="stat-sub" style="color:#f87171;">FULL</p>
+            @endif
         </div>
-        <div class="bg-blue-900 rounded-xl shadow-sm p-5 text-center">
-            <p class="text-xs text-blue-200 uppercase tracking-wider mb-1">Total Enrollment</p>
-            <p class="text-2xl font-bold text-white">{{ number_format($totalEnrolled + $totalNewAdmit) }}</p>
+
+        {{-- Newly Admitted --}}
+        <div class="stat-card stat-card--blue">
+            <p class="stat-label">Newly Admitted</p>
+            <p class="stat-num stat-num--blue">{{ number_format($totalNewAdmit) }}</p>
         </div>
+
+        {{-- Total Enrollment — spans 2 cols, hero card --}}
+        <div class="stat-card md:col-span-2 {{ $isOverCapacity ? 'stat-card--hero-red' : 'stat-card--hero-green' }}">
+            <p class="stat-label">Total Enrollment</p>
+            <p class="stat-num stat-num--white">{{ number_format($totalEnrollment) }}</p>
+            @if ($isOverCapacity)
+                <p class="stat-sub">▲ {{ number_format($overBy) }} over capacity</p>
+            @else
+                <p class="stat-sub">{{ number_format($totalAvailable) }} seats remaining</p>
+            @endif
+        </div>
+
     </div>
 
+    {{-- ── Enrollment Form ───────────────────────────────────────────── --}}
     <form method="POST" action="{{ route('hoi.enrollment.save') }}">
         @csrf
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-
-            {{-- Table --}}
+        <div class="fde-table-wrap mb-6">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <table>
+                    <thead>
                         <tr>
-                            <th class="px-4 py-3 text-left">Class</th>
-                            <th class="px-4 py-3 text-center">No. of Sections</th>
-                            <th class="px-4 py-3 text-center">Existing Enrollment</th>
-                            <th class="px-4 py-3 text-center">Intake Capacity</th>
-                            <th class="px-4 py-3 text-center text-green-600">Seats Available<br><span class="normal-case font-normal text-gray-400">(Auto-Calculated)</span></th>
-                            <th class="px-4 py-3 text-center text-blue-600">Newly Admitted<br><span class="normal-case font-normal text-gray-400">(Daily Updates)</span></th>
-                            <th class="px-4 py-3 text-center bg-blue-50 text-blue-900">Total Enrollment<br><span class="normal-case font-normal text-gray-400">(Auto-Calculated)</span></th>
+                            <th class="text-left">Class</th>
+                            <th class="text-center">Sections</th>
+                            <th class="text-center col-orange">
+                                Existing Enrollment
+                            </th>
+                            <th class="text-center col-green">
+                                Intake Capacity
+                            </th>
+                            <th class="text-center col-green">
+                                Seats Available
+                                <span class="th-sub">(Auto-Calculated)</span>
+                            </th>
+                            <th class="text-center col-blue">
+                                Newly Admitted
+                                <span class="th-sub">(Daily Updates)</span>
+                            </th>
+                            <th class="text-center col-accent">
+                                Total Enrollment
+                                <span class="th-sub">(Auto-Calculated)</span>
+                            </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50">
+
+                    <tbody>
                         @foreach ($classes as $index => $ic)
                             @php
-                                $editable   = $ic->isEnrollmentEditable();
-                                $secs       = ($sections[$ic->class_id] ?? collect())->pluck('name')->join(', ') ?: '-';
-                                $secCount   = ($sections[$ic->class_id] ?? collect())->count();
-                                $admitted   = $newlyAdmitted[$ic->class_id] ?? 0;
+                                $editable = $ic->isEnrollmentEditable();
+                                $secs = ($sections[$ic->class_id] ?? collect())->pluck('name')->join(', ') ?: '-';
+                                $secCount = ($sections[$ic->class_id] ?? collect())->count();
+                                $admitted = $newlyAdmitted[$ic->class_id] ?? 0;
                                 $seatsAvail = max(0, $ic->total_seats - $ic->existing_enrollment - $admitted);
-                                $totalEnrl  = $ic->existing_enrollment + $admitted;
+                                $totalEnrl = $ic->existing_enrollment + $admitted;
                             @endphp
 
-                            <tr class="hover:bg-gray-50"
-                                x-data="{ seats: {{ $ic->total_seats }}, enrolled: {{ $ic->existing_enrollment }}, admitted: {{ $admitted }} }">
+                            <tr x-data="{ seats: {{ $ic->total_seats }}, enrolled: {{ $ic->existing_enrollment }}, admitted: {{ $admitted }} }">
 
-                                {{-- 1. Class --}}
-                                <td class="px-4 py-3">
-                                    <span class="font-semibold text-gray-800">{{ $ic->classModel?->name }}</span>
+                                {{-- Class Name --}}
+                                <td>
+                                    <span class="font-semibold">{{ $ic->classModel?->name }}</span>
                                     @if ($ic->classModel?->is_ece)
-                                        <span class="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">ECE</span>
+                                        <span class="badge badge-purple" style="margin-left:6px;">ECE</span>
                                     @endif
-                                    <input type="hidden" name="enrollment[{{ $index }}][class_id]" value="{{ $ic->class_id }}" />
+                                    <input type="hidden" name="enrollment[{{ $index }}][class_id]"
+                                        value="{{ $ic->class_id }}" />
                                 </td>
 
-                                {{-- 2. Number of Sections --}}
-                                <td class="px-4 py-3 text-center text-gray-600">
+                                {{-- Sections --}}
+                                <td class="text-center">
                                     <span class="font-medium">{{ max(1, $secCount) }}</span>
                                     @if ($secs !== '-')
-                                        <div class="text-xs text-gray-400">({{ $secs }})</div>
+                                        <div class="th-sub" style="font-size:11px;">{{ $secs }}</div>
                                     @endif
                                 </td>
 
-                                {{-- 3. Existing Enrollment --}}
-                                <td class="px-4 py-3 text-center">
+                                {{-- Existing Enrollment --}}
+                                <td class="text-center">
                                     @if ($editable)
                                         <input type="number" name="enrollment[{{ $index }}][existing]"
-                                            x-model.number="enrolled" :max="seats" min="0"
-                                            class="w-24 border-2 border-blue-300 rounded-lg px-3 py-2 text-sm text-center
-                                                   font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                            class="input-compact" x-model.number="enrolled" :max="seats"
+                                            min="0" />
                                     @else
-                                        <span class="text-lg font-bold text-orange-600">
+                                        <span class="font-bold stat-num--orange" style="font-size:17px;">
                                             {{ number_format($ic->existing_enrollment) }}
                                         </span>
-                                        <input type="hidden" name="enrollment[{{ $index }}][existing]" value="{{ $ic->existing_enrollment }}" />
+                                        <input type="hidden" name="enrollment[{{ $index }}][existing]"
+                                            value="{{ $ic->existing_enrollment }}" />
                                     @endif
                                 </td>
 
-                                {{-- 4. Intake Capacity --}}
-                                <td class="px-4 py-3 text-center">
-                                    <span class="text-lg font-bold text-blue-900">{{ number_format($ic->total_seats) }}</span>
+                                {{-- Intake Capacity --}}
+                                <td class="text-center">
+                                    <span class="font-bold stat-num--green" style="font-size:17px;">
+                                        {{ number_format($ic->total_seats) }}
+                                    </span>
                                 </td>
 
-                                {{-- 5. Seats Available (Auto) --}}
-                                <td class="px-4 py-3 text-center">
+                                {{-- Seats Available (reactive) --}}
+                                <td class="text-center">
                                     @if ($editable)
-                                        <span class="text-lg font-bold"
-                                            :class="(seats - enrolled - admitted) > 0 ? 'text-green-600' : 'text-red-500'"
+                                        <span class="font-bold" style="font-size:17px;"
+                                            :class="(seats - enrolled - admitted) > 0 ? 'stat-num--green' : 'stat-num--red'"
                                             x-text="Math.max(0, seats - enrolled - admitted)">
                                         </span>
                                     @else
-                                        <span class="text-lg font-bold {{ $seatsAvail > 0 ? 'text-green-600' : 'text-red-500' }}">
+                                        <span class="font-bold {{ $seatsAvail > 0 ? 'stat-num--green' : 'stat-num--red' }}"
+                                            style="font-size:17px;">
                                             {{ number_format($seatsAvail) }}
                                         </span>
                                     @endif
                                 </td>
 
-                                {{-- 6. Newly Admitted (from daily) --}}
-                                <td class="px-4 py-3 text-center">
-                                    <span class="text-lg font-bold text-blue-700">{{ number_format($admitted) }}</span>
+                                {{-- Newly Admitted --}}
+                                <td class="text-center">
+                                    <span class="font-bold stat-num--blue" style="font-size:17px;">
+                                        {{ number_format($admitted) }}
+                                    </span>
                                 </td>
 
-                                {{-- 7. Total Enrollment After Admissions (Auto) --}}
-                                <td class="px-4 py-3 text-center bg-blue-50">
+                                {{-- Total Enrollment (reactive) --}}
+                                <td class="text-center td-accent">
                                     @if ($editable)
-                                        <span class="text-lg font-bold text-blue-900"
+                                        <span class="font-bold stat-num--green" style="font-size:17px;"
                                             x-text="enrolled + admitted">
                                         </span>
                                     @else
-                                        <span class="text-lg font-bold text-blue-900">{{ number_format($totalEnrl) }}</span>
+                                        <span class="font-bold stat-num--green" style="font-size:17px;">
+                                            {{ number_format($totalEnrl) }}
+                                        </span>
                                     @endif
                                 </td>
+
                             </tr>
                         @endforeach
                     </tbody>
 
                     {{-- Totals Footer --}}
-                    <tfoot class="bg-blue-50 border-t-2 border-blue-100 font-bold text-sm">
+                    <tfoot>
                         <tr>
-                            <td class="px-4 py-3 text-gray-700">TOTAL</td>
-                            <td class="px-4 py-3 text-center text-gray-600">
+                            <td>TOTAL</td>
+                            <td class="text-center">
                                 {{ $classes->sum(fn($ic) => max(1, ($sections[$ic->class_id] ?? collect())->count())) }}
                             </td>
-                            <td class="px-4 py-3 text-center text-orange-600">
+                            <td class="text-center stat-num--orange">
                                 {{ number_format($totalEnrolled) }}
                             </td>
-                            <td class="px-4 py-3 text-center text-blue-900">
+                            <td class="text-center stat-num--green">
                                 {{ number_format($totalSeats) }}
                             </td>
-                            <td class="px-4 py-3 text-center {{ $totalAvailable > 0 ? 'text-green-600' : 'text-red-500' }}">
+                            <td class="text-center {{ $totalAvailable > 0 ? 'stat-num--green' : 'stat-num--red' }}">
                                 {{ number_format($totalAvailable) }}
                             </td>
-                            <td class="px-4 py-3 text-center text-blue-700">
+                            <td class="text-center stat-num--blue">
                                 {{ number_format($totalNewAdmit) }}
                             </td>
-                            <td class="px-4 py-3 text-center text-blue-900 bg-blue-100">
+                            <td class="text-center td-accent">
                                 {{ number_format($totalEnrolled + $totalNewAdmit) }}
                             </td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
-
         </div>
 
-        {{-- Actions --}}
+        {{-- ── Action Buttons ────────────────────────────────────────── --}}
         @if (!$allSubmitted)
-            <div class="flex gap-4">
-                <button type="submit" name="action" value="save"
-                    class="px-8 py-3 rounded-lg text-sm font-medium border border-gray-300
-                           text-gray-700 hover:bg-gray-50 transition">
-                    Save Draft
+            <div class="flex flex-wrap gap-3 items-center">
+                <button type="submit" name="action" value="save" class="btn btn-secondary">
+                    💾 Save Draft
                 </button>
-                <button type="submit" name="action" value="submit"
-                    class="bg-blue-900 text-white px-8 py-3 rounded-lg font-semibold text-sm
-                           hover:bg-blue-800 transition"
+                <button type="submit" name="action" value="submit" class="btn btn-primary"
                     onclick="return confirm('Submit enrollment? This cannot be edited after submission.')">
-                    Submit Enrollment
+                    ✅ Submit Enrollment
                 </button>
-                <a href="{{ route('dashboard') }}"
-                    class="px-8 py-3 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700">
-                    Back
-                </a>
+                <a href="{{ route('dashboard') }}" class="btn btn-ghost">← Back</a>
             </div>
         @else
-            <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-                Enrollment has been submitted. Contact FDE Cell if changes are needed.
+            <div class="fde-alert fde-alert-success">
+                ✅ Enrollment has been submitted. Contact FDE Cell if changes are needed.
             </div>
         @endif
 

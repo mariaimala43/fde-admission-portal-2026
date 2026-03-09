@@ -11,38 +11,57 @@ use App\Models\Sector;
 use App\Models\AuditLog;
 use Spatie\Permission\Models\Role;
 
+/**
+ * AEO sector assignment uses the aeo_sectors pivot table (belongsToMany).
+ * There is NO sector_id column on the users table.
+ * Use $user->sectors()->sync([id]) to assign, whereHas('sectors',...) to query.
+ */
 class UserController extends Controller
 {
     // ── List all users ─────────────────────────────────────
     public function index(Request $request)
     {
-        $query = User::with(['institution', 'roles'])
+        $query = User::with(['institution', 'sectors', 'roles'])
             ->orderBy('name');
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(fn($q) =>
+                $q->where('name',  'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+            );
         }
 
         if ($request->filled('role')) {
             $query->role($request->role);
         }
 
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
         $users = $query->paginate(20)->withQueryString();
 
-        return view('admin.users.index', compact('users'));
+        $stats = [
+            'total'    => User::count(),
+            'hoi'      => User::role('hoi')->count(),
+            'aeo'      => User::role('aeo')->count(),
+            'fde_cell' => User::role('fde_cell')->count(),
+            'director' => User::role('director')->count(),
+            'inactive' => User::where('is_active', false)->count(),
+        ];
+
+        return view('admin.users.index', compact('users', 'stats'));
     }
 
     // ── Show create form ───────────────────────────────────
     public function create()
     {
-        $roles        = Role::orderBy('name')->get();
-        $institutions = Institution::where('is_active', true)
-                          ->orderBy('name')->get();
-        $sectors      = Sector::where('is_active', true)
-                          ->orderBy('name')->get();
+        $institutions = Institution::where('is_active', true)->orderBy('name')->get();
+        $sectors      = Sector::orderBy('name')->get();
 
-        return view('admin.users.create', compact('roles', 'institutions', 'sectors'));
+        return view('admin.users.create', compact('institutions', 'sectors'));
     }
 
     // ── Store new user ─────────────────────────────────────
@@ -52,37 +71,43 @@ class UserController extends Controller
             'name'           => 'required|string|max:255',
             'email'          => 'required|email|unique:users,email',
             'password'       => 'required|string|min:8|confirmed',
-            'role'           => 'required|exists:roles,name',
+            'role'           => 'required|in:hoi,aeo,fde_cell,director',
             'phone'          => 'nullable|string|max:20',
-            'institution_id' => 'nullable|exists:institutions,id',
-            'sector_ids'     => 'nullable|array',
-            'sector_ids.*'   => 'exists:sectors,id',
+            'institution_id' => 'required_if:role,hoi|nullable|exists:institutions,id',
+            'sector_id'      => 'required_if:role,aeo|nullable|exists:sectors,id',
+        ], [
+            'institution_id.required_if' => 'Please select an institution for this HOI.',
+            'sector_id.required_if'      => 'Please select a sector for this AEO.',
         ]);
+
+        // ── One AEO per sector enforcement ───────────────────
+        if ($request->role === 'aeo' && $request->sector_id) {
+            $existing = User::role('aeo')
+                ->whereHas('sectors', fn($q) => $q->where('sectors.id', $request->sector_id))
+                ->where('is_active', true)
+                ->first();
+
+            if ($existing) {
+                return back()->withInput()->withErrors([
+                    'sector_id' => "This sector already has an active AEO: {$existing->name}. Deactivate them first.",
+                ]);
+            }
+        }
 
         $user = User::create([
             'name'           => $request->name,
             'email'          => $request->email,
             'password'       => Hash::make($request->password),
             'phone'          => $request->phone,
-            'institution_id' => $request->role === 'hoi'
-                                    ? $request->institution_id
-                                    : null,
+            'institution_id' => $request->role === 'hoi' ? $request->institution_id : null,
             'is_active'      => true,
         ]);
 
-        // Assign role
         $user->assignRole($request->role);
 
-        // Assign sectors for AEO
-        if ($request->role === 'aeo' && $request->filled('sector_ids')) {
-            foreach ($request->sector_ids as $sectorId) {
-                \DB::table('aeo_sectors')->insert([
-                    'user_id'    => $user->id,
-                    'sector_id'  => $sectorId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+        // Assign sector via pivot (AEO only)
+        if ($request->role === 'aeo' && $request->sector_id) {
+            $user->sectors()->sync([$request->sector_id]);
         }
 
         AuditLog::record(
@@ -93,24 +118,19 @@ class UserController extends Controller
         );
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully.');
+            ->with('success', "User {$user->name} created successfully.");
     }
 
     // ── Show edit form ─────────────────────────────────────
     public function edit(User $user)
     {
-        $roles        = Role::orderBy('name')->get();
-        $institutions = Institution::where('is_active', true)
-                          ->orderBy('name')->get();
-        $sectors      = Sector::where('is_active', true)
-                          ->orderBy('name')->get();
+        $user->load('sectors');
 
-        $userSectorIds = $user->sectors->pluck('id')->toArray();
-        $userRole      = $user->getRoleNames()->first();
+        $institutions = Institution::where('is_active', true)->orderBy('name')->get();
+        $sectors      = Sector::orderBy('name')->get();
+        $userRole     = $user->getRoleNames()->first();
 
-        return view('admin.users.edit', compact(
-            'user', 'roles', 'institutions', 'sectors', 'userSectorIds', 'userRole'
-        ));
+        return view('admin.users.edit', compact('user', 'institutions', 'sectors', 'userRole'));
     }
 
     // ── Update user ────────────────────────────────────────
@@ -120,20 +140,35 @@ class UserController extends Controller
             'name'           => 'required|string|max:255',
             'email'          => 'required|email|unique:users,email,' . $user->id,
             'password'       => 'nullable|string|min:8|confirmed',
-            'role'           => 'required|exists:roles,name',
+            'role'           => 'required|in:hoi,aeo,fde_cell,director',
             'phone'          => 'nullable|string|max:20',
-            'institution_id' => 'nullable|exists:institutions,id',
-            'sector_ids'     => 'nullable|array',
-            'sector_ids.*'   => 'exists:sectors,id',
+            'institution_id' => 'required_if:role,hoi|nullable|exists:institutions,id',
+            'sector_id'      => 'required_if:role,aeo|nullable|exists:sectors,id',
+        ], [
+            'institution_id.required_if' => 'Please select an institution for this HOI.',
+            'sector_id.required_if'      => 'Please select a sector for this AEO.',
         ]);
+
+        // ── One AEO per sector (excluding self) ───────────────
+        if ($request->role === 'aeo' && $request->sector_id) {
+            $existing = User::role('aeo')
+                ->whereHas('sectors', fn($q) => $q->where('sectors.id', $request->sector_id))
+                ->where('is_active', true)
+                ->where('id', '!=', $user->id)
+                ->first();
+
+            if ($existing) {
+                return back()->withInput()->withErrors([
+                    'sector_id' => "This sector already has an active AEO: {$existing->name}.",
+                ]);
+            }
+        }
 
         $data = [
             'name'           => $request->name,
             'email'          => $request->email,
             'phone'          => $request->phone,
-            'institution_id' => $request->role === 'hoi'
-                                    ? $request->institution_id
-                                    : null,
+            'institution_id' => $request->role === 'hoi' ? $request->institution_id : null,
         ];
 
         if ($request->filled('password')) {
@@ -141,22 +176,13 @@ class UserController extends Controller
         }
 
         $user->update($data);
-
-        // Update role
         $user->syncRoles([$request->role]);
 
-        // Update AEO sectors
-        \DB::table('aeo_sectors')->where('user_id', $user->id)->delete();
-
-        if ($request->role === 'aeo' && $request->filled('sector_ids')) {
-            foreach ($request->sector_ids as $sectorId) {
-                \DB::table('aeo_sectors')->insert([
-                    'user_id'    => $user->id,
-                    'sector_id'  => $sectorId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+        // Sync sector pivot (AEO only — clear for other roles)
+        if ($request->role === 'aeo' && $request->sector_id) {
+            $user->sectors()->sync([$request->sector_id]);
+        } else {
+            $user->sectors()->detach();
         }
 
         AuditLog::record(
@@ -167,13 +193,19 @@ class UserController extends Controller
         );
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User updated successfully.');
+            ->with('success', "User {$user->name} updated successfully.");
     }
 
     // ── Toggle active status ───────────────────────────────
     public function toggleStatus(User $user)
     {
-        $user->update(['is_active' => !$user->is_active]);
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'You cannot deactivate your own account.');
+        }
+
+        $user->update(['is_active' => ! $user->is_active]);
+
+        $status = $user->is_active ? 'activated' : 'deactivated';
 
         AuditLog::record(
             action: 'updated',
@@ -182,6 +214,6 @@ class UserController extends Controller
             newValues: ['is_active' => $user->is_active]
         );
 
-        return back()->with('success', 'User status updated.');
+        return back()->with('success', "{$user->name} has been {$status}.");
     }
 }

@@ -36,15 +36,16 @@ class Institution extends Model
     ];
 
     protected $casts = [
-    'has_matric_tech'     => 'boolean',
-    'has_transport'       => 'boolean',
-    'has_meal_program'    => 'boolean',
-    'has_evening_classes' => 'boolean',
-    'has_ece'             => 'boolean',
-    'classes_configured'  => 'boolean',
-    'is_cambridge'        => 'boolean',
-    'is_active'           => 'boolean',
-        ];
+        'has_matric_tech'     => 'boolean',
+        'has_transport'       => 'boolean',
+        'has_meal_program'    => 'boolean',
+        'has_evening_classes' => 'boolean',
+        'has_ece'             => 'boolean',
+        'classes_configured'  => 'boolean',
+        'is_cambridge'        => 'boolean',
+        'is_active'           => 'boolean',
+        'seats_locked_at'     => 'datetime',
+    ];
 
     // ── Cambridge Guard ────────────────────────────────────
 
@@ -111,8 +112,24 @@ class Institution extends Model
         return $this->hasMany(InstitutionClass::class)->with('classModel');
     }
 
+    /**
+     * Alias used by SeatConfigurationController eager-load ('classes').
+     * Returns InstitutionClass rows WITHOUT auto-eager-loading classModel
+     * so callers can add their own with('classModel') filter.
+     */
+    public function classes()
+    {
+        return $this->hasMany(InstitutionClass::class);
+    }
+
     public function institutionSections()
     {
         return $this->hasMany(InstitutionSection::class);
+    }
+
+    /** User who last locked seat configuration for this institution */
+    public function seatsLockedBy()
+    {
+        return $this->belongsTo(User::class, 'seats_locked_by');
     }
 }

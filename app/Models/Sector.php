@@ -35,4 +35,7 @@ class Sector extends Model
             'user_id'
         );
     }
+    public function users() {
+    return $this->hasMany(User::class);
+    }
 }

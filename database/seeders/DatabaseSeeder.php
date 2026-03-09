@@ -15,8 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-         $this->call([
-              RolesSeeder::class,
+        // Core reference data needed by the application
+        $this->call([
+            RolesSeeder::class,
             ClassesSeeder::class,
             AcademicYearSeeder::class,
             AdminUserSeeder::class,
@@ -24,5 +25,10 @@ class DatabaseSeeder extends Seeder
             SectorSeeder::class,
             InstitutionSeeder::class,
         ]);
+
+        // Local / testing only: realistic workflow data for full-system testing
+        if (! app()->environment('production')) {
+            $this->call(TestingSeeder::class);
+        }
     }
 }

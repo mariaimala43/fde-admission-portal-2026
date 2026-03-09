@@ -14,7 +14,7 @@ class InstitutionController extends Controller
     // ── List all institutions ──────────────────────────────
     public function index(Request $request)
     {
-        $query = Institution::with(['sector'])
+        $query = Institution::with(['sector', 'unionCouncil'])
             ->orderBy('name');
 
         if ($request->filled('search')) {

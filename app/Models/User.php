@@ -42,15 +42,21 @@ class User extends Authenticatable
         return $this->belongsTo(Institution::class);
     }
 
-    // AEO can manage multiple sectors
+    /**
+     * Single-sector shortcut (legacy — not used for AEO scoping).
+     */
+    public function sector()
+    {
+        return $this->belongsTo(Sector::class);
+    }
+
+    /**
+     * AEO can be assigned to multiple sectors via the aeo_sectors pivot table.
+     * Usage: $user->sectors()->pluck('sectors.id')
+     */
     public function sectors()
     {
-        return $this->belongsToMany(
-            Sector::class,
-            'aeo_sectors',
-            'user_id',
-            'sector_id'
-        );
+        return $this->belongsToMany(Sector::class, 'aeo_sectors', 'user_id', 'sector_id');
     }
 
     // ── Helpers ────────────────────────────────────────────

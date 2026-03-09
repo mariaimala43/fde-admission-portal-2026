@@ -40,20 +40,24 @@ class EnrollmentController extends Controller
         $academicYear = AcademicYear::where('is_active', true)->first();
         $newlyAdmitted = DailyAdmission::where('institution_id', $institution->id)
             ->where('academic_year_id', $academicYear?->id)
-            ->selectRaw('class_id, SUM(boys_count + girls_count + oosc_boys + oosc_girls + p2p_boys + p2p_girls) as total')
+            ->selectRaw('class_id, SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total')
             ->groupBy('class_id')
             ->pluck('total', 'class_id');
 
         $totalSeats      = $classes->sum('total_seats');
         $totalEnrolled   = $classes->sum('existing_enrollment');
         $totalNewAdmit   = $newlyAdmitted->sum();
+        $totalEnrollment = $totalEnrolled + $totalNewAdmit;  // combined for capacity check
         $totalAvailable  = $classes->sum(fn($c) => max(0, $c->total_seats - $c->existing_enrollment - ($newlyAdmitted[$c->class_id] ?? 0)));
+        $isOverCapacity  = $totalEnrollment > $totalSeats;
+        $overBy          = max(0, $totalEnrollment - $totalSeats);
         $allSubmitted    = $classes->isNotEmpty()
             && $classes->every(fn($c) => $c->enrollment_status === 'submitted');
 
         return view('hoi.enrollment.index', compact(
             'institution', 'classes', 'sections', 'newlyAdmitted',
-            'totalSeats', 'totalEnrolled', 'totalNewAdmit', 'totalAvailable', 'allSubmitted'
+            'totalSeats', 'totalEnrolled', 'totalNewAdmit', 'totalAvailable',
+            'totalEnrollment', 'isOverCapacity', 'overBy', 'allSubmitted'
         ));
     }
 

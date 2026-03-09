@@ -58,13 +58,13 @@ class MasterReportController extends Controller
             ->selectRaw('
                 institution_id,
                 class_id,
-                SUM(boys_count)                                                             as reg_boys,
-                SUM(girls_count)                                                            as reg_girls,
+                SUM(morning_boys+evening_boys)                                                             as reg_boys,
+                SUM(morning_girls+evening_girls)                                                            as reg_girls,
                 SUM(oosc_boys)                                                              as oosc_boys,
                 SUM(oosc_girls)                                                             as oosc_girls,
                 SUM(p2p_boys)                                                               as p2p_boys,
                 SUM(p2p_girls)                                                              as p2p_girls,
-                SUM(boys_count+girls_count+oosc_boys+oosc_girls+p2p_boys+p2p_girls)        as total_admitted
+                SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls)        as total_admitted
             ')
             ->groupBy('institution_id', 'class_id')
             ->get()

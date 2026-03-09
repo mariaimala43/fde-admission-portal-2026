@@ -8,115 +8,345 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap"
         rel="stylesheet">
 
     <style>
         :root {
-            --navy: #0a1628;
-            --gold: #c9a84c;
-            --gold2: #e8c97a;
-            --cream: #fdf8f0;
-            --slate: #1e3a5f;
+            --bg: #0d1117;
+            --bg2: #0f1520;
+            --bg3: #131c2e;
+            --surface: rgba(255, 255, 255, 0.035);
+            --surface-h: rgba(255, 255, 255, 0.065);
+            --border: rgba(255, 255, 255, 0.07);
+            --border-g: rgba(74, 160, 110, 0.4);
+            --green: #4aa06e;
+            --green-d: #3a8a5c;
+            --green-glow: rgba(74, 160, 110, 0.2);
+            --green-soft: rgba(74, 160, 110, 0.12);
+            --green-text: #74c99a;
+            --muted: #7a8a96;
+            --text: #dde4ee;
+            --white: #ffffff;
         }
 
-        * {
+        *,
+        *::before,
+        *::after {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--cream);
-            color: var(--navy);
-        }
-
-        .display {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
         .urdu {
             font-family: 'Noto Nastaliq Urdu', serif;
             direction: rtl;
-            line-height: 2.2;
+            line-height: 2.5;
         }
 
         [x-cloak] {
             display: none !important;
         }
 
-        /* Geometric background pattern */
-        .geo-bg {
-            background-color: var(--navy);
-            background-image:
-                linear-gradient(30deg, rgba(201, 168, 76, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(201, 168, 76, 0.06) 87.5%, rgba(201, 168, 76, 0.06)),
-                linear-gradient(150deg, rgba(201, 168, 76, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(201, 168, 76, 0.06) 87.5%, rgba(201, 168, 76, 0.06)),
-                linear-gradient(30deg, rgba(201, 168, 76, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(201, 168, 76, 0.06) 87.5%, rgba(201, 168, 76, 0.06)),
-                linear-gradient(150deg, rgba(201, 168, 76, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(201, 168, 76, 0.06) 87.5%, rgba(201, 168, 76, 0.06)),
-                linear-gradient(60deg, rgba(201, 168, 76, 0.08) 25%, transparent 25.5%, transparent 75%, rgba(201, 168, 76, 0.08) 75%, rgba(201, 168, 76, 0.08)),
-                linear-gradient(60deg, rgba(201, 168, 76, 0.08) 25%, transparent 25.5%, transparent 75%, rgba(201, 168, 76, 0.08) 75%, rgba(201, 168, 76, 0.08));
-            background-size: 80px 140px;
-            background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+        /* ── Dark mesh radial background ── */
+        .page-bg {
+            background:
+                radial-gradient(ellipse 90% 70% at 0% 20%, rgba(60, 130, 90, 0.13) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 100% 60%, rgba(20, 60, 120, 0.12) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 50% 100%, rgba(60, 130, 90, 0.07) 0%, transparent 50%),
+                var(--bg);
         }
 
-        /* Gold shimmer line */
-        .gold-line {
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--gold), var(--gold2), var(--gold), transparent);
+        /* ── Navbar ── */
+        .navbar {
+            background: rgba(13, 17, 23, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        /* Animated gradient border on stat cards */
-        .stat-card {
-            position: relative;
+        /* ── Glass card ── */
+        .glass {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            transition: all 0.28s ease;
+        }
+
+        .glass:hover {
+            background: var(--surface-h);
+            border-color: var(--border-g);
+            transform: translateY(-3px);
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ── Icon box (green rounded square) ── */
+        .icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(74, 160, 110, 0.2);
+            border: 1px solid rgba(74, 160, 110, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        /* ── Search panel ── */
+        .search-panel {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 18px;
+            backdrop-filter: blur(16px);
+        }
+
+        .s-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 15px;
+            color: var(--text);
+            width: 100%;
+        }
+
+        .s-input::placeholder {
+            color: #3a4a55;
+        }
+
+        .f-select {
             background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(201, 168, 76, 0.25);
-            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 9px 32px 9px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text);
+            width: 100%;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234aa06e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            transition: border-color .2s;
         }
 
-        .stat-card:hover {
-            background: rgba(201, 168, 76, 0.08);
-            border-color: rgba(201, 168, 76, 0.6);
-            transform: translateY(-4px);
+        .f-select:focus {
+            border-color: var(--green);
         }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: linear-gradient(135deg, rgba(201, 168, 76, 0.1), transparent 60%);
-            opacity: 0;
-            transition: opacity 0.3s;
+        .f-select option {
+            background: #131c2e;
         }
 
-        .stat-card:hover::before {
-            opacity: 1;
+        /* ── Facility pill ── */
+        .f-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            background: var(--surface);
+            cursor: pointer;
+            transition: all .2s;
+            user-select: none;
         }
 
-        /* School card */
+        .f-pill:hover {
+            border-color: var(--border-g);
+            color: var(--green-text);
+            background: var(--green-soft);
+        }
+
+        .f-pill:has(input:checked) {
+            border-color: var(--green);
+            color: var(--green-text);
+            background: var(--green-soft);
+        }
+
+        /* ── Badges ── */
+        .bdg {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 9px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .bdg-open {
+            background: rgba(74, 160, 110, 0.16);
+            color: var(--green-text);
+            border: 1px solid rgba(74, 160, 110, 0.28);
+        }
+
+        .bdg-full {
+            background: rgba(239, 68, 68, 0.12);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.22);
+        }
+
+        .bdg-tag {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+
+        .bdg-purple {
+            background: rgba(139, 92, 246, 0.14);
+            color: #c4b5fd;
+            border: 1px solid rgba(139, 92, 246, 0.24);
+        }
+
+        .bdg-pink {
+            background: rgba(236, 72, 153, 0.12);
+            color: #f9a8d4;
+            border: 1px solid rgba(236, 72, 153, 0.22);
+        }
+
+        /* ── School card ── */
         .school-card {
-            transition: all 0.25s ease;
-            border: 1px solid #e8e0d0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all .25s ease;
         }
 
         .school-card:hover {
-            border-color: var(--gold);
-            box-shadow: 0 8px 32px rgba(10, 22, 40, 0.12), 0 0 0 1px var(--gold);
+            background: var(--surface-h);
+            border-color: var(--border-g);
             transform: translateY(-3px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
         }
 
-        /* Floating orbs */
-        .orb {
-            position: absolute;
+        .card-bar {
+            height: 3px;
+            background: linear-gradient(90deg, var(--green-d), var(--green));
+        }
+
+        .card-bar-dim {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ── Class chip ── */
+        .c-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 6px 4px;
+            text-align: center;
+        }
+
+        .c-chip-open {
+            background: rgba(74, 160, 110, 0.1);
+            border-color: rgba(74, 160, 110, 0.25);
+        }
+
+        /* ── Green button ── */
+        .btn-g {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--green);
+            color: white;
+            padding: 10px 26px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            cursor: pointer;
+            transition: all .25s;
+        }
+
+        .btn-g:hover {
+            background: var(--green-d);
+            box-shadow: 0 0 28px rgba(74, 160, 110, 0.45);
+            transform: translateY(-1px);
+        }
+
+        /* ── Glow dot ── */
+        .dot {
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
-            filter: blur(80px);
-            pointer-events: none;
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green);
+            display: inline-block;
         }
 
-        /* Count up animation */
+        /* ── Stats ── */
+        .s-num {
+            font-size: 2.6rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--white);
+        }
+
+        .s-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .v-sep {
+            width: 1px;
+            background: var(--border);
+            align-self: stretch;
+        }
+
+        /* ── Login card ── */
+        .l-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 26px 18px;
+            text-align: center;
+            display: block;
+            transition: all .25s;
+        }
+
+        .l-card:hover {
+            background: rgba(74, 160, 110, 0.1);
+            border-color: var(--border-g);
+            transform: translateY(-4px);
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ── Animations ── */
         @keyframes fadeUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(24px);
             }
 
             to {
@@ -125,650 +355,526 @@
             }
         }
 
-        .fade-up {
-            animation: fadeUp 0.6s ease forwards;
+        .au {
+            animation: fadeUp .5s ease both;
         }
 
-        /* Search input */
-        .search-input {
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid transparent;
-            transition: border-color 0.2s;
+        .au1 {
+            animation-delay: .07s;
         }
 
-        .search-input:focus {
-            outline: none;
-            border-color: var(--gold);
-            background: #fff;
+        .au2 {
+            animation-delay: .14s;
         }
 
-        /* Checkbox pill */
-        .filter-pill {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            transition: all 0.2s;
-            cursor: pointer;
+        .au3 {
+            animation-delay: .21s;
         }
 
-        .filter-pill:hover {
-            background: rgba(201, 168, 76, 0.15);
-            border-color: var(--gold);
+        .au4 {
+            animation-delay: .28s;
         }
 
-        .filter-pill:has(input:checked) {
-            background: rgba(201, 168, 76, 0.2);
-            border-color: var(--gold);
-            color: var(--gold2);
-        }
-
-        /* Seat badge */
-        .seat-open {
-            background: #dcfce7;
-            color: #15803d;
-        }
-
-        .seat-full {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        /* Login card */
-        .login-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(201, 168, 76, 0.2);
-            transition: all 0.25s;
-        }
-
-        .login-card:hover {
-            background: rgba(201, 168, 76, 0.12);
-            border-color: var(--gold);
-            transform: translateY(-4px);
-        }
-
-        /* Banner placeholder */
-        .banner-slot {
-            background: linear-gradient(135deg, rgba(201, 168, 76, 0.1), rgba(30, 58, 95, 0.3));
-            border: 2px dashed rgba(201, 168, 76, 0.3);
-        }
-
-        /* Divider ornament */
-        .ornament {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .ornament::before,
-        .ornament::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-        }
-
-        /* Tag badges */
-        .tag {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-
-        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
 
         ::-webkit-scrollbar-track {
-            background: var(--cream);
+            background: var(--bg);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: var(--gold);
+            background: var(--green-d);
             border-radius: 3px;
         }
     </style>
 </head>
 
-<body x-data="{ lang: 'en', mobileMenu: false }" :dir="lang === 'ur' ? 'rtl' : 'ltr'">
+<body class="page-bg" x-data="{ lang: 'en' }" :dir="lang === 'ur' ? 'rtl' : 'ltr'">
 
-    {{-- ══════════════════════════════════════════════════════
-     TOP RIBBON
-══════════════════════════════════════════════════════ --}}
-    <div style="background: var(--navy);" class="py-2 px-4 text-xs">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <span class="text-gray-400" x-show="lang === 'en'">
-                Government of Pakistan · Ministry of Federal Education & Professional Training
-            </span>
-            <span class="urdu text-gray-400 text-sm" x-show="lang === 'ur'" x-cloak>
-                حکومتِ پاکستان · وزارتِ وفاقی تعلیم و پیشہ ورانہ تربیت
-            </span>
+    {{-- Portal notice --}}
+    @if (!empty($settings['portal_notice']))
+        <div style="background:rgba(234,179,8,0.12);border-bottom:1px solid rgba(234,179,8,0.25);"
+            class="py-2 px-4 text-center text-xs font-semibold text-yellow-300">
+            ⚠️ {{ $settings['portal_notice'] }}
+        </div>
+    @endif
 
-            <div class="flex items-center gap-3">
-                {{-- Language Toggle --}}
+    {{-- ════════════════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════════════════ --}}
+    <nav class="navbar">
+        <div class="max-w-7xl mx-auto px-5 py-3.5 flex items-center justify-between gap-6">
+
+            {{-- Brand --}}
+            <a href="{{ route('portal.index') }}" class="flex items-center gap-3 no-underline shrink-0">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center"
+                    style="background:rgba(74,160,110,0.18);border:1px solid rgba(74,160,110,0.35);">
+                    <span style="font-size:18px;">🏛️</span>
+                </div>
+                <div class="hidden sm:block">
+                    <p class="text-sm font-bold text-white leading-tight">FDE Admission Portal</p>
+                    <p class="text-xs" style="color:var(--muted);">Government of Pakistan</p>
+                </div>
+            </a>
+
+            {{-- Nav links --}}
+            <div class="hidden md:flex items-center gap-7">
+                <a href="{{ route('portal.index') }}"
+                    class="text-sm font-medium text-white/90 hover:text-white transition">Home</a>
+                <a href="#schools-section" class="text-sm font-medium text-white/60 hover:text-white transition">Find
+                    Schools</a>
+                <a href="#staff-section" class="text-sm font-medium text-white/60 hover:text-white transition">Staff
+                    Portal</a>
+            </div>
+
+            {{-- Actions --}}
+            <div class="flex items-center gap-2.5">
                 <button @click="lang = lang === 'en' ? 'ur' : 'en'"
-                    class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
-                           border transition"
-                    style="border-color: rgba(201,168,76,0.4); color: #c9a84c;"
-                    onmouseover="this.style.background='rgba(201,168,76,0.1)'"
-                    onmouseout="this.style.background='transparent'">
-                    <span x-show="lang === 'en'">🌐 اردو</span>
-                    <span x-show="lang === 'ur'" x-cloak class="urdu">🌐 English</span>
+                    class="text-xs px-3 py-1.5 rounded-full border transition font-medium hidden sm:block"
+                    style="border-color:var(--border);color:var(--muted);"
+                    onmouseover="this.style.borderColor='var(--border-g)';this.style.color='var(--green-text)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+                    <span x-show="lang === 'en'">اردو</span>
+                    <span x-show="lang === 'ur'" x-cloak class="urdu" style="font-size:11px;">English</span>
                 </button>
-
-                {{-- Login Button --}}
-                <a href="{{ route('login') }}"
-                    class="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition"
-                    style="background: var(--gold); color: var(--navy);" onmouseover="this.style.background='#e8c97a'"
-                    onmouseout="this.style.background='#c9a84c'">
-                    🔐
-                    <span x-show="lang === 'en'">Staff Login</span>
-                    <span x-show="lang === 'ur'" x-cloak class="urdu">عملہ لاگ ان</span>
-                </a>
+                <a href="{{ route('login') }}" class="text-sm px-4 py-2 rounded-full border font-medium transition"
+                    style="border-color:var(--border);color:var(--text);"
+                    onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'"
+                    onmouseout="this.style.borderColor='var(--border)'">Sign In</a>
+                <a href="{{ route('login') }}" class="btn-g" style="padding:8px 20px;font-size:13px;">Get Access</a>
             </div>
         </div>
-    </div>
+    </nav>
 
-    {{-- ══════════════════════════════════════════════════════
+    {{-- ════════════════════════════════════════════════════
      HERO
-══════════════════════════════════════════════════════ --}}
-    <div class="geo-bg relative overflow-hidden">
+════════════════════════════════════════════════════ --}}
+    <section class="relative overflow-hidden" style="background: linear-gradient(160deg, #0f1a20 0%, #0d1117 100%);">
 
-        {{-- Decorative orbs --}}
-        <div class="orb w-96 h-96 top-0 -right-20" style="background: rgba(201,168,76,0.07);"></div>
-        <div class="orb w-64 h-64 bottom-0 left-10" style="background: rgba(30,58,95,0.4);"></div>
+        {{-- Ambient blobs --}}
+        <div class="absolute pointer-events-none"
+            style="width:700px;height:700px;top:-200px;left:-150px;background:radial-gradient(circle,rgba(60,130,90,0.14),transparent 65%);border-radius:50%;">
+        </div>
+        <div class="absolute pointer-events-none"
+            style="width:500px;height:500px;top:0;right:-100px;background:radial-gradient(circle,rgba(20,60,140,0.1),transparent 65%);border-radius:50%;">
+        </div>
+        <div class="absolute pointer-events-none"
+            style="width:400px;height:400px;bottom:-100px;right:20%;background:radial-gradient(circle,rgba(60,130,90,0.08),transparent 65%);border-radius:50%;">
+        </div>
 
-        <div class="max-w-7xl mx-auto px-4 pt-12 pb-0 relative z-10">
+        <div class="max-w-7xl mx-auto px-5 pt-16 pb-20 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-            {{-- Logos + Header --}}
-            <div class="flex flex-col items-center text-center mb-10">
-
-                {{-- Logo row --}}
-                <div class="flex items-center justify-center gap-8 mb-8">
-
-                    {{-- Ministry Logo Slot --}}
-                    <div class="w-20 h-20 rounded-full flex items-center justify-center relative"
-                        style="background: rgba(255,255,255,0.08); border: 2px solid rgba(201,168,76,0.3);">
-                        {{-- Replace src with: {{ $settings->ministry_logo ? asset('storage/'.$settings->ministry_logo) : '' }} --}}
-                        <span class="text-4xl">🇵🇰</span>
-                        <span class="absolute -bottom-5 text-xs whitespace-nowrap"
-                            style="color: rgba(201,168,76,0.6);">Ministry</span>
+                {{-- ── LEFT: Headline ── --}}
+                <div>
+                    <div class="flex items-center gap-2 mb-5 au">
+                        <span class="dot"></span>
+                        <span class="text-xs font-semibold tracking-widest uppercase" style="color:var(--green-text);">
+                            Admissions Open — Academic Year 2026–27
+                        </span>
                     </div>
 
-                    {{-- Center emblem --}}
-                    <div class="w-28 h-28 rounded-full flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.05));
-                            border: 3px solid rgba(201,168,76,0.5);
-                            box-shadow: 0 0 40px rgba(201,168,76,0.15);">
-                        {{-- Replace with: <img src="{{ asset('storage/'.$settings->fde_logo) }}" class="w-20 h-20 object-contain" /> --}}
-                        <span class="text-5xl">🏛️</span>
-                    </div>
+                    <h1 class="font-extrabold leading-[1.08] mb-6 au au1"
+                        style="font-size:clamp(2.6rem,5.5vw,4rem);color:var(--white);">
+                        <span x-show="lang === 'en'">
+                            Your Gateway to<br>
+                            <span style="color:var(--green-text);">Quality Education</span>
+                        </span>
+                        <span x-show="lang === 'ur'" x-cloak class="urdu"
+                            style="font-size:clamp(2rem,4vw,3rem);line-height:1.9;">
+                            معیاری تعلیم کا راستہ
+                        </span>
+                    </h1>
 
-                    {{-- FDE Logo Slot --}}
-                    <div class="w-20 h-20 rounded-full flex items-center justify-center relative"
-                        style="background: rgba(255,255,255,0.08); border: 2px solid rgba(201,168,76,0.3);">
-                        <span class="text-4xl">📚</span>
-                        <span class="absolute -bottom-5 text-xs whitespace-nowrap"
-                            style="color: rgba(201,168,76,0.6);">FDE</span>
-                    </div>
-
-                </div>
-
-                {{-- Title --}}
-                <div class="mt-4">
-                    <p class="text-xs font-medium uppercase tracking-[0.3em] mb-3" style="color: var(--gold);"
+                    <p class="text-base leading-relaxed mb-8 max-w-lg au au2" style="color:var(--muted);"
                         x-show="lang === 'en'">
-                        Federal Directorate of Education · Islamabad Capital Territory
+                        Discover <strong class="text-white">{{ $openInstitutions }}</strong> government schools with
+                        open admissions across Islamabad Capital Territory. Free quality education
+                        from ECE to Class XII — no tuition fee.
+                        @if ($academicYear && !empty($academicYear->admission_end))
+                            <br><span class="text-white/70 text-sm">Applications close
+                                <strong
+                                    class="text-white">{{ \Carbon\Carbon::parse($academicYear->admission_end)->format('d M Y') }}</strong>.</span>
+                        @endif
                     </p>
-                    <p class="urdu text-base mb-3" style="color: var(--gold);" x-show="lang === 'ur'" x-cloak>
-                        وفاقی ڈائریکٹوریٹ برائے تعلیم · وفاقی دارالحکومت اسلام آباد
+                    <p class="urdu text-base leading-loose mb-8 max-w-lg au au2" style="color:var(--muted);"
+                        x-show="lang === 'ur'" x-cloak>
+                        اسلام آباد میں وفاقی حکومت کے اسکولوں میں مفت معیاری تعلیم۔ ای سی ای سے بارہویں تک داخلہ لیں۔
                     </p>
 
-                    <h1 class="display text-white mb-2" x-show="lang === 'en'"
-                        style="font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.1;">
-                        FDE Admission Portal
-                        <em style="color: var(--gold);">2026–27</em>
-                    </h1>
-                    <h1 class="display text-white mb-2" x-show="lang === 'ur'" x-cloak
-                        style="font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.5; font-family: 'Noto Nastaliq Urdu', serif;">
-                        وفاقی ڈائریکٹوریٹ داخلہ پورٹل
-                        <em style="color: var(--gold);">۲۰۲۶–۲۷</em>
-                    </h1>
+                    {{-- CTA row --}}
+                    <div class="flex flex-wrap items-center gap-3 mb-12 au au3">
+                        <button onclick="document.getElementById('schools-section').scrollIntoView({behavior:'smooth'})"
+                            class="btn-g">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                            </svg>
+                            <span x-show="lang === 'en'">Find Schools</span>
+                            <span x-show="lang === 'ur'" x-cloak class="urdu">اسکول تلاش کریں</span>
+                        </button>
+                        <a href="{{ route('login') }}"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold border transition"
+                            style="border-color:var(--border);color:var(--text);"
+                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                            onmouseout="this.style.background='transparent'">
+                            Staff Portal <span style="opacity:.5">→</span>
+                        </a>
+                    </div>
+
+                    {{-- Stats --}}
+                    <div class="flex items-stretch gap-0 flex-wrap au au4"
+                        style="border-top:1px solid var(--border);padding-top:28px;">
+                        @foreach ([[$totalInstitutions, 'Total Schools', 'کل اسکول'], [$openInstitutions, 'Admissions Open', 'کھلے داخلے'], [$totalSeatsAvailable, 'Seats Available', 'نشستیں دستیاب'], [$totalAdmittedThisYear, 'Admitted This Year', 'اس سال داخلے']] as $i => [$val, $en, $ur])
+                            @if ($i > 0)
+                                <div class="v-sep mx-5"></div>
+                            @endif
+                            <div>
+                                <p class="s-num">{{ number_format($val) }}<span
+                                        style="color:var(--green);font-size:1.6rem;font-weight:800;">+</span></p>
+                                <p class="s-label" x-show="lang === 'en'">{{ $en }}</p>
+                                <p class="s-label urdu" x-show="lang === 'ur'" x-cloak>{{ $ur }}</p>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
 
-                <div class="gold-line w-48 mt-6 mb-4"></div>
+                {{-- ── RIGHT: Glass feature cards ── --}}
+                <div class="grid grid-cols-2 gap-4 au au2">
 
-            </div>
+                    {{-- Banner image if set --}}
+                    @if (!empty($settings['banner_enabled']) && !empty($settings['banner_image']))
+                        <div class="col-span-2">
+                            <img src="{{ asset('storage/' . $settings['banner_image']) }}"
+                                class="w-full object-cover rounded-2xl" style="max-height:220px;" alt="Banner" />
+                        </div>
+                    @else
+                        {{-- Feature cards --}}
+                        @php $cards = [['🏫', 'Government Schools', 'All schools are official FDE institutions'], ['🎓', 'Free Education', 'No tuition fee from ECE to Class XII'], ['📋', 'Open Admissions', 'Check live seat availability instantly'], ['📞', 'Easy to Apply', 'Visit any school directly to enroll']]; @endphp
+                        @foreach ($cards as $c)
+                            <div class="glass p-5">
+                                <div class="icon-box mb-3">{{ $c[0] }}</div>
+                                <p class="text-sm font-semibold text-white mb-1">{{ $c[1] }}</p>
+                                <p class="text-xs leading-relaxed" style="color:var(--muted);">{{ $c[2] }}
+                                </p>
+                            </div>
+                        @endforeach
 
-            {{-- ── Banner Area (managed via admin) ── --}}
-            <div class="banner-slot rounded-2xl p-6 mb-10 text-center" style="min-height: 120px;">
-                {{--
-                Admin panel replaces this with:
-                @if ($settings->banner_image)
-                    <img src="{{ asset('storage/'.$settings->banner_image) }}" class="w-full rounded-xl object-cover max-h-48" />
-                @elseif($settings->banner_text)
-                    <div>{{ $settings->banner_text }}</div>
-                @endif
-            --}}
-                <div class="flex items-center justify-center gap-4 flex-wrap">
-                    <div class="text-3xl">📢</div>
-                    <div x-show="lang === 'en'" class="text-left">
-                        <h2 class="font-semibold text-white text-lg">
-                            Admissions Now Open — Academic Year 2026–27
-                        </h2>
-                        <p class="text-sm mt-1" style="color: rgba(255,255,255,0.7);">
-                            Free quality education from ECE to Class XII in government schools across Islamabad.
-                            No tuition fee. Apply today.
-                        </p>
-                        @if ($academicYear)
-                            <p class="text-xs mt-2" style="color: var(--gold);">
-                                📅 Admission open until:
-                                {{ \Carbon\Carbon::parse($academicYear->admission_end)->format('d M Y') }}
-                            </p>
+                        {{-- Banner text if set --}}
+                        @if (!empty($settings['banner_enabled']) && !empty($settings['banner_text']))
+                            <div class="glass col-span-2 p-5" style="border-color:rgba(74,160,110,0.3);">
+                                <div class="flex items-start gap-3">
+                                    <div class="icon-box shrink-0">📢</div>
+                                    <p class="text-sm text-white leading-relaxed">{{ $settings['banner_text'] }}</p>
+                                </div>
+                            </div>
                         @endif
-                    </div>
-                    <div x-show="lang === 'ur'" x-cloak class="text-right">
-                        <h2 class="urdu font-semibold text-white text-lg">
-                            داخلے کھل گئے — تعلیمی سال ۲۰۲۶–۲۷
-                        </h2>
-                        <p class="urdu text-sm mt-1" style="color: rgba(255,255,255,0.7);">
-                            اسلام آباد کے سرکاری اسکولوں میں ای سی ای سے بارہویں تک مفت معیاری تعلیم۔ آج ہی درخواست دیں۔
-                        </p>
-                        @if ($academicYear)
-                            <p class="urdu text-xs mt-2" style="color: var(--gold);">
-                                📅 داخلے کی آخری تاریخ:
-                                {{ \Carbon\Carbon::parse($academicYear->admission_end)->format('d M Y') }}
-                            </p>
-                        @endif
+                    @endif
+
+                    {{-- Help card --}}
+                    <div class="glass col-span-2 p-5">
+                        <div class="flex items-center gap-4">
+                            <div class="icon-box shrink-0">❓</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold text-white">Need Help?</p>
+                                <p class="text-xs mt-0.5" style="color:var(--muted);">Contact FDE for admission
+                                    queries and guidance</p>
+                            </div>
+                            <a href="{{ route('login') }}"
+                                class="text-xs font-semibold whitespace-nowrap transition shrink-0"
+                                style="color:var(--green-text);" onmouseover="this.style.color='white'"
+                                onmouseout="this.style.color='var(--green-text)'">
+                                Staff Login →
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            {{-- ── Live Stats ── --}}
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-
-                @foreach ([[$totalInstitutions, 'Total Schools', 'کل اسکول', '🏫'], [$openInstitutions, 'Admissions Open', 'داخلے کھلے', '✅'], [$totalSeatsAvailable, 'Seats Available', 'نشستیں دستیاب', '💺'], [$totalAdmittedThisYear, 'Admitted This Year', 'اس سال داخلے', '🎓']] as [$val, $labelEn, $labelUr, $icon])
-                    <div class="stat-card rounded-2xl p-5 text-center">
-                        <div class="text-2xl mb-2">{{ $icon }}</div>
-                        <p class="display text-white font-bold" style="font-size: 2rem;">
-                            {{ number_format($val) }}
-                        </p>
-                        <p class="text-xs mt-1 font-medium" x-show="lang === 'en'" style="color: rgba(201,168,76,0.8);">
-                            {{ $labelEn }}</p>
-                        <p class="urdu text-sm mt-1" x-show="lang === 'ur'" x-cloak
-                            style="color: rgba(201,168,76,0.8);">{{ $labelUr }}</p>
-                    </div>
-                @endforeach
 
             </div>
+        </div>
+    </section>
 
-            {{-- ── Search Box ── --}}
-            <form method="GET" action="{{ route('portal.index') }}"
-                class="rounded-3xl overflow-hidden shadow-2xl mb-0"
-                style="background: rgba(255,255,255,0.97); border: 1px solid rgba(201,168,76,0.2);">
+    {{-- ════════════════════════════════════════════════════
+     SEARCH + SCHOOLS
+════════════════════════════════════════════════════ --}}
+    <section id="schools-section" class="max-w-7xl mx-auto px-5 py-12">
+
+        {{-- Search panel --}}
+        <div class="search-panel mb-8">
+            <form id="filter-form" method="GET" action="{{ route('portal.index') }}">
 
                 {{-- Search row --}}
-                <div class="flex items-stretch gap-0 border-b" style="border-color: #e8e0d0;">
-                    <div class="flex-1 flex items-center px-5 gap-3">
-                        <span class="text-gray-400 text-lg">🔍</span>
+                <div class="flex items-stretch" style="border-bottom:1px solid var(--border);">
+                    <div class="flex-1 flex items-center gap-3 px-5 py-4">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3a4a55"
+                            stroke-width="2" stroke-linecap="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
                         <input type="text" name="search" value="{{ request('search') }}"
-                            :placeholder="lang === 'en' ? 'Search school name, area...' : 'اسکول کا نام تلاش کریں...'"
-                            class="w-full py-5 text-sm bg-transparent border-none outline-none text-gray-800 placeholder-gray-400" />
+                            placeholder="Search school name or area..." class="s-input" />
                     </div>
-                    <button type="submit" class="px-8 py-5 font-semibold text-sm transition"
-                        style="background: var(--navy); color: white;"
-                        onmouseover="this.style.background='var(--slate)'"
-                        onmouseout="this.style.background='var(--navy)'">
-                        <span x-show="lang === 'en'">Find Schools</span>
-                        <span x-show="lang === 'ur'" x-cloak class="urdu">تلاش کریں</span>
+                    <button type="submit" class="btn-g m-2.5"
+                        style="border-radius:12px;padding:9px 22px;font-size:13px;">
+                        <span x-show="lang === 'en'">Search</span>
+                        <span x-show="lang === 'ur'" x-cloak class="urdu">تلاش</span>
                     </button>
                 </div>
 
-                {{-- Filters row --}}
-                <div class="px-5 py-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-b" style="border-color: #e8e0d0;">
-
-                    <select name="sector_id"
-                        class="border rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none transition"
-                        style="border-color: #d4c9b0;" onfocus="this.style.borderColor='var(--gold)'"
-                        onblur="this.style.borderColor='#d4c9b0'">
-                        <option value="" x-text="lang === 'en' ? 'All Sectors' : 'تمام سیکٹر'"></option>
+                {{-- Filters --}}
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 px-5 py-4"
+                    style="border-bottom:1px solid var(--border);">
+                    <select name="sector_id" class="f-select">
+                        <option value="">All Sectors</option>
                         @foreach ($sectors as $s)
                             <option value="{{ $s->id }}"
-                                {{ request('sector_id') == $s->id ? 'selected' : '' }}>
-                                {{ $s->name }}
-                            </option>
+                                {{ request('sector_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
                         @endforeach
                     </select>
-
-                    <select name="class_id"
-                        class="border rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none transition"
-                        style="border-color: #d4c9b0;" onfocus="this.style.borderColor='var(--gold)'"
-                        onblur="this.style.borderColor='#d4c9b0'">
-                        <option value="" x-text="lang === 'en' ? 'Any Class' : 'کوئی بھی جماعت'"></option>
+                    <select name="class_id" class="f-select">
+                        <option value="">Any Class</option>
                         @foreach ($classes as $c)
                             <option value="{{ $c->id }}"
-                                {{ request('class_id') == $c->id ? 'selected' : '' }}>
-                                {{ $c->name }}
-                            </option>
+                                {{ request('class_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                         @endforeach
                     </select>
-
-                    <select name="gender"
-                        class="border rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none transition"
-                        style="border-color: #d4c9b0;" onfocus="this.style.borderColor='var(--gold)'"
-                        onblur="this.style.borderColor='#d4c9b0'">
-                        <option value="" x-text="lang === 'en' ? 'Boys & Girls' : 'لڑکے اور لڑکیاں'"></option>
-                        <option value="boys" {{ request('gender') == 'boys' ? 'selected' : '' }}
-                            x-text="lang === 'en' ? 'Boys Schools' : 'لڑکوں کے اسکول'"></option>
-                        <option value="girls" {{ request('gender') == 'girls' ? 'selected' : '' }}
-                            x-text="lang === 'en' ? 'Girls Schools' : 'لڑکیوں کے اسکول'"></option>
-                        <option value="co_education" {{ request('gender') == 'co_education' ? 'selected' : '' }}
-                            x-text="lang === 'en' ? 'Co-Education'  : 'مشترک تعلیم'"></option>
+                    <select name="gender" class="f-select">
+                        <option value="">Boys &amp; Girls</option>
+                        <option value="boys" {{ request('gender') == 'boys' ? 'selected' : '' }}>Boys
+                            Schools</option>
+                        <option value="girls" {{ request('gender') == 'girls' ? 'selected' : '' }}>Girls
+                            Schools</option>
+                        <option value="co_education" {{ request('gender') == 'co_education' ? 'selected' : '' }}>
+                            Co-Education</option>
                     </select>
-
-                    <select name="type"
-                        class="border rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none transition"
-                        style="border-color: #d4c9b0;" onfocus="this.style.borderColor='var(--gold)'"
-                        onblur="this.style.borderColor='#d4c9b0'">
-                        <option value="" x-text="lang === 'en' ? 'All Types' : 'تمام اقسام'"></option>
+                    <select name="type" class="f-select">
+                        <option value="">All Types</option>
                         @foreach (['I-V', 'I-VIII', 'I-X', 'I-XII', 'VI-VIII', 'VI-X', 'VI-XII', 'Model_College'] as $t)
                             <option value="{{ $t }}" {{ request('type') == $t ? 'selected' : '' }}>
                                 {{ $t }}</option>
                         @endforeach
                     </select>
-
                 </div>
 
                 {{-- Facility pills --}}
-                <div class="px-5 py-4 flex flex-wrap gap-2">
+                <div class="px-5 py-3.5 flex flex-wrap gap-2 items-center">
                     @foreach ([
-        'has_transport' => ['🚌', 'Transport', 'ٹرانسپورٹ'],
-        'has_meal_program' => ['🍱', 'Meal Program', 'کھانا پروگرام'],
-        'has_matric_tech' => ['⚙️', 'Matric Tech', 'میٹرک ٹیک'],
-        'has_evening_classes' => ['🌙', 'Evening Classes', 'شام کلاسز'],
-        'is_cambridge' => ['🎓', 'Cambridge', 'کیمبرج'],
-        'has_ece' => ['👶', 'ECE Center', 'ای سی ای مرکز'],
-    ] as $key => [$icon, $en, $ur])
-                        <label
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs cursor-pointer
-                              font-medium border transition select-none"
-                            style="border-color: #d4c9b0; color: #555;"
-                            onmouseover="this.style.borderColor='var(--gold)'; this.style.color='var(--navy)'"
-                            onmouseout="if(!this.querySelector('input').checked){this.style.borderColor='#d4c9b0'; this.style.color='#555';}">
+        'has_transport' => ['🚌', 'Transport'],
+        'has_meal_program' => ['🍱', 'Meal Program'],
+        'has_matric_tech' => ['⚙️', 'Matric Tech'],
+        'has_evening_classes' => ['🌙', 'Evening'],
+        'is_cambridge' => ['🎓', 'Cambridge'],
+        'has_ece' => ['👶', 'ECE'],
+    ] as $key => [$icon, $label])
+                        <label class="f-pill">
                             <input type="checkbox" name="{{ $key }}" value="1"
-                                {{ request($key) ? 'checked' : '' }} class="w-3.5 h-3.5 rounded"
-                                style="accent-color: var(--gold)" />
-                            {{ $icon }}
-                            <span x-show="lang === 'en'">{{ $en }}</span>
-                            <span x-show="lang === 'ur'" x-cloak class="urdu">{{ $ur }}</span>
+                                {{ request($key) ? 'checked' : '' }} class="sr-only"
+                                onchange="this.closest('form').submit()" />
+                            {{ $icon }} {{ $label }}
                         </label>
                     @endforeach
-
-                    <a href="{{ route('portal.index') }}"
-                        class="flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition"
-                        style="border-color: #d4c9b0; color: #888;"
-                        onmouseover="this.style.borderColor='#999'; this.style.color='#333'"
-                        onmouseout="this.style.borderColor='#d4c9b0'; this.style.color='#888'">
-                        <span x-show="lang === 'en'">✕ Clear all</span>
-                        <span x-show="lang === 'ur'" x-cloak class="urdu">✕ صاف کریں</span>
-                    </a>
+                    @if (request()->hasAny([
+                            'search',
+                            'sector_id',
+                            'class_id',
+                            'gender',
+                            'type',
+                            'has_transport',
+                            'has_meal_program',
+                            'has_matric_tech',
+                            'has_evening_classes',
+                            'is_cambridge',
+                            'has_ece',
+                        ]))
+                        <a href="{{ route('portal.index') }}" class="text-xs font-medium ml-1 transition"
+                            style="color:#f87171;" onmouseover="this.style.color='#fca5a5'"
+                            onmouseout="this.style.color='#f87171'">
+                            ✕ Clear filters
+                        </a>
+                    @endif
                 </div>
 
             </form>
-
         </div>
 
-        {{-- Curved bottom --}}
-        <div
-            style="height: 60px; background: var(--cream); clip-path: ellipse(55% 100% at 50% 100%);
-                margin-top: -1px; position: relative; z-index: 5;">
-        </div>
-
-    </div>
-
-    {{-- ══════════════════════════════════════════════════════
-     SCHOOL LISTINGS
-══════════════════════════════════════════════════════ --}}
-    <div class="max-w-7xl mx-auto px-4 py-8">
-
-        {{-- Section header --}}
-        <div class="flex justify-between items-center mb-8">
+        {{-- Results heading --}}
+        <div class="flex items-end justify-between mb-6">
             <div>
-                <div class="ornament mb-3" style="width: 200px;">
-                    <span class="text-xs font-semibold uppercase tracking-[0.2em]"
-                        style="color: var(--gold); white-space: nowrap;">
-                        <span x-show="lang === 'en'">Available Schools</span>
-                        <span x-show="lang === 'ur'" x-cloak class="urdu">دستیاب اسکول</span>
-                    </span>
-                </div>
-                <h2 class="display text-3xl font-bold" style="color: var(--navy);" x-show="lang === 'en'">
-                    Schools with Open Admissions
+                <h2 class="text-xl font-bold text-white">
+                    <span x-show="lang === 'en'">{{ $institutions->count() }} Schools with Open Admissions</span>
+                    <span x-show="lang === 'ur'" x-cloak class="urdu text-lg">{{ $institutions->count() }} اسکول
+                        دستیاب</span>
                 </h2>
-                <h2 class="display text-2xl font-bold urdu" style="color: var(--navy);" x-show="lang === 'ur'"
-                    x-cloak>
-                    کھلے داخلوں والے اسکول
-                </h2>
-                <p class="text-sm mt-1 text-gray-500">
-                    <span x-show="lang === 'en'">{{ $institutions->count() }} schools found</span>
-                    <span x-show="lang === 'ur'" x-cloak class="urdu">{{ $institutions->count() }} اسکول ملے</span>
+                <p class="text-xs mt-1" style="color:var(--muted);">
+                    {{ $academicYear?->name }} · Showing all schools with available seats
                 </p>
+            </div>
+            <div class="flex items-center gap-2 hidden sm:flex">
+                <span class="dot"></span>
+                <span class="text-xs font-medium" style="color:var(--green-text);">Live data</span>
             </div>
         </div>
 
+        {{-- School grid --}}
         @if ($institutions->isEmpty())
-            {{-- Empty state --}}
-            <div class="text-center py-24 rounded-3xl"
-                style="background: rgba(201,168,76,0.04); border: 1px dashed rgba(201,168,76,0.3);">
-                <div class="text-6xl mb-4">🏫</div>
-                <h3 class="display text-2xl font-bold mb-2" style="color: var(--navy);">
-                    <span x-show="lang === 'en'">No schools found</span>
-                    <span x-show="lang === 'ur'" x-cloak class="urdu">کوئی اسکول نہیں ملا</span>
-                </h3>
-                <p class="text-gray-500 text-sm">
-                    <span x-show="lang === 'en'">Try adjusting your search filters above</span>
-                    <span x-show="lang === 'ur'" x-cloak class="urdu">اوپر فلٹر تبدیل کریں</span>
-                </p>
-                <a href="{{ route('portal.index') }}"
-                    class="mt-6 inline-block px-6 py-3 rounded-full text-sm font-semibold transition"
-                    style="background: var(--navy); color: white;">
-                    <span x-show="lang === 'en'">Show All Schools</span>
-                    <span x-show="lang === 'ur'" x-cloak class="urdu">تمام اسکول دکھائیں</span>
-                </a>
+            <div class="text-center py-24 rounded-2xl"
+                style="background:var(--surface);border:1px solid var(--border);">
+                <div class="text-5xl mb-4">🏫</div>
+                <h3 class="text-xl font-bold text-white mb-2">No schools found</h3>
+                <p class="text-sm" style="color:var(--muted);">Try adjusting your filters above.</p>
+                <a href="{{ route('portal.index') }}" class="btn-g inline-flex mt-6">Show All Schools</a>
             </div>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 @foreach ($institutions as $inst)
                     @php
                         $instSeats = $seatData[$inst->id] ?? collect();
-                        $totalSeats = $instSeats->sum('total_seats');
-                        $totalExist = $instSeats->sum('existing_enrollment');
-                        $totalAdmit = $admissionTotals[$inst->id]?->total_admitted ?? 0;
-                        $totalAvail = max(0, $totalSeats - $totalExist - $totalAdmit);
+                        $ttlSeats = $instSeats->sum('total_seats');
+                        $ttlExist = $instSeats->sum('existing_enrollment');
+                        $ttlAdmit = $admissionTotals[$inst->id]?->total_admitted ?? 0;
+                        $ttlAvail = max(0, $ttlSeats - $ttlExist - $ttlAdmit);
                     @endphp
 
-                    <div class="school-card bg-white rounded-2xl overflow-hidden flex flex-col">
+                    <div class="school-card">
+                        <div class="{{ $ttlAvail > 0 ? 'card-bar' : 'card-bar-dim' }}"></div>
 
-                        {{-- Top accent bar --}}
-                        <div class="h-1"
-                            style="background: {{ $totalAvail > 0 ? 'linear-gradient(90deg, var(--gold), var(--gold2))' : '#e5e7eb' }};">
-                        </div>
-
-                        {{-- Card body --}}
-                        <div class="p-5 flex-1">
-
-                            {{-- School name + availability --}}
+                        <div class="p-5 flex-1 flex flex-col">
+                            {{-- Name + availability badge --}}
                             <div class="flex justify-between items-start gap-3 mb-3">
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="font-semibold leading-snug text-sm" style="color: var(--navy);">
-                                        {{ $inst->name }}
-                                    </h3>
-                                    <p class="text-xs text-gray-400 mt-0.5">
+                                    <h3 class="font-semibold text-sm text-white leading-snug">{{ $inst->name }}</h3>
+                                    <p class="text-xs mt-0.5" style="color:var(--muted);">
                                         {{ $inst->sector?->name }} Sector
                                         @if ($inst->address)
-                                            &nbsp;·&nbsp; {{ Str::limit($inst->address, 35) }}
+                                            · {{ Str::limit($inst->address, 30) }}
                                         @endif
                                     </p>
                                 </div>
-                                <span
-                                    class="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold
-                        {{ $totalAvail > 0 ? 'seat-open' : 'seat-full' }}">
-                                    <span x-show="lang === 'en'">
-                                        {{ $totalAvail > 0 ? number_format($totalAvail) . ' open' : 'Full' }}
-                                    </span>
-                                    <span x-show="lang === 'ur'" x-cloak class="urdu">
-                                        {{ $totalAvail > 0 ? number_format($totalAvail) . ' نشستیں' : 'بھرا' }}
-                                    </span>
+                                <span class="bdg {{ $ttlAvail > 0 ? 'bdg-open' : 'bdg-full' }} shrink-0">
+                                    {{ $ttlAvail > 0 ? number_format($ttlAvail) . ' open' : 'Full' }}
                                 </span>
                             </div>
 
-                            {{-- Info tags --}}
+                            {{-- Tags --}}
                             <div class="flex flex-wrap gap-1.5 mb-4">
-                                <span class="tag"
-                                    style="background: rgba(10,22,40,0.06); color: var(--navy);">{{ $inst->type }}</span>
-                                <span class="tag" style="background: rgba(10,22,40,0.06); color: var(--navy);">
-                                    {{ ucfirst(str_replace('_', ' ', $inst->gender)) }}
-                                </span>
-                                <span class="tag" style="background: rgba(10,22,40,0.06); color: var(--navy);">
-                                    {{ ucfirst($inst->shift) }}
-                                </span>
+                                <span class="bdg bdg-tag">{{ $inst->type }}</span>
+                                <span class="bdg bdg-tag">{{ ucfirst(str_replace('_', ' ', $inst->gender)) }}</span>
+                                <span class="bdg bdg-tag">{{ ucfirst($inst->shift) }}</span>
                                 @if ($inst->is_cambridge)
-                                    <span class="tag" style="background: #ede9fe; color: #5b21b6;">🎓
-                                        Cambridge</span>
+                                    <span class="bdg bdg-purple">🎓 Cambridge</span>
                                 @endif
                                 @if ($inst->has_transport)
-                                    <span class="tag" style="background: #fef9c3; color: #854d0e;">🚌</span>
+                                    <span class="bdg bdg-tag">🚌</span>
                                 @endif
                                 @if ($inst->has_meal_program)
-                                    <span class="tag" style="background: #dcfce7; color: #166534;">🍱</span>
-                                @endif
-                                @if ($inst->has_matric_tech)
-                                    <span class="tag" style="background: #fff7ed; color: #9a3412;">⚙️</span>
+                                    <span class="bdg bdg-tag">🍱</span>
                                 @endif
                                 @if ($inst->has_evening_classes)
-                                    <span class="tag" style="background: #f3e8ff; color: #6b21a8;">🌙</span>
+                                    <span class="bdg bdg-tag">🌙</span>
                                 @endif
                                 @if ($inst->has_ece)
-                                    <span class="tag" style="background: #fce7f3; color: #9d174d;">👶 ECE</span>
+                                    <span class="bdg bdg-pink">👶 ECE</span>
                                 @endif
                             </div>
 
-                            {{-- Class seats grid --}}
-                            @if ($instSeats->count())
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-wider mb-2"
-                                        style="color: var(--gold);">
-                                        <span x-show="lang === 'en'">Available by Class</span>
-                                        <span x-show="lang === 'ur'" x-cloak class="urdu">جماعت وار نشستیں</span>
-                                    </p>
+                            {{-- Class chips --}}
+                            @if ($instSeats->isNotEmpty())
+                                <div class="mt-auto">
+                                    <p class="text-xs font-semibold mb-2 uppercase tracking-wider"
+                                        style="color:var(--green-text);">Seats by Class</p>
                                     <div class="grid grid-cols-4 gap-1.5">
                                         @foreach ($instSeats->sortBy('class_id')->take(8) as $ic)
-                                            @php $avail = max(0, $ic->total_seats - $ic->existing_enrollment - $totalAdmit); @endphp
-                                            <div class="rounded-xl p-2 text-center transition"
-                                                style="{{ $avail > 0
-                                                    ? 'background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2);'
-                                                    : 'background: #f9fafb; border: 1px solid #e5e7eb;' }}">
-                                                <p class="leading-none truncate"
-                                                    style="font-size: 10px; color: #9ca3af;">
-                                                    {{ $ic->classModel?->name }}
-                                                </p>
-                                                <p class="font-bold mt-1"
-                                                    style="font-size: 13px; color: {{ $avail > 0 ? 'var(--gold)' : '#d1d5db' }}">
-                                                    {{ $avail > 0 ? $avail : '—' }}
+                                            @php $av = max(0, $ic->total_seats - $ic->existing_enrollment - $ttlAdmit); @endphp
+                                            <div class="c-chip {{ $av > 0 ? 'c-chip-open' : '' }}">
+                                                <p class="truncate" style="font-size:10px;color:var(--muted);">
+                                                    {{ $ic->classModel?->name }}</p>
+                                                <p class="font-bold mt-0.5"
+                                                    style="font-size:13px;color:{{ $av > 0 ? 'var(--green-text)' : '#2a3540' }}">
+                                                    {{ $av > 0 ? $av : '—' }}
                                                 </p>
                                             </div>
                                         @endforeach
                                         @if ($instSeats->count() > 8)
-                                            <div class="rounded-xl p-2 text-center flex items-center justify-center"
-                                                style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                                            <div class="c-chip flex items-center justify-center">
                                                 <span
-                                                    style="font-size: 11px; color: #9ca3af;">+{{ $instSeats->count() - 8 }}</span>
+                                                    style="font-size:11px;color:var(--muted);">+{{ $instSeats->count() - 8 }}</span>
                                             </div>
                                         @endif
                                     </div>
                                 </div>
                             @endif
-
                         </div>
 
                         {{-- Card footer --}}
                         <div class="px-5 py-3 flex justify-between items-center"
-                            style="background: #fafaf8; border-top: 1px solid #e8e0d0;">
-                            @if ($inst->contact_number)
-                                <span class="text-xs text-gray-400">📞 {{ $inst->contact_number }}</span>
-                            @else
-                                <span></span>
-                            @endif
+                            style="border-top:1px solid var(--border);">
+                            <span class="text-xs" style="color:var(--muted);">
+                                @if ($inst->contact_number)
+                                    📞 {{ $inst->contact_number }}
+                                @endif
+                            </span>
                             <a href="{{ route('portal.show', $inst) }}"
-                                class="text-xs font-semibold transition hover:opacity-70" style="color: var(--navy);">
-                                <span x-show="lang === 'en'">View Details →</span>
-                                <span x-show="lang === 'ur'" x-cloak class="urdu">تفصیل دیکھیں ←</span>
+                                class="text-xs font-semibold flex items-center gap-1.5 transition"
+                                style="color:var(--green-text);" onmouseover="this.style.color='white'"
+                                onmouseout="this.style.color='var(--green-text)'">
+                                View Details
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                </svg>
                             </a>
                         </div>
-
                     </div>
                 @endforeach
             </div>
         @endif
 
-    </div>
+    </section>
 
-    {{-- ══════════════════════════════════════════════════════
+    {{-- ════════════════════════════════════════════════════
      STAFF LOGIN
-══════════════════════════════════════════════════════ --}}
-    <div class="geo-bg py-16 px-4 mt-16 relative overflow-hidden">
-        <div class="orb w-64 h-64 top-0 right-0" style="background: rgba(201,168,76,0.06);"></div>
-
-        <div class="max-w-4xl mx-auto text-center relative z-10">
-
-            <p class="text-xs font-semibold uppercase tracking-[0.3em] mb-2" style="color: var(--gold);">
-                <span x-show="lang === 'en'">Portal Access</span>
-                <span x-show="lang === 'ur'" x-cloak class="urdu">پورٹل تک رسائی</span>
+════════════════════════════════════════════════════ --}}
+    <section id="staff-section" style="background:var(--bg2);border-top:1px solid var(--border);" class="py-20 px-5">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="flex items-center justify-center gap-2 mb-3">
+                <span class="dot"></span>
+                <span class="text-xs font-semibold tracking-widest uppercase" style="color:var(--green-text);">Portal
+                    Access</span>
+            </div>
+            <h3 class="text-3xl font-bold text-white mb-2">Staff Login</h3>
+            <p class="text-sm mb-10" style="color:var(--muted);">Select your role to access the administration portal
             </p>
-            <h3 class="display text-3xl font-bold text-white mb-2" x-show="lang === 'en'">Staff Login</h3>
-            <h3 class="display text-2xl font-bold text-white mb-2 urdu" x-show="lang === 'ur'" x-cloak>عملہ لاگ ان
-            </h3>
-
-            <div class="gold-line w-32 mx-auto mb-8"></div>
-
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                @foreach ([['HoI', 'Head of Institution', 'پرنسپل', '🏫'], ['AEO', 'Area Education Officer', 'ایریا ایجوکیشن افسر', '👤'], ['FDE Cell', 'FDE Admission Cell', 'ایف ڈی ای سیل', '🏢'], ['Admin', 'System Administrator', 'ایڈمن', '⚙️']] as [$title, $roleEn, $roleUr, $icon])
-                    <a href="{{ route('login') }}" class="login-card rounded-2xl p-5 text-center block">
-                        <div class="text-3xl mb-3">{{ $icon }}</div>
+                @foreach ([['HoI', 'Head of Institution', '🏫'], ['AEO', 'Area Education Officer', '👤'], ['FDE Cell', 'FDE Admission Cell', '🏢'], ['Admin', 'System Administrator', '⚙️']] as [$title, $role, $icon])
+                    <a href="{{ route('login') }}" class="l-card">
+                        <div class="icon-box mx-auto mb-3">{{ $icon }}</div>
                         <p class="font-bold text-white text-sm mb-1">{{ $title }}</p>
-                        <p class="text-xs" x-show="lang === 'en'" style="color: rgba(201,168,76,0.7);">
-                            {{ $roleEn }}</p>
-                        <p class="urdu text-xs" x-show="lang === 'ur'" x-cloak style="color: rgba(201,168,76,0.7);">
-                            {{ $roleUr }}</p>
+                        <p class="text-xs" style="color:var(--muted);">{{ $role }}</p>
                     </a>
                 @endforeach
             </div>
-
         </div>
-    </div>
+    </section>
 
-    {{-- ══════════════════════════════════════════════════════
+    {{-- ════════════════════════════════════════════════════
      FOOTER
-══════════════════════════════════════════════════════ --}}
-    <footer style="background: var(--navy);" class="py-8 px-4">
-        <div class="max-w-7xl mx-auto">
-            <div class="gold-line mb-6"></div>
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <p class="text-sm font-medium text-white" x-show="lang === 'en'">
-                        Federal Directorate of Education &nbsp;·&nbsp; Islamabad Capital Territory
-                    </p>
-                    <p class="urdu text-sm font-medium text-white" x-show="lang === 'ur'" x-cloak>
-                        وفاقی ڈائریکٹوریٹ برائے تعلیم · اسلام آباد
-                    </p>
-                    <p class="text-xs mt-1" style="color: rgba(255,255,255,0.4);">
-                        © {{ now()->year }} FDE Admissions Portal · All rights reserved
-                    </p>
+════════════════════════════════════════════════════ --}}
+    <footer style="background:var(--bg);border-top:1px solid var(--border);" class="py-8 px-5">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                    style="background:rgba(74,160,110,0.15);border:1px solid rgba(74,160,110,0.28);">
+                    <span style="font-size:15px;">🏛️</span>
                 </div>
-                <div class="text-xs" style="color: rgba(201,168,76,0.6);">
-                    <span x-show="lang === 'en'">Academic Year 2026–27</span>
-                    <span x-show="lang === 'ur'" x-cloak class="urdu">تعلیمی سال ۲۰۲۶–۲۷</span>
+                <div>
+                    <p class="text-sm font-semibold text-white">Federal Directorate of Education</p>
+                    <p class="text-xs" style="color:var(--muted);">© {{ now()->year }} FDE Admissions Portal ·
+                        Islamabad Capital Territory</p>
                 </div>
             </div>
+            <p class="text-xs" style="color:var(--muted);">Academic Year 2026–27 · All rights reserved</p>
         </div>
     </footer>
 

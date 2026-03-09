@@ -16,7 +16,8 @@ class AcademicYearSeeder extends Seeder
                 'end_date'          => '2027-03-31',
                 'admission_start'   => '2026-04-01',
                 'admission_end'     => '2026-06-30',
-                'daily_cutoff_time' => '17:00:00',
+                // Keep entry window open till midnight for testing
+                'daily_cutoff_time' => '23:59:00',
                 'is_active'         => true,
             ]
         );

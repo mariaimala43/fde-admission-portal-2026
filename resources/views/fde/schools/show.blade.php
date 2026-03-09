@@ -13,6 +13,10 @@
             </p>
         </div>
         <a href="{{ route('fde.schools.index') }}" class="text-sm text-blue-600 hover:underline">All Schools</a>
+        <a href="{{ route('fde.enrollment.show', $institution) }}"
+            class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600">
+            🔓 Enrollment Override
+        </a>
     </div>
 
     {{-- Date Range Filter --}}
@@ -68,16 +72,19 @@
                         <th class="px-4 py-3 text-left">Class</th>
                         <th class="px-4 py-3 text-center">Existing Enrollment</th>
                         <th class="px-4 py-3 text-center">Intake Capacity</th>
-                        <th class="px-4 py-3 text-center text-green-600">Seats Available<br><span class="normal-case font-normal text-gray-400">(Auto-Calculated)</span></th>
-                        <th class="px-4 py-3 text-center text-blue-600">Newly Admitted<br><span class="normal-case font-normal text-gray-400">(Daily Updates)</span></th>
-                        <th class="px-4 py-3 text-center bg-blue-50 text-blue-900">Total Enrollment<br><span class="normal-case font-normal text-gray-400">(Auto-Calculated)</span></th>
+                        <th class="px-4 py-3 text-center text-green-600">Seats Available<br><span
+                                class="normal-case font-normal text-gray-400">(Auto-Calculated)</span></th>
+                        <th class="px-4 py-3 text-center text-blue-600">Newly Admitted<br><span
+                                class="normal-case font-normal text-gray-400">(Daily Updates)</span></th>
+                        <th class="px-4 py-3 text-center bg-blue-50 text-blue-900">Total Enrollment<br><span
+                                class="normal-case font-normal text-gray-400">(Auto-Calculated)</span></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     @foreach ($classes as $ic)
                         @php
                             $s = $classSummary[$ic->class_id] ?? null;
-                            $admitted  = $s?->total ?? 0;
+                            $admitted = $s?->total ?? 0;
                             $available = max(0, $ic->total_seats - $ic->existing_enrollment - $admitted);
                             $totalEnrl = $ic->existing_enrollment + $admitted;
                         @endphp
@@ -88,9 +95,12 @@
                                     <span class="ml-1 text-xs bg-purple-100 text-purple-700 px-1.5 rounded-full">ECE</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-center text-orange-600 font-medium">{{ number_format($ic->existing_enrollment) }}</td>
-                            <td class="px-4 py-3 text-center font-medium text-gray-700">{{ number_format($ic->total_seats) }}</td>
-                            <td class="px-4 py-3 text-center font-bold {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">
+                            <td class="px-4 py-3 text-center text-orange-600 font-medium">
+                                {{ number_format($ic->existing_enrollment) }}</td>
+                            <td class="px-4 py-3 text-center font-medium text-gray-700">
+                                {{ number_format($ic->total_seats) }}</td>
+                            <td
+                                class="px-4 py-3 text-center font-bold {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">
                                 {{ number_format($available) }}
                             </td>
                             <td class="px-4 py-3 text-center text-blue-700 font-bold">
@@ -103,20 +113,25 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-center font-bold text-blue-900 bg-blue-50">{{ number_format($totalEnrl) }}</td>
+                            <td class="px-4 py-3 text-center font-bold text-blue-900 bg-blue-50">
+                                {{ number_format($totalEnrl) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot class="bg-blue-50 border-t-2 border-blue-100 font-bold text-sm">
                     <tr>
                         <td class="px-4 py-3 text-gray-700">TOTAL</td>
-                        <td class="px-4 py-3 text-center text-orange-600">{{ number_format($classes->sum('existing_enrollment')) }}</td>
-                        <td class="px-4 py-3 text-center text-blue-900">{{ number_format($classes->sum('total_seats')) }}</td>
-                        <td class="px-4 py-3 text-center {{ max(0, $classes->sum('total_seats') - $classes->sum('existing_enrollment') - $grandTotal) > 0 ? 'text-green-600' : 'text-red-500' }}">
+                        <td class="px-4 py-3 text-center text-orange-600">
+                            {{ number_format($classes->sum('existing_enrollment')) }}</td>
+                        <td class="px-4 py-3 text-center text-blue-900">{{ number_format($classes->sum('total_seats')) }}
+                        </td>
+                        <td
+                            class="px-4 py-3 text-center {{ max(0, $classes->sum('total_seats') - $classes->sum('existing_enrollment') - $grandTotal) > 0 ? 'text-green-600' : 'text-red-500' }}">
                             {{ number_format(max(0, $classes->sum('total_seats') - $classes->sum('existing_enrollment') - $grandTotal)) }}
                         </td>
                         <td class="px-4 py-3 text-center text-blue-700">{{ number_format($grandTotal) }}</td>
-                        <td class="px-4 py-3 text-center text-blue-900 bg-blue-100">{{ number_format($classes->sum('existing_enrollment') + $grandTotal) }}</td>
+                        <td class="px-4 py-3 text-center text-blue-900 bg-blue-100">
+                            {{ number_format($classes->sum('existing_enrollment') + $grandTotal) }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -153,14 +168,16 @@
                                     {{ $row->admission_date->format('d M Y') }}
                                 </td>
                                 <td class="px-4 py-2.5 font-medium text-gray-800">{{ $row->classModel?->name }}</td>
-                                <td class="px-4 py-2.5 text-center text-blue-700">{{ $row->boys_count }}</td>
-                                <td class="px-4 py-2.5 text-center text-pink-700">{{ $row->girls_count }}</td>
+                                <td class="px-4 py-2.5 text-center text-blue-700">
+                                    {{ $row->morning_boys + $row->evening_boys }}</td>
+                                <td class="px-4 py-2.5 text-center text-pink-700">
+                                    {{ $row->morning_girls + $row->evening_girls }}</td>
                                 <td class="px-4 py-2.5 text-center text-purple-700">{{ $row->oosc_boys }}</td>
                                 <td class="px-4 py-2.5 text-center text-pink-700">{{ $row->oosc_girls }}</td>
                                 <td class="px-4 py-2.5 text-center text-orange-700">{{ $row->p2p_boys }}</td>
                                 <td class="px-4 py-2.5 text-center text-pink-700">{{ $row->p2p_girls }}</td>
                                 <td class="px-4 py-2.5 text-center font-bold text-gray-900">
-                                    {{ $row->totalAdmissions() }}
+                                    {{ $row->displayTotal() }}
                                 </td>
                             </tr>
                         @endforeach

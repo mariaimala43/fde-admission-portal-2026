@@ -19,8 +19,8 @@ class DashboardController extends Controller
         // ── Today's grand totals ───────────────────────────
         $todayTotals = DailyAdmission::where('admission_date', $today)
             ->selectRaw('
-                SUM(boys_count + girls_count + oosc_boys + oosc_girls + p2p_boys + p2p_girls) as total,
-                SUM(boys_count + girls_count)     as regular,
+                SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total,
+                SUM(morning_boys+evening_boys+morning_girls+evening_girls)     as regular,
                 SUM(oosc_boys + oosc_girls)       as oosc,
                 SUM(p2p_boys + p2p_girls)         as p2p
             ')
@@ -29,8 +29,8 @@ class DashboardController extends Controller
         // ── Cumulative grand totals ────────────────────────
         $cumulativeTotals = DailyAdmission::where('academic_year_id', $academicYear?->id)
             ->selectRaw('
-                SUM(boys_count + girls_count + oosc_boys + oosc_girls + p2p_boys + p2p_girls) as total,
-                SUM(boys_count + girls_count)     as regular,
+                SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total,
+                SUM(morning_boys+evening_boys+morning_girls+evening_girls)     as regular,
                 SUM(oosc_boys + oosc_girls)       as oosc,
                 SUM(p2p_boys + p2p_girls)         as p2p
             ')
@@ -45,7 +45,7 @@ class DashboardController extends Controller
                 $cumul = DailyAdmission::whereIn('institution_id', $institutionIds)
                     ->where('academic_year_id', $academicYear?->id)
                     ->selectRaw('
-                        SUM(boys_count + girls_count + oosc_boys + oosc_girls + p2p_boys + p2p_girls) as total,
+                        SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total,
                         SUM(oosc_boys + oosc_girls) as oosc,
                         SUM(p2p_boys + p2p_girls)   as p2p
                     ')
@@ -53,7 +53,7 @@ class DashboardController extends Controller
 
                 $todayCount = DailyAdmission::whereIn('institution_id', $institutionIds)
                     ->where('admission_date', $today)
-                    ->selectRaw('SUM(boys_count + girls_count + oosc_boys + oosc_girls + p2p_boys + p2p_girls) as total')
+                    ->selectRaw('SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total')
                     ->value('total') ?? 0;
 
                 $sector->cumul_total  = $cumul?->total  ?? 0;

@@ -1,0 +1,196 @@
+{{-- resources/views/fde/reports/sector.blade.php --}}
+
+@extends('layouts.app')
+@section('title', 'Sector & UC Report')
+
+@section('content')
+
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Sector / UC Wise Report</h2>
+            <p class="text-sm text-gray-500 mt-0.5">
+                Academic Year: <strong>{{ $academicYear?->name ?? '—' }}</strong>
+                &nbsp;·&nbsp; {{ $from->format('d M Y') }} — {{ $to->format('d M Y') }}
+            </p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            <a href="{{ route('fde.reports.dashboard') }}"
+                class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                ← Dashboard
+            </a>
+            @can('reports.export')
+                <a href="{{ route('fde.export.master', array_merge(request()->query(), ['format' => 'excel'])) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition">
+                    📊 Excel
+                </a>
+                <a href="{{ route('fde.export.master', array_merge(request()->query(), ['format' => 'pdf'])) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition">
+                    📄 PDF
+                </a>
+            @endcan
+        </div>
+    </div>
+
+    {{-- Filter --}}
+    <form method="GET" action="{{ route('fde.reports.sector') }}"
+        class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">From</label>
+            <input type="date" name="from" value="{{ $from->toDateString() }}"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">To</label>
+            <input type="date" name="to" value="{{ $to->toDateString() }}"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <button type="submit"
+            class="px-5 py-2 bg-blue-900 text-white text-sm font-medium rounded-lg hover:bg-blue-800 transition">
+            Apply
+        </button>
+        <a href="{{ route('fde.reports.sector') }}" class="px-4 py-2 text-sm text-gray-400 hover:text-gray-600">Reset</a>
+    </form>
+
+    {{-- Sectors --}}
+    @foreach ($sectorReport as $item)
+        @php
+            $filled = $item['total_existing'] + $item['total_admitted'];
+            $rem = max(0, $item['total_seats'] - $filled);
+            $fillRate = $item['total_seats'] > 0 ? round(($filled / $item['total_seats']) * 100) : 0;
+        @endphp
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
+
+            {{-- Sector header --}}
+            <div class="bg-blue-900 px-5 py-4 flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <h3 class="text-base font-bold text-white">{{ $item['sector']->name }}</h3>
+                    <p class="text-xs text-blue-200 mt-0.5">
+                        {{ $item['school_count'] }} schools &nbsp;·&nbsp; Code: {{ $item['sector']->code }}
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-5 text-center">
+                    <div>
+                        <p class="text-lg font-bold text-white">{{ number_format($item['total_admitted']) }}</p>
+                        <p class="text-xs text-blue-200">Admitted</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-white">{{ number_format($item['total_oosc']) }}</p>
+                        <p class="text-xs text-blue-200">OOSC</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-white">{{ number_format($item['total_p2p']) }}</p>
+                        <p class="text-xs text-blue-200">P2P</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-white">{{ $fillRate }}%</p>
+                        <p class="text-xs text-blue-200">Fill Rate</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Sector summary strip --}}
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-px bg-gray-100">
+                <div class="bg-white px-4 py-3 text-center">
+                    <p class="text-xs text-gray-400 mb-0.5">Total Seats</p>
+                    <p class="font-bold text-gray-700">{{ number_format($item['total_seats']) }}</p>
+                </div>
+                <div class="bg-white px-4 py-3 text-center">
+                    <p class="text-xs text-gray-400 mb-0.5">Existing</p>
+                    <p class="font-bold text-orange-600">{{ number_format($item['total_existing']) }}</p>
+                </div>
+                <div class="bg-white px-4 py-3 text-center">
+                    <p class="text-xs text-gray-400 mb-0.5">Boys</p>
+                    <p class="font-bold text-blue-600">{{ number_format($item['total_boys']) }}</p>
+                </div>
+                <div class="bg-white px-4 py-3 text-center">
+                    <p class="text-xs text-gray-400 mb-0.5">Girls</p>
+                    <p class="font-bold text-pink-500">{{ number_format($item['total_girls']) }}</p>
+                </div>
+                <div class="bg-white px-4 py-3 text-center">
+                    <p class="text-xs text-gray-400 mb-0.5">Remaining</p>
+                    <p class="font-bold {{ $rem > 0 ? 'text-green-600' : 'text-red-500' }}">
+                        {{ number_format($rem) }}
+                    </p>
+                </div>
+            </div>
+
+            {{-- UC breakdown table --}}
+            @if ($item['uc_breakdown']->count())
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
+                                <th class="text-left px-5 py-3 font-medium">Union Council</th>
+                                <th class="text-center px-3 py-3 font-medium">Schools</th>
+                                <th class="text-center px-3 py-3 font-medium">Seats</th>
+                                <th class="text-center px-3 py-3 font-medium">Existing</th>
+                                <th class="text-center px-3 py-3 font-medium">Boys</th>
+                                <th class="text-center px-3 py-3 font-medium">Girls</th>
+                                <th class="text-center px-3 py-3 font-medium">OOSC</th>
+                                <th class="text-center px-3 py-3 font-medium">P2P</th>
+                                <th class="text-center px-3 py-3 font-medium">Total</th>
+                                <th class="text-center px-3 py-3 font-medium">Fill %</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            @foreach ($item['uc_breakdown'] as $uc)
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-5 py-3 font-medium text-gray-700">
+                                        {{ $uc->name }}
+                                        <span class="text-xs text-gray-400 ml-1">({{ $uc->code }})</span>
+                                    </td>
+                                    <td class="px-3 py-3 text-center text-gray-600">{{ $uc->school_count }}</td>
+                                    <td class="px-3 py-3 text-center text-gray-600">{{ number_format($uc->total_seats) }}
+                                    </td>
+                                    <td class="px-3 py-3 text-center text-orange-600">
+                                        {{ number_format($uc->total_existing) }}</td>
+                                    <td class="px-3 py-3 text-center text-blue-600">{{ number_format($uc->total_boys) }}
+                                    </td>
+                                    <td class="px-3 py-3 text-center text-pink-500">{{ number_format($uc->total_girls) }}
+                                    </td>
+                                    <td class="px-3 py-3 text-center text-purple-600">{{ number_format($uc->total_oosc) }}
+                                    </td>
+                                    <td class="px-3 py-3 text-center text-orange-500">{{ number_format($uc->total_p2p) }}
+                                    </td>
+                                    <td class="px-3 py-3 text-center font-semibold text-gray-800">
+                                        {{ number_format($uc->total_admitted) }}</td>
+                                    <td class="px-3 py-3 text-center">
+                                        <span
+                                            class="text-xs font-bold
+                            {{ $uc->fill_rate >= 90 ? 'text-red-500' : ($uc->fill_rate >= 70 ? 'text-yellow-600' : 'text-green-600') }}">
+                                            {{ $uc->fill_rate }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-blue-50 font-semibold text-sm border-t-2 border-blue-200">
+                                <td class="px-5 py-3 text-blue-900">Sector Total</td>
+                                <td class="px-3 py-3 text-center text-blue-900">{{ $item['school_count'] }}</td>
+                                <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_seats']) }}
+                                </td>
+                                <td class="px-3 py-3 text-center text-blue-900">
+                                    {{ number_format($item['total_existing']) }}</td>
+                                <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_boys']) }}
+                                </td>
+                                <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_girls']) }}
+                                </td>
+                                <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_oosc']) }}
+                                </td>
+                                <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_p2p']) }}
+                                </td>
+                                <td class="px-3 py-3 text-center text-blue-900">
+                                    {{ number_format($item['total_admitted']) }}</td>
+                                <td class="px-3 py-3 text-center text-blue-900">{{ $fillRate }}%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            @endif
+
+        </div>
+    @endforeach
+
+@endsection

@@ -17,7 +17,38 @@ class AuthController extends Controller
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
-        return view('auth.login');
+
+        // Dev sidebar — all active accounts grouped by role
+        $testUsers = User::with(['roles', 'institution', 'sectors'])
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($user) {
+                $role = $user->getRoleNames()->first();
+                return [
+                    'name'        => $user->name,
+                    'email'       => $user->email,
+                    'role'        => $role,
+                    'password'    => $user->email === 'admin@fde.edu.pk' ? 'Admin@1234' : 'Test@1234',
+                    'description' => match ($role) {
+                        'hoi'      => $user->institution?->name ?? '—',
+                        'aeo'      => $user->sectors->pluck('name')->join(', ') ?: '—',
+                        'fde_cell' => 'Full system · All institutions',
+                        'director' => 'Read-only · All institutions',
+                        default    => '—',
+                    },
+                ];
+            })
+            ->sortBy(fn($u) => match ($u['role']) {
+                'fde_cell' => 0,
+                'director' => 1,
+                'aeo'      => 2,
+                'hoi'      => 3,
+                default    => 4,
+            })
+            ->values()
+            ->groupBy('role');
+
+        return view('auth.login', compact('testUsers'));
     }
 
     // ── Handle Login ───────────────────────────────────────
