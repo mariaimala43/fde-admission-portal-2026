@@ -20,7 +20,7 @@
                     <th class="px-6 py-4 text-left">#</th>
                     <th class="px-6 py-4 text-left">Name</th>
                     <th class="px-6 py-4 text-left">Code</th>
-                    <th class="px-6 py-4 text-left">Union Council</th>
+                    <th class="px-6 py-4 text-left">Union Councils</th>
                     <th class="px-6 py-4 text-left">Schools</th>
                     <th class="px-6 py-4 text-left">Status</th>
                     <th class="px-6 py-4 text-left">Actions</th>
@@ -33,7 +33,8 @@
                         <td class="px-6 py-4 font-medium text-gray-800">{{ $sector->name }}</td>
                         <td class="px-6 py-4 text-gray-600">{{ $sector->code }}</td>
                         <td class="px-6 py-4 text-gray-600">
-                            {{ $sector->unionCouncil?->name ?? '—' }}
+                            {{ $sector->union_councils_count ?? 0 }}
+                            <span class="text-gray-400 text-xs">UC{{ ($sector->union_councils_count ?? 0) !== 1 ? 's' : '' }}</span>
                         </td>
                         <td class="px-6 py-4 text-gray-600">
                             {{ $sector->institutions_count }}

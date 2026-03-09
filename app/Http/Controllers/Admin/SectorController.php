@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Sector;
-use App\Models\UnionCouncil;
 use App\Models\AuditLog;
 
 class SectorController extends Controller
@@ -13,34 +12,28 @@ class SectorController extends Controller
     // ── List all sectors ───────────────────────────────────
     public function index()
     {
-       $sectors = Sector::with('unionCouncil')
-                    ->withCount('institutions')
-                    ->orderBy('name')
-                    ->paginate(20);
+        $sectors = Sector::withCount(['institutions', 'unionCouncils'])
+            ->orderBy('name')
+            ->paginate(20);
+
         return view('admin.sectors.index', compact('sectors'));
     }
 
     // ── Show create form ───────────────────────────────────
     public function create()
     {
-        $ucs = UnionCouncil::where('is_active', true)
-            ->orderBy('name')
-            ->get();
-
-        return view('admin.sectors.create', compact('ucs'));
+        return view('admin.sectors.create');
     }
 
     // ── Store new sector ───────────────────────────────────
     public function store(Request $request)
     {
         $request->validate([
-            'uc_id' => 'required|exists:union_councils,id',
-            'name'  => 'required|string|max:255',
-            'code'  => 'required|string|max:50|unique:sectors,code',
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:sectors,code',
         ]);
 
         $sector = Sector::create([
-            'uc_id'     => $request->uc_id,
             'name'      => $request->name,
             'code'      => strtoupper($request->code),
             'is_active' => true,
@@ -60,28 +53,22 @@ class SectorController extends Controller
     // ── Show edit form ─────────────────────────────────────
     public function edit(Sector $sector)
     {
-        $ucs = UnionCouncil::where('is_active', true)
-            ->orderBy('name')
-            ->get();
-
-        return view('admin.sectors.edit', compact('sector', 'ucs'));
+        return view('admin.sectors.edit', compact('sector'));
     }
 
     // ── Update sector ──────────────────────────────────────
     public function update(Request $request, Sector $sector)
     {
         $request->validate([
-            'uc_id' => 'required|exists:union_councils,id',
-            'name'  => 'required|string|max:255',
-            'code'  => 'required|string|max:50|unique:sectors,code,' . $sector->id,
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:sectors,code,' . $sector->id,
         ]);
 
         $old = $sector->toArray();
 
         $sector->update([
-            'uc_id' => $request->uc_id,
-            'name'  => $request->name,
-            'code'  => strtoupper($request->code),
+            'name' => $request->name,
+            'code' => strtoupper($request->code),
         ]);
 
         AuditLog::record(
