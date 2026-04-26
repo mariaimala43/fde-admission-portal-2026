@@ -12,17 +12,20 @@ use Illuminate\Support\Facades\Request;
 /**
  * SAVE AS: app/Models/AdmissionMonitoring.php
  *
- * One record per daily_admissions row.
- * Tracks test → merit → documentation lifecycle.
+ * One record per DailyAdmission row (class + date batch).
+ * Child splits (AdmissionMonitoringSplit) track per-outcome groups.
  *
- * Workflow states:
- *   draft → test_verification → merit_confirmation → doc_verification → finalized
+ * Workflow states (parent):
+ *   draft → test_verification → partial_finalized | merit_confirmation → doc_verification → finalized
  *
- * Business rules enforced in this model:
- *   - test_status=failed  → cannot set doc_status=complete
- *   - merit_status=rejected → blocks all further processing
- *   - merit_status must be 'selected' before doc_status can be 'complete'
- *   - Only FDE can set doc_status=complete (enforced in controller + canCompleteDoc())
+ * Split workflow states:
+ *   passed   → finalized (auto, immediately)
+ *   exempted → pending_doc → doc_complete → finalized
+ *   failed   → pending_retest (informational — re-test via new DailyAdmission)
+ *
+ * New fields (migration 2026_03_24_000001):
+ *   total_admitted, passed_count, failed_count, exempted_count,
+ *   test_entry_locked, partial_finalized, auto_finalized_at
  */
 class AdmissionMonitoring extends Model
 {
@@ -36,6 +39,17 @@ class AdmissionMonitoring extends Model
         'class_id',
         'academic_year_id',
         'admission_date',
+
+        // ── New count fields ─────────────────────────────────────────
+        'total_admitted',
+        'passed_count',
+        'failed_count',
+        'exempted_count',
+        'test_entry_locked',
+        'partial_finalized',
+        'auto_finalized_at',
+
+        // ── Existing workflow fields ──────────────────────────────────
         'workflow_status',
         'test_status',
         'test_updated_at',
@@ -56,12 +70,19 @@ class AdmissionMonitoring extends Model
     ];
 
     protected $casts = [
-        'admission_date'  => 'date',
-        'test_updated_at' => 'datetime',
-        'merit_updated_at'=> 'datetime',
-        'doc_updated_at'  => 'datetime',
-        'doc_override_at' => 'datetime',
-        'finalized_at'    => 'datetime',
+        'admission_date'   => 'date',
+        'test_updated_at'  => 'datetime',
+        'merit_updated_at' => 'datetime',
+        'doc_updated_at'   => 'datetime',
+        'doc_override_at'  => 'datetime',
+        'finalized_at'     => 'datetime',
+        'auto_finalized_at'=> 'datetime',
+        'test_entry_locked'=> 'boolean',
+        'partial_finalized'=> 'boolean',
+        'total_admitted'   => 'integer',
+        'passed_count'     => 'integer',
+        'failed_count'     => 'integer',
+        'exempted_count'   => 'integer',
     ];
 
     // ─────────────────────────────────────────────────────────────────
@@ -118,17 +139,98 @@ class AdmissionMonitoring extends Model
         return $this->hasMany(AdmissionMonitoringAudit::class, 'monitoring_id')->latest();
     }
 
+    /** Child splits — one per outcome type (passed / failed / exempted) */
+    public function splits(): HasMany
+    {
+        return $this->hasMany(AdmissionMonitoringSplit::class, 'monitoring_id')
+                    ->orderByRaw("FIELD(split_type, 'passed', 'exempted', 'failed')");
+    }
+
+    public function passedSplit(): ?AdmissionMonitoringSplit
+    {
+        return $this->splits->firstWhere('split_type', 'passed');
+    }
+
+    public function failedSplit(): ?AdmissionMonitoringSplit
+    {
+        return $this->splits->firstWhere('split_type', 'failed');
+    }
+
+    public function exemptedSplit(): ?AdmissionMonitoringSplit
+    {
+        return $this->splits->firstWhere('split_type', 'exempted');
+    }
+
     // ─────────────────────────────────────────────────────────────────
-    //  BUSINESS RULE VALIDATORS
+    //  FDE COMPAT — kept so existing FDE/AEO/Director blades don't break
     // ─────────────────────────────────────────────────────────────────
 
-    /** Can this record advance to doc_status = complete? */
+    /**
+     * Can this record's doc_status be set to 'complete'?
+     * FDE-only action. Called by the existing FDE show blade (resources/views/fde/monitoring/show.blade.php).
+     *
+     * Rules (original + splits-aware):
+     *   - merit must be 'selected'
+     *   - merit must not be 'rejected'
+     *   - If splits exist: exempted split must exist and not yet be finalized
+     *   - If no splits (legacy row): test_status must not be 'failed'
+     */
     public function canCompleteDoc(): bool
     {
-        if ($this->test_status === 'failed')    return false;
         if ($this->merit_status === 'rejected') return false;
         if ($this->merit_status !== 'selected') return false;
+
+        // Splits path — FDE completes the exempted split's doc
+        if ($this->relationLoaded('splits') && $this->splits->isNotEmpty()) {
+            $exempted = $this->splits->firstWhere('split_type', 'exempted');
+            if (! $exempted) return false;          // no exempted split = nothing for FDE to complete
+            return ! $exempted->isFinalized();      // FDE can complete if not yet finalized
+        }
+
+        // Legacy single-status path (rows created before splits feature)
+        if ($this->test_status === 'failed') return false;
         return true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  COUNT VALIDATION
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Validate that passed + failed + exempted === total_admitted.
+     * Call before saving test counts.
+     *
+     * Note: for rows created before the total_admitted column was added,
+     * total_admitted may be 0. The controller backfills it from dailyAdmission
+     * before calling this — see AdmissionMonitoringController@updateTestStatus.
+     */
+    public function countsAreValid(int $passed, int $failed, int $exempted): bool
+    {
+        if ($this->total_admitted <= 0) return false;
+        return ($passed + $failed + $exempted) === $this->total_admitted;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  AUTO-FINALIZE LOGIC
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * True when ALL students passed or were exempted — zero failed.
+     * These batches skip merit & doc stages entirely (unless exempted needs docs).
+     */
+    public function canAutoFinalize(): bool
+    {
+        if ($this->total_admitted === 0)    return false;
+        if (is_null($this->passed_count))   return false;
+        return ($this->failed_count ?? 0) === 0;
+    }
+
+    /**
+     * True when some passed AND some failed — batch is in a mixed state.
+     */
+    public function isPartiallyFinalized(): bool
+    {
+        return $this->partial_finalized === true;
     }
 
     /** Is further processing blocked (rejected merit)? */
@@ -137,22 +239,44 @@ class AdmissionMonitoring extends Model
         return $this->merit_status === 'rejected';
     }
 
-    /** Is this fully finalized? */
+    /** Is this fully finalized (all splits done)? */
     public function isFinalized(): bool
     {
         return $this->workflow_status === 'finalized';
     }
 
+    /** Have test counts been entered and locked? */
+    public function hasTestCounts(): bool
+    {
+        return $this->test_entry_locked === true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  WORKFLOW COMPUTATION
+    // ─────────────────────────────────────────────────────────────────
+
     /**
-     * Determine the next logical workflow status based on current field values.
-     * Called after each field update to auto-advance the workflow.
+     * Derive the parent workflow_status from current state.
+     * Called after test counts saved OR after split doc update.
      */
     public function computeWorkflowStatus(): string
     {
+        // Blocked by rejected merit — stays here
         if ($this->merit_status === 'rejected') {
-            return 'merit_confirmation'; // blocked — stays here
+            return 'merit_confirmation';
         }
 
+        // All splits finalized → parent finalized
+        if ($this->allSplitsFinalized()) {
+            return 'finalized';
+        }
+
+        // Has a failed split still pending retest → partial
+        if ($this->partial_finalized) {
+            return 'partial_finalized';
+        }
+
+        // Legacy single-status path (pre-splits, or FDE override)
         if ($this->doc_status === 'complete') {
             return 'finalized';
         }
@@ -180,15 +304,32 @@ class AdmissionMonitoring extends Model
         return 'draft';
     }
 
+    /**
+     * Check if all non-failed splits are finalized.
+     * Failed splits are permanently pending_retest — they don't block parent finalization.
+     */
+    public function allSplitsFinalized(): bool
+    {
+        $splits = $this->splits;
+
+        if ($splits->isEmpty()) return false;
+
+        // Only passed and exempted splits need to be finalized
+        $actionable = $splits->filter(fn($s) => $s->split_type !== 'failed');
+
+        if ($actionable->isEmpty()) return false;
+
+        return $actionable->every(fn($s) => $s->isFinalized());
+    }
+
     // ─────────────────────────────────────────────────────────────────
     //  AUDIT HELPER
-    //  Call this whenever you update a field to log the change.
     // ─────────────────────────────────────────────────────────────────
 
     public function logAudit(
-        string $fieldName,
-        mixed  $oldValue,
-        mixed  $newValue,
+        string  $fieldName,
+        mixed   $oldValue,
+        mixed   $newValue,
         ?string $reason = null
     ): void {
         $user = Auth::user();
@@ -217,6 +358,7 @@ class AdmissionMonitoring extends Model
             'test_verification'  => 'Test Verification',
             'merit_confirmation' => 'Merit Confirmation',
             'doc_verification'   => 'Documentation Review',
+            'partial_finalized'  => 'Partial — Retest Pending',
             'finalized'          => 'Finalized',
             default              => ucfirst($this->workflow_status),
         };
@@ -229,6 +371,7 @@ class AdmissionMonitoring extends Model
             'test_verification'  => 'bg-blue-100 text-blue-700',
             'merit_confirmation' => 'bg-yellow-100 text-yellow-700',
             'doc_verification'   => 'bg-orange-100 text-orange-700',
+            'partial_finalized'  => 'bg-purple-100 text-purple-700',
             'finalized'          => 'bg-green-100 text-green-700',
             default              => 'bg-gray-100 text-gray-500',
         };
@@ -322,5 +465,10 @@ class AdmissionMonitoring extends Model
     public function scopeFinalized($query)
     {
         return $query->where('workflow_status', 'finalized');
+    }
+
+    public function scopePartialFinalized($query)
+    {
+        return $query->where('partial_finalized', true);
     }
 }

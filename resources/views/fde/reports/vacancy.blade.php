@@ -16,11 +16,11 @@
                 ← Dashboard
             </a>
             @can('reports.export')
-                <a href="{{ route('fde.export.vacancy', array_merge(request()->query(), ['format' => 'excel'])) }}"
+                <a href="{{ route($exportPrefix.'.export.vacancy', array_merge(request()->query(), ['format' => 'excel'])) }}"
                     class="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition">
                     📊 Excel
                 </a>
-                <a href="{{ route('fde.export.vacancy', array_merge(request()->query(), ['format' => 'pdf'])) }}"
+                <a href="{{ route($exportPrefix.'.export.vacancy', array_merge(request()->query(), ['format' => 'pdf'])) }}"
                     class="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition">
                     📄 PDF
                 </a>
@@ -29,7 +29,7 @@
     </div>
 
     {{-- Filters --}}
-    <form method="GET" action="{{ route('fde.reports.vacancy') }}"
+    <form method="GET" action="{{ route($exportPrefix.'.reports.vacancy') }}"
         class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
         <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Sector</label>
@@ -76,19 +76,20 @@
         $grandExisting = 0;
         $grandAdmitted = 0;
         $grandFilled = 0;
-        $grandRemaining = 0;
         foreach ($institutions as $inst) {
             $seats = $seatData->get($inst->id, collect());
             $ts = $seats->sum('total_seats');
             $te = $seats->sum('existing_enrollment');
             // $admData[$inst->id] is a Collection keyed by class_id — sum across all classes
             $adm = (int) ($admData->get($inst->id)?->sum('total') ?? 0);
-            $grandSeats += $ts;
+            $grandSeats    += $ts;
             $grandExisting += $te;
             $grandAdmitted += $adm;
-            $grandFilled += $te + $adm;
-            $grandRemaining += max(0, $ts - $te - $adm);
+            $grandFilled   += $te + $adm;
         }
+        // Apply max(0,...) once on the aggregate — not per-school — to avoid
+        // over-enrolled schools clamping to 0 instead of offsetting the total.
+        $grandRemaining = max(0, $grandSeats - $grandFilled);
     @endphp
 
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-5">

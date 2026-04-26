@@ -20,7 +20,7 @@
                 <h2 class="text-xl font-bold">{{ $room->institution?->name ?? 'Unknown School' }}</h2>
             </div>
             <p class="text-blue-200 text-sm">
-                {{ $room->institution?->sector?->name ?? 'Unknown Cluster' }}
+                {{ $room->institution?->sector?->name ?? 'Unknown Sector' }}
                 &nbsp;·&nbsp; {{ $room->institution?->type }}
                 &nbsp;·&nbsp; {{ ucfirst(str_replace('_', ' ', $room->institution?->gender ?? '')) }}
                 @if ($academicYear)
@@ -64,7 +64,7 @@
             <p class="text-2xl font-bold text-pink-500">{{ number_format($schoolTotals->total_girls) }}</p>
         </div>
         <div class="bg-white rounded-xl border border-indigo-100 shadow-sm p-4 text-center">
-            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Total Enrollment</p>
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Total Capacity</p>
             <p
                 class="text-2xl font-bold {{ $schoolTotals->total_enroll > $schoolTotals->seats_added ? 'text-red-600' : 'text-indigo-700' }}">
                 {{ number_format($schoolTotals->total_enroll) }}
@@ -157,7 +157,7 @@
                             <td class="px-4 py-3.5 text-center bg-sky-50">
                                 <span class="font-medium text-sky-700">{{ number_format($e->total_boys) }}</span>
                                 @if ($e->oosc_boys > 0)
-                                    <span class="block text-xs text-sky-400">+{{ $e->oosc_boys }} OOSC/P2P</span>
+                                    <span class="block text-xs text-sky-400">+{{ $e->oosc_boys }} OOSC/P2G</span>
                                 @endif
                             </td>
 
@@ -165,7 +165,7 @@
                             <td class="px-4 py-3.5 text-center bg-pink-50">
                                 <span class="font-medium text-pink-600">{{ number_format($e->total_girls) }}</span>
                                 @if ($e->oosc_girls > 0)
-                                    <span class="block text-xs text-pink-400">+{{ $e->oosc_girls }} OOSC/P2P</span>
+                                    <span class="block text-xs text-pink-400">+{{ $e->oosc_girls }} OOSC/P2G</span>
                                 @endif
                             </td>
 
@@ -174,7 +174,7 @@
                                 <span class="font-bold text-orange-600">{{ number_format($e->newly) }}</span>
                             </td>
 
-                            {{-- Total Enrollment --}}
+                            {{-- Total Capacity --}}
                             <td class="px-4 py-3.5 text-center bg-indigo-50">
                                 <span class="font-bold {{ $e->is_over ? 'text-red-600' : 'text-indigo-700' }}">
                                     {{ number_format($e->total_enroll) }}
@@ -269,9 +269,9 @@
     {{-- ── Enrollment Formula Note ──────────────────────────────────────── --}}
     <div class="bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-xs text-gray-500">
         <strong class="text-gray-700">Formula:</strong>
-        Total Enrollment = Existing Enrollment + Newly Admitted (Boys + Girls, Regular + OOSC + P2P)
+        Total Capacity = Promoted Students + Newly Admitted (Boys + Girls, Regular + OOSC + P2G)
         &nbsp;·&nbsp;
-        Available Seats = Seat Capacity − Total Enrollment
+        Available Seats = Seat Capacity − Total Capacity
         &nbsp;·&nbsp;
         Seat Capacity = Rooms × 40 seats
     </div>

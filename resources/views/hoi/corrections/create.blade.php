@@ -66,9 +66,9 @@
                                     'key' => 'morning_oosc_girls',
                                     'color' => 'purple',
                                 ],
-                                ['label' => '🌅 Morning P2P — Boys', 'key' => 'morning_p2p_boys', 'color' => 'orange'],
+                                ['label' => '🌅 Morning P2G — Boys', 'key' => 'morning_p2p_boys', 'color' => 'orange'],
                                 [
-                                    'label' => '🌅 Morning P2P — Girls',
+                                    'label' => '🌅 Morning P2G — Girls',
                                     'key' => 'morning_p2p_girls',
                                     'color' => 'orange',
                                 ],
@@ -96,12 +96,12 @@
                                         'color' => 'purple',
                                     ],
                                     [
-                                        'label' => '🌆 Evening P2P — Boys',
+                                        'label' => '🌆 Evening P2G — Boys',
                                         'key' => 'evening_p2p_boys',
                                         'color' => 'orange',
                                     ],
                                     [
-                                        'label' => '🌆 Evening P2P — Girls',
+                                        'label' => '🌆 Evening P2G — Girls',
                                         'key' => 'evening_p2p_girls',
                                         'color' => 'orange',
                                     ],

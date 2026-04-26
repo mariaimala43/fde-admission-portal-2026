@@ -6,7 +6,7 @@
 
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Correction Requests</h2>
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">Correction Requests<x-info-tooltip position="bottom" text="Submit a formal request to fix a mistake in your daily admission entry. FDE will review and approve or reject it." /></h2>
             <p class="text-sm text-gray-500 mt-1">{{ $institution->name }} — request corrections for past verified
                 submissions</p>
         </div>
@@ -23,6 +23,7 @@
 
     {{-- Filter Bar --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-5 py-4 mb-5">
+        @php $activeFilters = collect(request()->except(['page','_token']))->filter(fn($v) => $v !== '' && $v !== null)->count(); @endphp
         <form method="GET" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Class</label>
@@ -64,7 +65,7 @@
             <div class="flex gap-2">
                 <button type="submit"
                     class="px-4 py-2 bg-blue-900 text-white text-sm font-semibold rounded-lg hover:bg-blue-800 transition">
-                    Filter
+                    Filter @if ($activeFilters > 0)<span class="ml-1 inline-flex items-center justify-center w-5 h-5 bg-white text-blue-900 rounded-full text-xs font-bold">{{ $activeFilters }}</span>@endif
                 </button>
                 <a href="{{ route('hoi.corrections.index') }}"
                     class="px-4 py-2 text-sm text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition">
@@ -100,20 +101,21 @@
             {{ number_format($submissions->total()) }} records
         </p>
 
+        <p class="block sm:hidden text-xs text-gray-400 mb-2 flex items-center gap-1 px-5 pt-3"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>Swipe right to see all columns</p>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase">
-                            <th class="px-4 py-3 text-left">Date</th>
-                            <th class="px-4 py-3 text-left">Class</th>
-                            <th class="px-4 py-3 text-center">Morning<br><span
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Date</th>
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Class</th>
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Morning<br><span
                                     class="font-normal normal-case text-gray-400">Boys / Girls</span></th>
-                            <th class="px-4 py-3 text-center">OOSC</th>
-                            <th class="px-4 py-3 text-center">P2P</th>
-                            <th class="px-4 py-3 text-center">Total</th>
-                            <th class="px-4 py-3 text-center">Correction Status</th>
-                            <th class="px-4 py-3 text-center">Action</th>
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">OOSC</th>
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">P2G</th>
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Total</th>
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Correction Status</th>
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -136,23 +138,23 @@
                                     $entry->evening_p2p_girls;
                             @endphp
                             <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                <td class="px-4 py-3 font-medium text-gray-700 whitespace-nowrap">
+                                <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap font-medium text-gray-700">
                                     {{ $entry->admission_date->format('d M Y') }}
                                 </td>
-                                <td class="px-4 py-3 font-semibold text-gray-800">
+                                <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap font-semibold">
                                     {{ $entry->classModel?->name ?? "Class {$entry->class_id}" }}
                                 </td>
-                                <td class="px-4 py-3 text-center text-gray-600">
+                                <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center hidden sm:table-cell text-gray-600">
                                     {{ $entry->morning_boys }} / {{ $entry->morning_girls }}
                                 </td>
-                                <td class="px-4 py-3 text-center text-purple-700">
+                                <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center hidden md:table-cell text-purple-700">
                                     {{ $entry->morning_oosc_boys + $entry->morning_oosc_girls + $entry->evening_oosc_boys + $entry->evening_oosc_girls }}
                                 </td>
-                                <td class="px-4 py-3 text-center text-orange-700">
+                                <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center hidden md:table-cell text-orange-700">
                                     {{ $entry->morning_p2p_boys + $entry->morning_p2p_girls + $entry->evening_p2p_boys + $entry->evening_p2p_girls }}
                                 </td>
-                                <td class="px-4 py-3 text-center font-bold text-blue-900">{{ $total }}</td>
-                                <td class="px-4 py-3 text-center">
+                                <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center hidden sm:table-cell font-bold text-blue-900">{{ $total }}</td>
+                                <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
                                     @if ($correction)
                                         <span
                                             class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $correction->statusBadgeClass() }}">
@@ -167,7 +169,7 @@
                                         <span class="text-xs text-gray-300">—</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-center">
+                                <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
                                     @if (!$correction || $correction->isRejected())
                                         <a href="{{ route('hoi.corrections.create', ['date' => $entry->admission_date->toDateString(), 'class_id' => $entry->class_id]) }}"
                                             class="px-3 py-1.5 text-xs font-semibold bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition whitespace-nowrap">

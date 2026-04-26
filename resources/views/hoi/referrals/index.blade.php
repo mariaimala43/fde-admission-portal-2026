@@ -5,9 +5,9 @@
 @section('content')
 
     {{-- ── Page Header ─────────────────────────────────────────────── --}}
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Admission Referrals</h2>
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">Admission Referrals<x-info-tooltip position="bottom" text="Students referred to your school by FDE for admission. Confirm whether each student was admitted." /></h2>
             <p class="text-sm text-gray-500 mt-1">Students referred to your school by the FDE Cell</p>
         </div>
         @if ($stats->pending > 0)
@@ -39,9 +39,9 @@
     </div>
 
     {{-- ── Status Tabs ─────────────────────────────────────────────── --}}
-    <div class="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
+    <div class="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1 w-fit">
         @foreach (['all' => 'All', 'pending' => '⏳ Pending', 'accepted' => '✅ Accepted', 'rejected' => '❌ Rejected'] as $val => $label)
-            <a href="{{ route('hoi.referrals.index', ['status' => $val]) }}"
+            <a href="{{ route('hoi.referrals.index', array_filter(['status' => $val, 'class_id' => request('class_id')])) }}"
                 class="px-4 py-2 rounded-lg text-sm font-medium transition
                       {{ ($status ?? 'all') === $val ? 'bg-white text-blue-900 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                 {{ $label }}
@@ -49,30 +49,53 @@
         @endforeach
     </div>
 
+    {{-- ── Class Filter ─────────────────────────────────────────────── --}}
+    <form method="GET" action="{{ route('hoi.referrals.index') }}" class="mb-5 flex items-end gap-3">
+        <input type="hidden" name="status" value="{{ $status ?? 'all' }}">
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Class</label>
+            <select name="class_id" onchange="this.form.submit()"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="">All Classes</option>
+                @foreach ($classes as $cls)
+                    <option value="{{ $cls->id }}" {{ request('class_id') == $cls->id ? 'selected' : '' }}>{{ $cls->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @if (request()->filled('class_id'))
+            <a href="{{ route('hoi.referrals.index', ['status' => $status ?? 'all']) }}"
+                class="px-4 py-2 text-sm text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg self-end">
+                Clear
+            </a>
+        @endif
+    </form>
+
     {{-- ── Table ───────────────────────────────────────────────────── --}}
+    <p class="block sm:hidden text-xs text-gray-400 mb-2 flex items-center gap-1"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>Swipe right to see all columns</p>
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b-2 border-gray-100 bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ref No</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Class</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Shift</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Referred On</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Ref No</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Student</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Class</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Shift</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Referred On</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Status</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Tracking</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($referrals as $ref)
                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
 
-                            <td class="px-4 py-3">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden sm:table-cell">
                                 <span class="font-mono text-xs font-semibold text-blue-700">{{ $ref->reference_no }}</span>
                             </td>
 
-                            <td class="px-4 py-3">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
                                 <p class="font-medium text-gray-800">{{ $ref->student_name ?? '—' }}</p>
                                 @if ($ref->father_name)
                                     <p class="text-xs text-gray-400">S/O {{ $ref->father_name }}</p>
@@ -82,20 +105,20 @@
                                 @endif
                             </td>
 
-                            <td class="px-4 py-3 text-gray-700">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden sm:table-cell">
                                 {{ $ref->classModel?->name ?? '—' }}
                             </td>
 
-                            <td class="px-4 py-3 text-gray-600 capitalize">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden md:table-cell capitalize">
                                 {{ $ref->shift }}
                             </td>
 
-                            <td class="px-4 py-3 text-xs">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden sm:table-cell">
                                 <p class="text-gray-600">{{ $ref->created_at->format('d M Y') }}</p>
-                                <p class="text-gray-400">{{ $ref->created_at->diffForHumans() }}</p>
+                                <p class="text-gray-400 text-xs">{{ $ref->created_at->diffForHumans() }}</p>
                             </td>
 
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
                                 <span
                                     class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $ref->statusBadgeClass() }}">
                                     {{ $ref->statusLabel() }}
@@ -111,8 +134,19 @@
                                 @endif
                             </td>
 
-                            <td class="px-4 py-3">
-                                <div class="flex items-center justify-center gap-2">
+                            {{-- Tracking status (only meaningful after acceptance) --}}
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden md:table-cell">
+                                @if ($ref->isAccepted())
+                                    <span class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $ref->trackingBadgeClass() }}">
+                                        {{ $ref->trackingStatusLabel() }}
+                                    </span>
+                                @else
+                                    <span class="text-xs text-gray-300">—</span>
+                                @endif
+                            </td>
+
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
+                                <div class="flex items-center justify-start gap-2">
                                     @if ($ref->isPending())
                                         <button type="button"
                                             onclick="openAcceptModal({{ $ref->id }}, '{{ $ref->reference_no }}', '{{ $ref->gender }}', '{{ $ref->shift }}')"
@@ -124,6 +158,11 @@
                                             class="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition">
                                             ❌ Reject
                                         </button>
+                                    @elseif ($ref->isAccepted())
+                                        <a href="{{ route('hoi.referrals.show', $ref) }}"
+                                            class="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
+                                            📋 Track
+                                        </a>
                                     @else
                                         <span class="text-xs text-gray-400 italic">No action needed</span>
                                     @endif
@@ -133,7 +172,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-12 text-center text-gray-400 text-sm">
+                            <td colspan="8" class="px-4 py-12 text-center text-gray-400 text-sm">
                                 No {{ ($status ?? 'all') !== 'all' ? $status : '' }} referrals for your school.
                             </td>
                         </tr>

@@ -4,13 +4,13 @@
 
 @section('content')
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div>
             <p class="text-xs text-gray-400 mb-1">
                 <a href="{{ route('fde.referrals.index') }}" class="hover:underline">Referrals</a> →
                 {{ $referral->reference_no }}
             </p>
-            <h2 class="text-2xl font-bold text-gray-800">Referral {{ $referral->reference_no }}</h2>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Referral {{ $referral->reference_no }}</h2>
             <p class="text-sm text-gray-500 mt-1">
                 {{ $referral->institution->name }}
                 @if ($referral->institution->sector)
@@ -19,7 +19,7 @@
             </p>
         </div>
         <a href="{{ route('fde.referrals.index') }}"
-            class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition">
+            class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-4 py-2 transition">
             ← Back to Referrals
         </a>
     </div>
@@ -47,7 +47,7 @@
                     </span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Reference No</p>
                         <p class="font-mono font-bold text-blue-700">{{ $referral->reference_no }}</p>
@@ -185,6 +185,102 @@
 
                 </div>
             </div>
+            {{-- ── Post-Acceptance Tracking Card (FDE read-only) ──── --}}
+            @if ($referral->isAccepted())
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-sm font-bold text-gray-800 mb-4">📋 Post-Acceptance Tracking</h3>
+
+                    <p class="text-xs text-gray-400 mb-2 sm:hidden">Scroll horizontally to see all columns</p>
+                    <div class="overflow-x-auto -mx-4 sm:mx-0">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="pb-2 text-left text-xs font-semibold text-gray-400 uppercase whitespace-nowrap">Stage</th>
+                                <th class="pb-2 text-left text-xs font-semibold text-gray-400 uppercase">Status</th>
+                                <th class="pb-2 text-left text-xs font-semibold text-gray-400 uppercase">Updated By</th>
+                                <th class="pb-2 text-left text-xs font-semibold text-gray-400 uppercase">Updated At</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+
+                            {{-- Test Stage --}}
+                            <tr>
+                                <td class="py-3 font-medium text-gray-700">🧪 Admission Test</td>
+                                <td class="py-3">
+                                    @if ($referral->test_conducted === 'yes')
+                                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold
+                                            {{ $referral->test_result === 'pass'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-red-100 text-red-700' }}">
+                                            {{ $referral->test_result === 'pass' ? '✅ Pass' : '❌ Fail' }}
+                                        </span>
+                                    @elseif ($referral->test_conducted === 'no')
+                                        <span class="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">
+                                            No Test Taken
+                                        </span>
+                                    @elseif ($referral->test_conducted === 'exempted')
+                                        <span class="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">
+                                            Exempted
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-gray-300 italic">Pending</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 text-xs text-gray-500">
+                                    {{ $referral->testUpdatedBy?->name ?? '—' }}
+                                </td>
+                                <td class="py-3 text-xs text-gray-500">
+                                    {{ $referral->test_updated_at?->format('d M Y, g:i A') ?? '—' }}
+                                </td>
+                            </tr>
+
+                            {{-- Test Result (separate row when test was done) --}}
+                            @if ($referral->test_conducted !== 'yes' && $referral->test_conducted !== null)
+                                <tr>
+                                    <td class="py-3 pl-5 text-gray-400 text-xs italic" colspan="4">
+                                        N/A — Test was not required ({{ $referral->test_conducted }})
+                                    </td>
+                                </tr>
+                            @endif
+
+                            {{-- Admission Decision --}}
+                            <tr>
+                                <td class="py-3 font-medium text-gray-700">🎓 Admission Decision</td>
+                                <td class="py-3">
+                                    @if ($referral->admission_status === 'admitted')
+                                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-100 text-emerald-800">
+                                            ✅ Admitted
+                                        </span>
+                                    @elseif ($referral->admission_status === 'not_admitted')
+                                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-orange-100 text-orange-700">
+                                            Not Admitted
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-gray-300 italic">Pending</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 text-xs text-gray-500">
+                                    {{ $referral->admissionUpdatedBy?->name ?? '—' }}
+                                </td>
+                                <td class="py-3 text-xs text-gray-500">
+                                    {{ $referral->admission_updated_at?->format('d M Y, g:i A') ?? '—' }}
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                    </div>
+
+                    {{-- Overall tracking badge --}}
+                    <div class="mt-4 pt-4 border-t border-gray-50 flex items-center gap-3">
+                        <span class="text-xs text-gray-400 uppercase font-semibold">Overall:</span>
+                        <span class="text-xs px-3 py-1 rounded-full font-semibold {{ $referral->trackingBadgeClass() }}">
+                            {{ $referral->trackingStatusLabel() }}
+                        </span>
+                    </div>
+                </div>
+            @endif
+
         </div>
 
         {{-- ── Action Panel ─────────────────────────────────────────── --}}

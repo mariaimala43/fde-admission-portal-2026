@@ -4,7 +4,7 @@
 
 @section('content')
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Admission Process Monitoring</h2>
             <p class="text-sm text-gray-500 mt-1">
@@ -18,7 +18,7 @@
     </div>
 
     {{-- ── Stats ──────────────────────────────────────────────────────── --}}
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-4 text-center">
             <p class="text-2xl font-bold text-blue-900">{{ number_format($stats->total) }}</p>
             <p class="text-xs text-gray-500 mt-0.5">Total Records</p>
@@ -95,17 +95,21 @@
     </form>
 
     {{-- ── Table ───────────────────────────────────────────────────────── --}}
+    <p class="block sm:hidden text-xs text-gray-400 mb-2 flex items-center gap-1">
+        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        Swipe right to see all columns
+    </p>
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
+            <table class="min-w-full text-sm">
                 <thead>
                     <tr class="border-b-2 border-gray-100 bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">School</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase max-w-[160px] min-w-[120px]">School</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Class</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Test</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Merit</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Merit</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Docs</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Date</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Date</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">View</th>
                     </tr>
                 </thead>
@@ -132,8 +136,8 @@
                             };
                         @endphp
                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-3">
-                                <p class="font-medium text-gray-800">{{ $rec->institution->name }}</p>
+                            <td class="px-4 py-3 max-w-[160px]">
+                                <p class="font-medium text-gray-800 truncate max-w-[160px]" title="{{ $rec->institution->name }}">{{ $rec->institution->name }}</p>
                                 <p class="text-xs text-gray-400">{{ $rec->institution->code }}</p>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-700">
@@ -144,7 +148,7 @@
                                     {{ ucfirst(str_replace('_', ' ', $rec->test_status ?? 'pending')) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-4 py-3 text-center hidden md:table-cell">
                                 <span class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $meritBadge }}">
                                     {{ ucfirst($rec->merit_status ?? 'pending') }}
                                 </span>
@@ -154,7 +158,7 @@
                                     {{ ucfirst(str_replace('_', ' ', $rec->doc_status ?? 'pending')) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-center text-xs text-gray-500">
+                            <td class="px-4 py-3 text-center text-xs text-gray-500 hidden md:table-cell">
                                 {{ $rec->admission_date?->format('d M Y') ?? '—' }}
                             </td>
                             <td class="px-4 py-3 text-center">

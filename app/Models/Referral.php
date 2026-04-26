@@ -52,12 +52,22 @@ class Referral extends Model
         'rejected_at',
         'closed_at',
         'actioned_by',
+        // Post-acceptance tracking
+        'test_conducted',
+        'test_result',
+        'admission_status',
+        'test_updated_at',
+        'test_updated_by',
+        'admission_updated_at',
+        'admission_updated_by',
     ];
 
     protected $casts = [
-        'accepted_at' => 'datetime',
-        'rejected_at' => 'datetime',
-        'closed_at'   => 'datetime',
+        'accepted_at'          => 'datetime',
+        'rejected_at'          => 'datetime',
+        'closed_at'            => 'datetime',
+        'test_updated_at'      => 'datetime',
+        'admission_updated_at' => 'datetime',
     ];
 
     // ─────────────────────────────────────────────────────────────────
@@ -198,5 +208,72 @@ class Referral extends Model
     public function scopeForInstitution($query, int $institutionId)
     {
         return $query->where('institution_id', $institutionId);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  TRACKING RELATIONSHIPS
+    // ─────────────────────────────────────────────────────────────────
+
+    public function testUpdatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'test_updated_by');
+    }
+
+    public function admissionUpdatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'admission_updated_by');
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  TRACKING GATE HELPERS
+    // ─────────────────────────────────────────────────────────────────
+
+    /** Can HOI update the test stage? */
+    public function canUpdateTest(): bool
+    {
+        return $this->status === 'accepted';
+    }
+
+    /**
+     * Can HOI update admission stage?
+     * Only after test is done (conducted=yes and result set, OR conducted=no/exempted)
+     */
+    public function canUpdateAdmission(): bool
+    {
+        if ($this->status !== 'accepted') return false;
+        if ($this->test_conducted === 'yes') return $this->test_result !== null;
+        return $this->test_conducted !== null; // no or exempted = skip to admission
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  TRACKING DISPLAY HELPERS
+    // ─────────────────────────────────────────────────────────────────
+
+    /** Human-readable combined tracking status for dashboard badges */
+    public function trackingStatusLabel(): string
+    {
+        if ($this->status !== 'accepted') return ucfirst($this->status);
+        if ($this->admission_status === 'admitted')     return 'Admitted';
+        if ($this->admission_status === 'not_admitted') return 'Not Admitted';
+        if ($this->test_conducted === 'yes' && $this->test_result === 'fail') return 'Test Failed';
+        if ($this->test_conducted === 'yes' && $this->test_result === 'pass') return 'Test Passed';
+        if ($this->test_conducted === 'no')         return 'No Test Taken';
+        if ($this->test_conducted === 'exempted')   return 'Test Exempted';
+        return 'Accepted — Pending Test';
+    }
+
+    /** Tailwind badge classes for the tracking status */
+    public function trackingBadgeClass(): string
+    {
+        return match ($this->trackingStatusLabel()) {
+            'Admitted'               => 'bg-emerald-100 text-emerald-800 font-bold',
+            'Not Admitted'           => 'bg-orange-100  text-orange-700',
+            'Test Failed'            => 'bg-red-100     text-red-700',
+            'Test Passed'            => 'bg-green-100   text-green-700',
+            'No Test Taken'          => 'bg-gray-100    text-gray-500',
+            'Test Exempted'          => 'bg-gray-100    text-gray-500',
+            'Accepted — Pending Test'=> 'bg-blue-100    text-blue-700',
+            default                  => 'bg-gray-100    text-gray-500',
+        };
     }
 }

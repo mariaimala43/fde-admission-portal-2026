@@ -87,41 +87,7 @@
                     <span class="ico">📋</span> Admission Report
                 </a>
 
-                {{-- Corrections — with pending badge --}}
-                <a href="{{ route('hoi.corrections.index') }}"
-                    class="sb-link {{ request()->routeIs('hoi.corrections.*') ? 'active' : '' }}">
-                    <span class="ico">✏️</span> Corrections
-                    @php
-                        $hoiInstitution = Auth::user()->institution;
-                        $hoiPendingCorrections = $hoiInstitution
-                            ? \App\Models\AdmissionCorrection::where('institution_id', $hoiInstitution->id)
-                                ->where('status', 'pending')
-                                ->count()
-                            : 0;
-                    @endphp
-                    @if ($hoiPendingCorrections > 0)
-                        <span class="sb-badge">{{ $hoiPendingCorrections }}</span>
-                    @endif
-                </a>
-
-                {{-- Transfers — badge for incoming pending --}}
-                <a href="{{ route('hoi.transfers.index') }}"
-                    class="sb-link {{ request()->routeIs('hoi.transfers.*') ? 'active' : '' }}">
-                    <span class="ico">🔄</span> Transfers
-                    @php
-                        $hoiInstitution = Auth::user()->institution;
-                        $hoiPendingTransfers = $hoiInstitution
-                            ? \App\Models\StudentTransfer::where('to_institution_id', $hoiInstitution->id)
-                                ->whereIn('status', ['pending', 'info_requested'])
-                                ->count()
-                            : 0;
-                    @endphp
-                    @if ($hoiPendingTransfers > 0)
-                        <span class="sb-badge sb-badge-y">{{ $hoiPendingTransfers }}</span>
-                    @endif
-                </a>
-
-                {{-- Referrals — HOI can only respond (referral.respond) --}}
+                {{-- Referrals — with pending badge --}}
                 <a href="{{ route('hoi.referrals.index') }}"
                     class="sb-link {{ request()->routeIs('hoi.referrals.*') ? 'active' : '' }}">
                     <span class="ico">📨</span> Referrals
@@ -138,37 +104,21 @@
                     @endif
                 </a>
 
-                <p class="sb-sec">Monitoring</p>
+                <p class="sb-sec">Staff &amp; Data</p>
 
-                {{-- Monitoring — monitoring.view + update_test + update_doc --}}
-                <a href="{{ route('hoi.monitoring.index') }}"
-                    class="sb-link {{ request()->routeIs('hoi.monitoring.*') ? 'active' : '' }}">
-                    <span class="ico">👁</span> Monitoring
+                <a href="{{ route('hoi.merit-lists.index') }}"
+                    class="sb-link {{ request()->routeIs('hoi.merit-lists.*') ? 'active' : '' }}">
+                    <span class="ico">📋</span> Merit Lists
                 </a>
 
-                {{-- New Classrooms — only visible if institution has rooms --}}
-                @if (Auth::user()->institution &&
-                        \App\Models\NewConstructionRoom::where('institution_id', Auth::user()->institution->id)->exists())
-                    <a href="{{ route('hoi.rooms.index') }}"
-                        class="sb-link {{ request()->routeIs('hoi.rooms.*') ? 'active' : '' }}">
-                        <span class="ico">🏗️</span> New Classrooms
-                    </a>
-                @endif
-
-                <p class="sb-sec">Reports</p>
-
-                {{-- Vacancy report (reports.vacancy permission) --}}
-                @can('reports.vacancy')
-                <a href="{{ route('hoi.reports.vacancy') }}"
-                   class="sb-link {{ request()->routeIs('hoi.reports.vacancy') ? 'active' : '' }}">
-                    <span class="ico">💺</span> Vacancy Report
+                <a href="{{ route('hoi.facilities.index') }}"
+                    class="sb-link {{ request()->routeIs('hoi.facilities.*') ? 'active' : '' }}">
+                    <span class="ico">🏫</span> Facilities
                 </a>
-                @endcan
 
-                <p class="sb-sec">Links</p>
-
-                <a href="{{ route('portal.index') }}" target="_blank" class="sb-link">
-                    <span class="ico">🌐</span> Public Portal ↗
+                <a href="{{ route('hoi.notifications.index') }}"
+                    class="sb-link {{ request()->routeIs('hoi.notifications.*') ? 'active' : '' }}">
+                    <span class="ico">🔔</span> Notifications
                 </a>
 
             @endrole
@@ -178,6 +128,14 @@
              Permissions: all permissions
         ══════════════════════════════════════════════════════ --}}
             @role('fde_cell')
+                @php
+                    $fdeColOpen   = request()->routeIs('fde.colleges.*') || request()->routeIs('uc.control-rooms.*');
+                    $fdeAdmOpen   = request()->routeIs('fde.corrections.*','fde.admission-grants.*','fde.transfers.*','fde.referrals.*','fde.monitoring.*','fde.admissions.*','fde.rooms.*','fde.staff-strength.*','fde.merit-lists.*');
+                    $fdeRptOpen   = request()->routeIs('fde.reports.*','fde.ai.*');
+                    $fdeCfgOpen   = request()->routeIs('fde.seats.*','fde.admission-period.*');
+                    $fdeAdmOpen   = $fdeAdmOpen ?? false;
+                    $fdeAdminOpen = request()->routeIs('fde.audit.*','fde.portal-settings.*','admin.*','fde.app-settings.*','fde.theme.*','fde.system-reset.*','announcements.*');
+                @endphp
 
                 <p class="sb-sec">FDE Dashboard</p>
 
@@ -185,164 +143,204 @@
                     class="sb-link {{ request()->routeIs('fde.dashboard') ? 'active' : '' }}">
                     <span class="ico">🏠</span> Dashboard
                 </a>
-
                 <a href="{{ route('fde.schools.index') }}"
                     class="sb-link {{ request()->routeIs('fde.schools.*') ? 'active' : '' }}">
                     <span class="ico">🏫</span> All Schools
                 </a>
 
-                <p class="sb-sec">Admissions</p>
+                {{-- ── Colleges ── --}}
+                <div x-data="{ open: {{ $fdeColOpen ? 'true' : 'false' }} }">
+                    <div @click="open = !open" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;padding:6px 8px;margin-top:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-faint);cursor:pointer;border-radius:7px;">
+                        <span>Colleges</span>
+                        <span style="font-size:11px;opacity:0.5;transition:transform 0.2s;display:inline-block;line-height:1;" :style="open ? 'transform:rotate(180deg)' : ''">▼</span>
+                    </div>
+                    <div x-show="open" x-cloak>
+                        <a href="{{ route('fde.colleges.model') }}"
+                            class="sb-link {{ request()->routeIs('fde.colleges.model','fde.colleges.profile') ? 'active' : '' }}">
+                            <span class="ico">🎓</span> Model Colleges
+                        </a>
+                        <a href="{{ route('fde.colleges.ex-fg') }}"
+                            class="sb-link {{ request()->routeIs('fde.colleges.ex-fg') ? 'active' : '' }}">
+                            <span class="ico">🏛️</span> Ex-FG Colleges
+                        </a>
+                        <a href="{{ route('uc.control-rooms.index') }}"
+                            class="sb-link {{ request()->routeIs('uc.control-rooms.*') ? 'active' : '' }}">
+                            <span class="ico">🖥️</span> UC Control Rooms
+                        </a>
+                    </div>
+                </div>
 
-                {{-- Corrections — badge for all pending system-wide --}}
-                <a href="{{ route('fde.corrections.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.corrections.*') ? 'active' : '' }}">
-                    <span class="ico">✏️</span> Corrections
-                    @php $fdePendingCorrections = \App\Models\AdmissionCorrection::where('status','pending')->count(); @endphp
-                    @if ($fdePendingCorrections > 0)
-                        <span class="sb-badge">{{ $fdePendingCorrections }}</span>
-                    @endif
-                </a>
+                {{-- ── Admissions ── --}}
+                <div x-data="{ open: {{ $fdeAdmOpen ? 'true' : 'false' }} }">
+                    <div @click="open = !open" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;padding:6px 8px;margin-top:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-faint);cursor:pointer;border-radius:7px;">
+                        <span>Admissions</span>
+                        <span style="font-size:11px;opacity:0.5;transition:transform 0.2s;display:inline-block;line-height:1;" :style="open ? 'transform:rotate(180deg)' : ''">▼</span>
+                    </div>
+                    <div x-show="open" x-cloak>
+                        <a href="{{ route('fde.corrections.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.corrections.*') ? 'active' : '' }}">
+                            <span class="ico">✏️</span> Corrections
+                            @php $fdePendingCorrections = \App\Models\AdmissionCorrection::where('status','pending')->count(); @endphp
+                            @if ($fdePendingCorrections > 0)<span class="sb-badge">{{ $fdePendingCorrections }}</span>@endif
+                        </a>
+                        <a href="{{ route('fde.admission-grants.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.admission-grants.*') ? 'active' : '' }}">
+                            <span class="ico">🔑</span> Edit Grants
+                            @php $activeGrants = \App\Models\AdmissionEditGrant::where('status','active')->count(); @endphp
+                            @if ($activeGrants > 0)<span class="sb-badge sb-badge-y">{{ $activeGrants }}</span>@endif
+                        </a>
+                        <a href="{{ route('fde.transfers.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.transfers.*') ? 'active' : '' }}">
+                            <span class="ico">🔄</span> Transfers
+                            @php $fdePendingTransfers = \App\Models\StudentTransfer::whereIn('status',['pending','info_requested'])->count(); @endphp
+                            @if ($fdePendingTransfers > 0)<span class="sb-badge sb-badge-y">{{ $fdePendingTransfers }}</span>@endif
+                        </a>
+                        <a href="{{ route('fde.referrals.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.referrals.*') ? 'active' : '' }}">
+                            <span class="ico">📨</span> Referrals
+                            @php $fdePendingReferrals = \App\Models\Referral::where('status','pending')->count(); @endphp
+                            @if ($fdePendingReferrals > 0)<span class="sb-badge">{{ $fdePendingReferrals }}</span>@endif
+                        </a>
+                        <a href="{{ route('fde.monitoring.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.monitoring.*') ? 'active' : '' }}">
+                            <span class="ico">👁</span> Monitoring
+                        </a>
+                        <a href="{{ route('fde.admissions.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.admissions.*') ? 'active' : '' }}">
+                            <span class="ico">⚡</span> Admission Overrides
+                        </a>
+                        <a href="{{ route('fde.rooms.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.rooms.*') ? 'active' : '' }}">
+                            <span class="ico">🏗️</span> New Classrooms
+                        </a>
+                        @if (Route::has('fde.staff-strength.index'))
+                        <a href="{{ route('fde.staff-strength.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.staff-strength.*') ? 'active' : '' }}">
+                            <span class="ico">👨‍🏫</span> Staff Strength
+                        </a>
+                        @endif
+                        <a href="{{ route('fde.merit-lists.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.merit-lists.*') ? 'active' : '' }}">
+                            <span class="ico">📋</span> Merit Lists
+                        </a>
+                    </div>
+                </div>
 
-                {{-- Transfers — includes cross_sector permission --}}
-                <a href="{{ route('fde.transfers.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.transfers.*') ? 'active' : '' }}">
-                    <span class="ico">🔄</span> Transfers
-                    @php $fdePendingTransfers = \App\Models\StudentTransfer::whereIn('status',['pending','info_requested'])->count(); @endphp
-                    @if ($fdePendingTransfers > 0)
-                        <span class="sb-badge sb-badge-y">{{ $fdePendingTransfers }}</span>
-                    @endif
-                </a>
+                {{-- ── Reports ── --}}
+                <div x-data="{ open: {{ $fdeRptOpen ? 'true' : 'false' }} }">
+                    <div @click="open = !open" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;padding:6px 8px;margin-top:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-faint);cursor:pointer;border-radius:7px;">
+                        <span>Reports</span>
+                        <span style="font-size:11px;opacity:0.5;transition:transform 0.2s;display:inline-block;line-height:1;" :style="open ? 'transform:rotate(180deg)' : ''">▼</span>
+                    </div>
+                    <div x-show="open" x-cloak>
+                        <a href="{{ route('fde.reports.master') }}"
+                            class="sb-link {{ request()->routeIs('fde.reports.master') ? 'active' : '' }}">
+                            <span class="ico">📋</span> Master Report
+                        </a>
+                        <a href="{{ route('fde.reports.dashboard') }}"
+                            class="sb-link {{ request()->routeIs('fde.reports.dashboard') ? 'active' : '' }}">
+                            <span class="ico">📊</span> Analytics
+                        </a>
+                        <a href="{{ route('fde.reports.sector') }}"
+                            class="sb-link {{ request()->routeIs('fde.reports.sector') ? 'active' : '' }}">
+                            <span class="ico">🗺️</span> Sector / UC
+                        </a>
+                        <a href="{{ route('fde.reports.vacancy') }}"
+                            class="sb-link {{ request()->routeIs('fde.reports.vacancy') ? 'active' : '' }}">
+                            <span class="ico">💺</span> Vacancy
+                        </a>
+                        <a href="{{ route('fde.reports.oosc') }}"
+                            class="sb-link {{ request()->routeIs('fde.reports.oosc') ? 'active' : '' }}">
+                            <span class="ico">🎯</span> OOSC / P2P
+                        </a>
+                        <a href="{{ route('fde.reports.gender') }}"
+                            class="sb-link {{ request()->routeIs('fde.reports.gender') ? 'active' : '' }}">
+                            <span class="ico">👥</span> Gender
+                        </a>
+                        <a href="{{ route('fde.ai.reports') }}"
+                            class="sb-link {{ request()->routeIs('fde.ai.*') ? 'active' : '' }}"
+                            target="_blank">
+                            <span class="ico">🤖</span> AI Report Studio ↗
+                        </a>
+                    </div>
+                </div>
 
-                {{-- Referrals — FDE can create/edit/cancel/re-refer --}}
-                <a href="{{ route('fde.referrals.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.referrals.*') ? 'active' : '' }}">
-                    <span class="ico">📨</span> Referrals
-                    @php $fdePendingReferrals = \App\Models\Referral::where('status','pending')->count(); @endphp
-                    @if ($fdePendingReferrals > 0)
-                        <span class="sb-badge">{{ $fdePendingReferrals }}</span>
-                    @endif
-                </a>
+                {{-- ── Configuration ── --}}
+                <div x-data="{ open: {{ $fdeCfgOpen ? 'true' : 'false' }} }">
+                    <div @click="open = !open" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;padding:6px 8px;margin-top:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-faint);cursor:pointer;border-radius:7px;">
+                        <span>Configuration</span>
+                        <span style="font-size:11px;opacity:0.5;transition:transform 0.2s;display:inline-block;line-height:1;" :style="open ? 'transform:rotate(180deg)' : ''">▼</span>
+                    </div>
+                    <div x-show="open" x-cloak>
+                        <a href="{{ route('fde.seats.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.seats.*') ? 'active' : '' }}">
+                            <span class="ico">💺</span> Seat Configuration
+                        </a>
+                        <a href="{{ route('fde.admission-period.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.admission-period.*') ? 'active' : '' }}">
+                            <span class="ico">🗓️</span> Admission Period
+                        </a>
+                    </div>
+                </div>
 
-                {{-- Monitoring — full control including merit + override --}}
-                <a href="{{ route('fde.monitoring.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.monitoring.*') ? 'active' : '' }}">
-                    <span class="ico">👁</span> Monitoring
-                </a>
-
-                {{-- Admission Overrides (admission.override + admission.return) --}}
-                <a href="{{ route('fde.admissions.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.admissions.*') ? 'active' : '' }}">
-                    <span class="ico">⚡</span> Admission Overrides
-                </a>
-
-                {{-- New Classrooms --}}
-                <a href="{{ route('fde.rooms.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.rooms.*') ? 'active' : '' }}">
-                    <span class="ico">🏗️</span> New Classrooms
-                </a>
-
-                <p class="sb-sec">Reports</p>
-
-                <a href="{{ route('fde.reports.master') }}"
-                    class="sb-link {{ request()->routeIs('fde.reports.master') ? 'active' : '' }}">
-                    <span class="ico">📋</span> Master Report
-                </a>
-
-                <a href="{{ route('fde.reports.dashboard') }}"
-                    class="sb-link {{ request()->routeIs('fde.reports.dashboard') ? 'active' : '' }}">
-                    <span class="ico">📊</span> Analytics
-                </a>
-
-                <a href="{{ route('fde.reports.sector') }}"
-                    class="sb-link {{ request()->routeIs('fde.reports.sector') ? 'active' : '' }}">
-                    <span class="ico">🗺️</span> Sector / UC
-                </a>
-
-                <a href="{{ route('fde.reports.vacancy') }}"
-                    class="sb-link {{ request()->routeIs('fde.reports.vacancy') ? 'active' : '' }}">
-                    <span class="ico">💺</span> Vacancy
-                </a>
-
-                <a href="{{ route('fde.reports.oosc') }}"
-                    class="sb-link {{ request()->routeIs('fde.reports.oosc') ? 'active' : '' }}">
-                    <span class="ico">🎯</span> OOSC / P2P
-                </a>
-
-                <a href="{{ route('fde.reports.gender') }}"
-                    class="sb-link {{ request()->routeIs('fde.reports.gender') ? 'active' : '' }}">
-                    <span class="ico">👥</span> Gender
-                </a>
-                <a href="{{ route('fde.ai.reports') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                    {{ request()->routeIs('fde.ai.reports') ? 'bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}"
-                    target="_blank">
-                    🤖 AI Report Studio
-                </a>
-
-                <p class="sb-sec">Configuration</p>
-
-                {{-- Seat configuration (seats.configure permission) --}}
-                <a href="{{ route('fde.seats.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.seats.*') ? 'active' : '' }}">
-                    <span class="ico">💺</span> Seat Configuration
-                </a>
-
-                {{-- Admission period management (admission_period.manage) --}}
-                <a href="{{ route('fde.admission-period.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.admission-period.*') ? 'active' : '' }}">
-                    <span class="ico">🗓️</span> Admission Period
-                </a>
-
-                <p class="sb-sec">Admin</p>
-
-                {{-- Audit log (audit.view + audit.export) --}}
-                <a href="{{ route('fde.audit.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.audit.*') ? 'active' : '' }}">
-                    <span class="ico">📜</span> Audit Log
-                </a>
-
-                {{-- Portal settings (portal.settings permission) --}}
-                <a href="{{ route('fde.portal-settings.index') }}"
-                    class="sb-link {{ request()->routeIs('fde.portal-settings.*') ? 'active' : '' }}">
-                    <span class="ico">⚙️</span> Portal Settings
-                </a>
-
-                {{-- Academic years (academic_year.manage permission) --}}
-                <a href="{{ route('admin.academic-years.index') }}"
-                    class="sb-link {{ request()->routeIs('admin.academic-years.*') ? 'active' : '' }}">
-                    <span class="ico">📅</span> Academic Years
-                </a>
-
-                {{-- User management (users.manage permission) --}}
-                <a href="{{ route('admin.users.index') }}"
-                    class="sb-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                    <span class="ico">👤</span> Users
-                </a>
-
-                {{-- Institutions (institution.create/edit permission) --}}
-                <a href="{{ route('admin.institutions.index') }}"
-                    class="sb-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}">
-                    <span class="ico">🏫</span> Institutions
-                </a>
-
-                {{-- Sectors --}}
-                <a href="{{ route('admin.sectors.index') }}"
-                    class="sb-link {{ request()->routeIs('admin.sectors.*') ? 'active' : '' }}">
-                    <span class="ico">🗺️</span> Sectors
-                </a>
-
-                {{-- Import --}}
-                <a href="{{ route('admin.import.index') }}"
-                    class="sb-link {{ request()->routeIs('admin.import.*') ? 'active' : '' }}">
-                    <span class="ico">📥</span> Import Data
-                </a>
+                {{-- ── Admin ── --}}
+                <div x-data="{ open: {{ $fdeAdminOpen ? 'true' : 'false' }} }">
+                    <div @click="open = !open" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;padding:6px 8px;margin-top:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-faint);cursor:pointer;border-radius:7px;">
+                        <span>Admin</span>
+                        <span style="font-size:11px;opacity:0.5;transition:transform 0.2s;display:inline-block;line-height:1;" :style="open ? 'transform:rotate(180deg)' : ''">▼</span>
+                    </div>
+                    <div x-show="open" x-cloak>
+                        <a href="{{ route('fde.audit.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.audit.*') ? 'active' : '' }}">
+                            <span class="ico">📜</span> Audit Log
+                        </a>
+                        <a href="{{ route('fde.portal-settings.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.portal-settings.*') ? 'active' : '' }}">
+                            <span class="ico">⚙️</span> Portal Settings
+                        </a>
+                        <a href="{{ route('admin.academic-years.index') }}"
+                            class="sb-link {{ request()->routeIs('admin.academic-years.*') ? 'active' : '' }}">
+                            <span class="ico">📅</span> Academic Years
+                        </a>
+                        <a href="{{ route('admin.users.index') }}"
+                            class="sb-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <span class="ico">👤</span> Users
+                        </a>
+                        <a href="{{ route('admin.institutions.index') }}"
+                            class="sb-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}">
+                            <span class="ico">🏫</span> Institutions
+                        </a>
+                        <a href="{{ route('admin.sectors.index') }}"
+                            class="sb-link {{ request()->routeIs('admin.sectors.*') ? 'active' : '' }}">
+                            <span class="ico">🗺️</span> Sectors
+                        </a>
+                        <a href="{{ route('admin.import.index') }}"
+                            class="sb-link {{ request()->routeIs('admin.import.*') ? 'active' : '' }}">
+                            <span class="ico">📥</span> Import Data
+                        </a>
+                        <a href="{{ route('announcements.index') }}"
+                            class="sb-link {{ request()->routeIs('announcements.*') ? 'active' : '' }}">
+                            <span class="ico">📢</span> Announcements
+                        </a>
+                        <a href="{{ route('fde.app-settings.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.app-settings.*') ? 'active' : '' }}">
+                            <span class="ico">🎨</span> App Settings
+                        </a>
+                        <a href="{{ route('fde.theme.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.theme.*') ? 'active' : '' }}">
+                            <span class="ico">🖌️</span> Theme
+                        </a>
+                        <a href="{{ route('fde.system-reset.index') }}"
+                            class="sb-link {{ request()->routeIs('fde.system-reset.*') ? 'active' : '' }}">
+                            <span class="ico">⚠️</span> System Reset
+                        </a>
+                    </div>
+                </div>
 
                 <p class="sb-sec">Links</p>
-
                 <a href="{{ route('portal.index') }}" target="_blank" class="sb-link">
                     <span class="ico">🌐</span> Public Portal ↗
                 </a>
-
 
             @endrole
 
@@ -364,6 +362,11 @@
                 <a href="{{ route('aeo.monitoring.index') }}"
                     class="sb-link {{ request()->routeIs('aeo.monitoring.*') ? 'active' : '' }}">
                     <span class="ico">👁</span> Monitoring
+                </a>
+
+                <a href="{{ route('aeo.staff-strength.index') }}"
+                    class="sb-link {{ request()->routeIs('aeo.staff-strength.*') ? 'active' : '' }}">
+                    <span class="ico">👨‍🏫</span> Staff Strength
                 </a>
 
                 <p class="sb-sec">Reports</p>
@@ -425,6 +428,11 @@
                     <span class="ico">👁</span> System Monitoring
                 </a>
 
+                <a href="{{ route('director.staff-strength.index') }}"
+                    class="sb-link {{ request()->routeIs('director.staff-strength.*') ? 'active' : '' }}">
+                    <span class="ico">👨‍🏫</span> Staff Strength
+                </a>
+
                 <p class="sb-sec">Reports</p>
 
                 <a href="{{ route('director.reports.dashboard') }}"
@@ -452,6 +460,11 @@
                     <span class="ico">👥</span> Gender
                 </a>
 
+                <a href="{{ route('director.reports.master') }}"
+                    class="sb-link {{ request()->routeIs('director.reports.master') ? 'active' : '' }}">
+                    <span class="ico">📋</span> Master Report
+                </a>
+
                 <p class="sb-sec">Exports</p>
 
                 {{-- reports.export permission --}}
@@ -464,7 +477,7 @@
                 </a>
 
                 <a href="{{ route('director.export.master') }}" class="sb-link">
-                    <span class="ico">⬇️</span> Export Master
+                    <span class="ico">⬇️</span> Export Master (CSV)
                 </a>
             @endrole
 

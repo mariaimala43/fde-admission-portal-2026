@@ -1,0 +1,794 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word">
+<meta name="Originator" content="Microsoft Word">
+<!--[if gte mso 9]>
+<xml>
+  <w:WordDocument>
+    <w:View>Print</w:View>
+    <w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+  </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page {
+    size: A4;
+    margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+    mso-page-orientation: portrait;
+  }
+  body {
+    font-family: Calibri, sans-serif;
+    font-size: 11pt;
+    color: #1a1a1a;
+    line-height: 1.5;
+  }
+  /* Cover Page */
+  .cover {
+    text-align: center;
+    page-break-after: always;
+    padding-top: 80pt;
+  }
+  .cover-logo {
+    font-size: 48pt;
+    margin-bottom: 20pt;
+  }
+  .cover-title {
+    font-size: 26pt;
+    font-weight: bold;
+    color: #1e3a5f;
+    margin-bottom: 10pt;
+  }
+  .cover-subtitle {
+    font-size: 14pt;
+    color: #4a6741;
+    margin-bottom: 6pt;
+  }
+  .cover-meta {
+    font-size: 11pt;
+    color: #555;
+    margin-top: 30pt;
+    border-top: 2pt solid #1e3a5f;
+    padding-top: 14pt;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #1e3a5f;
+    color: white;
+    padding: 6pt 20pt;
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 20pt;
+  }
+  /* Headings */
+  h1 {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #1e3a5f;
+    border-bottom: 2pt solid #1e3a5f;
+    padding-bottom: 4pt;
+    margin-top: 20pt;
+    margin-bottom: 10pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #1e3a5f;
+    margin-top: 16pt;
+    margin-bottom: 6pt;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #2c5282;
+    margin-top: 12pt;
+    margin-bottom: 4pt;
+    page-break-after: avoid;
+  }
+  /* Summary box */
+  .summary-box {
+    border: 1pt solid #bee3f8;
+    background: #ebf8ff;
+    padding: 10pt 14pt;
+    margin: 10pt 0 16pt 0;
+  }
+  .summary-box p { margin: 3pt 0; font-size: 10.5pt; }
+  /* Change block */
+  .change-block {
+    border-left: 4pt solid #2b6cb0;
+    padding: 8pt 12pt;
+    margin: 12pt 0;
+    background: #f7fafc;
+  }
+  .change-block.green  { border-color: #276749; background: #f0fff4; }
+  .change-block.red    { border-color: #c53030; background: #fff5f5; }
+  .change-block.orange { border-color: #c05621; background: #fffaf0; }
+  .change-block.purple { border-color: #553c9a; background: #faf5ff; }
+  .change-number {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+  }
+  .change-title {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #1a202c;
+    margin: 2pt 0 6pt 0;
+  }
+  /* Problem / Fix boxes */
+  .label-box {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    color: #fff;
+    background: #c53030;
+    padding: 2pt 8pt;
+    display: inline-block;
+    margin-bottom: 4pt;
+  }
+  .label-box.fix { background: #276749; }
+  .label-box.note { background: #744210; }
+  .label-box.file { background: #2b6cb0; }
+  /* Tables */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8pt 0 14pt 0;
+    font-size: 10pt;
+  }
+  th {
+    background: #1e3a5f;
+    color: white;
+    padding: 6pt 8pt;
+    text-align: left;
+    font-size: 9.5pt;
+    font-weight: bold;
+  }
+  td {
+    padding: 5pt 8pt;
+    border: 0.5pt solid #cbd5e0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f7fafc; }
+  tr:nth-child(odd)  td { background: #ffffff; }
+  /* Code */
+  .code {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 9pt;
+    background: #1a202c;
+    color: #e2e8f0;
+    padding: 8pt 12pt;
+    margin: 6pt 0;
+    display: block;
+    white-space: pre;
+  }
+  .code-inline {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 9.5pt;
+    background: #edf2f7;
+    color: #2d3748;
+    padding: 1pt 4pt;
+  }
+  /* Status badges */
+  .badge {
+    font-size: 9pt;
+    font-weight: bold;
+    padding: 1pt 7pt;
+    display: inline-block;
+  }
+  .badge-blue   { background: #bee3f8; color: #2c5282; }
+  .badge-green  { background: #c6f6d5; color: #22543d; }
+  .badge-red    { background: #fed7d7; color: #822727; }
+  .badge-orange { background: #feebc8; color: #7b341e; }
+  /* Checklist */
+  .checklist { padding-left: 18pt; }
+  .checklist li { margin: 4pt 0; font-size: 10.5pt; }
+  /* Page break */
+  .page-break { page-break-before: always; }
+  /* Footer note */
+  .footer-note {
+    margin-top: 30pt;
+    border-top: 1pt solid #e2e8f0;
+    padding-top: 8pt;
+    font-size: 9pt;
+    color: #718096;
+    text-align: center;
+  }
+  p { margin: 4pt 0 8pt 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COVER PAGE
+════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">🏛️</div>
+  <div class="cover-title">FDE Admission Portal 2026</div>
+  <div class="cover-subtitle">Federal Directorate of Education — Islamabad</div>
+  <br><br>
+  <div style="font-size:20pt;font-weight:bold;color:#2d3748;">
+    Development Changes Report
+  </div>
+  <div style="font-size:15pt;color:#4a5568;margin-top:6pt;">
+    01 April 2026 — 19 April 2026
+  </div>
+  <div class="cover-badge">Confidential — Internal Use Only</div>
+  <div class="cover-meta">
+    <table style="margin:0 auto;border:none;width:auto;">
+      <tr>
+        <td style="border:none;padding:3pt 20pt;font-weight:bold;color:#1e3a5f;">Live URL</td>
+        <td style="border:none;padding:3pt 10pt;">https://magenta-sheep-235554.hostingersite.com</td>
+      </tr>
+      <tr>
+        <td style="border:none;padding:3pt 20pt;font-weight:bold;color:#1e3a5f;">Framework</td>
+        <td style="border:none;padding:3pt 10pt;">Laravel 12 · Tailwind CSS · Alpine.js 3.x</td>
+      </tr>
+      <tr>
+        <td style="border:none;padding:3pt 20pt;font-weight:bold;color:#1e3a5f;">Server</td>
+        <td style="border:none;padding:3pt 10pt;">Hostinger Shared Hosting · PHP 8.3</td>
+      </tr>
+      <tr>
+        <td style="border:none;padding:3pt 20pt;font-weight:bold;color:#1e3a5f;">Report Date</td>
+        <td style="border:none;padding:3pt 10pt;">20 April 2026</td>
+      </tr>
+      <tr>
+        <td style="border:none;padding:3pt 20pt;font-weight:bold;color:#1e3a5f;">Prepared By</td>
+        <td style="border:none;padding:3pt 10pt;">Development Team</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY
+════════════════════════════════════════════════════════════ -->
+<h1>Executive Summary</h1>
+
+<div class="summary-box">
+  <p><strong>Period Covered:</strong> 01 April 2026 to 19 April 2026</p>
+  <p><strong>Total Changes:</strong> 11 distinct changes across controllers, views, models, config &amp; routes</p>
+  <p><strong>Files Modified:</strong> 17 files updated on the live server</p>
+  <p><strong>Files Created:</strong> 12 new files deployed</p>
+  <p><strong>Database Migrations:</strong> 3 new migrations run</p>
+</div>
+
+<p>This report documents every code change made to the FDE Admission Portal between 1 April and 19 April 2026. Changes were made in response to live server issues, HOI user feedback, and feature improvements. All changes are listed in chronological order with the problem description, root cause, and solution applied.</p>
+
+<table>
+  <tr>
+    <th>#</th>
+    <th>Change</th>
+    <th>Type</th>
+    <th>Files Affected</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Staff Strength Register — New Module</td>
+    <td><span class="badge badge-blue">New Feature</span></td>
+    <td>7 files</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Merit List Feature — Full Build</td>
+    <td><span class="badge badge-blue">New Feature</span></td>
+    <td>8 files</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Sidebar Navigation — Missing Links Added</td>
+    <td><span class="badge badge-blue">Enhancement</span></td>
+    <td>1 file</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Merit List 500 Error — Missing Model Methods</td>
+    <td><span class="badge badge-red">Bug Fix</span></td>
+    <td>1 file</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Hostinger File Download 404 Fix</td>
+    <td><span class="badge badge-red">Bug Fix</span></td>
+    <td>4 files</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Baseline Enrollment — Failed Field Not Working</td>
+    <td><span class="badge badge-red">Bug Fix</span></td>
+    <td>2 files</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>FDE Merit Lists — Search Filter + EMIS Dropdown</td>
+    <td><span class="badge badge-green">Enhancement</span></td>
+    <td>1 file</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>Daily Admissions — Unified Table + Shift Toggle</td>
+    <td><span class="badge badge-blue">Enhancement</span></td>
+    <td>1 file</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>Daily Admissions — Available Seats Formula Fixed</td>
+    <td><span class="badge badge-red">Bug Fix</span></td>
+    <td>1 file</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>Daily Admissions — "Not Set" Badge Added</td>
+    <td><span class="badge badge-green">Enhancement</span></td>
+    <td>1 file</td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>Admin Institution Types — XI-XII &amp; XI-XIV Added</td>
+    <td><span class="badge badge-green">Enhancement</span></td>
+    <td>3 files</td>
+  </tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 1
+════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1>Detailed Change Log</h1>
+
+<div class="change-block purple">
+  <div class="change-number">Change 01 · 02 April 2026 · New Feature</div>
+  <div class="change-title">Staff Strength Register — New Module</div>
+  <p>A new Staff Strength Register module was built from scratch. Each institution is required to submit an annual staff headcount report detailing sanctioned vs filled posts across all teaching and program categories. HOI fills and submits; FDE Cell reviews, edits, and locks the record.</p>
+</div>
+
+<h3>Database Migrations Created</h3>
+<table>
+  <tr><th>Migration File</th><th>Purpose</th></tr>
+  <tr><td><span class="code-inline">2026_04_02_..._create_staff_post_types_table.php</span></td><td>Stores all post types: Principal, VP, SST, SET, EST, ECE, TFP, DIL, Coding Fellow, etc.</td></tr>
+  <tr><td><span class="code-inline">2026_04_02_..._create_staff_strength_registers_table.php</span></td><td>Main register per institution per academic year. Tracks status: draft / submitted / locked</td></tr>
+  <tr><td><span class="code-inline">2026_04_02_..._create_staff_strength_entries_table.php</span></td><td>Per-row entries: sanctioned_posts, filled_posts, sacked, deputationist in/out, temporary in/out, daily_wagers</td></tr>
+</table>
+
+<h3>Models Created</h3>
+<table>
+  <tr><th>Model</th><th>Location</th><th>Key Features</th></tr>
+  <tr><td>StaffPostType</td><td><span class="code-inline">app/Models/StaffPostType.php</span></td><td>forLevel() scope — filters post types by school type (I-V, I-VIII, VI-X etc.)</td></tr>
+  <tr><td>StaffStrengthRegister</td><td><span class="code-inline">app/Models/StaffStrengthRegister.php</span></td><td>isDraft(), isSubmitted(), isLocked() helpers. totalPresentOnDuty() calculation</td></tr>
+  <tr><td>StaffStrengthEntry</td><td><span class="code-inline">app/Models/StaffStrengthEntry.php</span></td><td>Computed accessor: vacant_posts = max(0, sanctioned_posts − filled_posts)</td></tr>
+</table>
+
+<h3>Seeder Created</h3>
+<table>
+  <tr><th>File</th><th>Content</th></tr>
+  <tr><td><span class="code-inline">database/seeders/StaffPostTypeSeeder.php</span></td><td>Seeds 18 post types (10 teaching + 8 program). Each post type maps to applicable school levels using JSON array. Run once: <span class="code-inline">php artisan db:seed --class=StaffPostTypeSeeder</span></td></tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 2
+════════════════════════════════════════════════════════════ -->
+<div class="change-block" style="margin-top:18pt;">
+  <div class="change-number">Change 02 · 05 April 2026 · New Feature</div>
+  <div class="change-title">Merit List Feature — Full Build (Model, Controllers, Views, Routes)</div>
+  <p>The Merit List module was built end-to-end. HOI users can upload merit list files (PDF, Excel, CSV) for their school. The public portal displays all uploaded merit lists with download links. FDE Cell has an admin view to manage lists across all schools.</p>
+</div>
+
+<h3>Files Created</h3>
+<table>
+  <tr><th>File</th><th>Type</th><th>Description</th></tr>
+  <tr><td><span class="code-inline">app/Models/InstitutionMeritList.php</span></td><td>Model</td><td>Merit list record. Methods: extension(), badgeClass(), formattedSize(), downloadUrl(), fileIcon(), fileType(), isNew()</td></tr>
+  <tr><td><span class="code-inline">app/Http/Controllers/Hoi/MeritListController.php</span></td><td>Controller</td><td>HOI uploads files (max 10 MB each, multiple allowed), lists and deletes their own school's files</td></tr>
+  <tr><td><span class="code-inline">app/Http/Controllers/Fde/MeritListController.php</span></td><td>Controller</td><td>FDE views and manages merit lists for all institutions</td></tr>
+  <tr><td><span class="code-inline">resources/views/hoi/merit_lists/index.blade.php</span></td><td>View</td><td>HOI upload form + file listing</td></tr>
+  <tr><td><span class="code-inline">resources/views/fde/merit_lists/index.blade.php</span></td><td>View</td><td>FDE management view — grouped by school with search</td></tr>
+  <tr><td><span class="code-inline">resources/views/portal/merit_lists.blade.php</span></td><td>View</td><td>Public portal page listing all merit lists by school</td></tr>
+  <tr><td><span class="code-inline">database/migrations/0037_create_institution_merit_lists_table.php</span></td><td>Migration</td><td>Table: institution_id, file_path, original_name, title, file_size, created_at</td></tr>
+  <tr><td><span class="code-inline">database/migrations/0038_add_file_size_to_institution_merit_lists_table.php</span></td><td>Migration</td><td>Added file_size column (separate migration)</td></tr>
+</table>
+
+<h3>Routes Added (routes/web.php)</h3>
+<table>
+  <tr><th>Method</th><th>URI</th><th>Purpose</th></tr>
+  <tr><td>GET</td><td>/portal/merit-lists</td><td>Public merit lists page</td></tr>
+  <tr><td>GET</td><td>/hoi/merit-lists</td><td>HOI merit list management</td></tr>
+  <tr><td>POST</td><td>/hoi/merit-lists</td><td>HOI file upload</td></tr>
+  <tr><td>DELETE</td><td>/hoi/merit-lists/{id}</td><td>HOI file delete</td></tr>
+  <tr><td>GET</td><td>/fde/merit-lists</td><td>FDE admin overview</td></tr>
+  <tr><td>POST</td><td>/fde/merit-lists</td><td>FDE upload for any school</td></tr>
+  <tr><td>DELETE</td><td>/fde/merit-lists/{id}</td><td>FDE file delete</td></tr>
+  <tr><td>GET</td><td>/merit-file/{meritList}</td><td>PHP-served file download (Hostinger fix)</td></tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 3
+════════════════════════════════════════════════════════════ -->
+<div class="change-block" style="margin-top:18pt;">
+  <div class="change-number">Change 03 · 07 April 2026 · Enhancement</div>
+  <div class="change-title">Sidebar Navigation — 7 Missing Links Added</div>
+  <p>A full portal audit found that several completed features were inaccessible because their sidebar links were never added. All 7 missing links were added to the navigation sidebar.</p>
+</div>
+
+<h3>File Modified: <span class="code-inline">resources/views/layouts/app.blade.php</span></h3>
+
+<table>
+  <tr><th>Role</th><th>Link Added</th><th>Route</th></tr>
+  <tr><td>HOI</td><td>🏫 Facilities</td><td>hoi.facilities.index</td></tr>
+  <tr><td>HOI</td><td>🔔 Notifications</td><td>hoi.notifications.index</td></tr>
+  <tr><td>HOI</td><td>📋 Merit Lists</td><td>hoi.merit-lists.index</td></tr>
+  <tr><td>FDE Cell (Admin)</td><td>📢 Announcements</td><td>announcements.index</td></tr>
+  <tr><td>FDE Cell (Admin)</td><td>🎨 App Settings</td><td>fde.app-settings.index</td></tr>
+  <tr><td>FDE Cell (Admin)</td><td>🖌️ Theme</td><td>fde.theme.index</td></tr>
+  <tr><td>FDE Cell (Admin)</td><td>⚠️ System Reset</td><td>fde.system-reset.index</td></tr>
+</table>
+
+<p>Also updated the <span class="code-inline">$fdeAdminOpen</span> PHP variable so the Admin dropdown auto-expands when navigating to any of the 4 new FDE admin pages.</p>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 4
+════════════════════════════════════════════════════════════ -->
+<div class="change-block red" style="margin-top:18pt;">
+  <div class="change-number">Change 04 · 10 April 2026 · Bug Fix</div>
+  <div class="change-title">Merit List Public Portal — 500 Server Error</div>
+</div>
+
+<div class="label-box">Problem</div>
+<p>The public portal merit lists page at <span class="code-inline">/portal/merit-lists</span> was throwing a 500 Internal Server Error immediately on load. The error log showed: <em>"Call to undefined method App\Models\InstitutionMeritList::fileIcon()"</em></p>
+
+<div class="label-box note">Root Cause</div>
+<p>The Blade view called three methods on the model that were referenced in the view but never defined in the model class: <span class="code-inline">fileIcon()</span>, <span class="code-inline">fileType()</span>, and <span class="code-inline">isNew()</span>.</p>
+
+<div class="label-box fix">Fix Applied</div>
+<p>Added all three missing methods to <span class="code-inline">app/Models/InstitutionMeritList.php</span>:</p>
+
+<table>
+  <tr><th>Method</th><th>Returns</th></tr>
+  <tr><td><span class="code-inline">fileIcon()</span></td><td>Emoji icon: 📄 for PDF, 📊 for Excel, 📋 for CSV, 📁 default</td></tr>
+  <tr><td><span class="code-inline">fileType()</span></td><td>Human label: "PDF Document", "Excel Spreadsheet", "CSV File"</td></tr>
+  <tr><td><span class="code-inline">isNew()</span></td><td>Returns true if file was uploaded within the last 7 days (shows "New" badge)</td></tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 5
+════════════════════════════════════════════════════════════ -->
+<div class="change-block red" style="margin-top:18pt;">
+  <div class="change-number">Change 05 · 12 April 2026 · Bug Fix</div>
+  <div class="change-title">Hostinger Live Server — Merit List Download 404 Error</div>
+</div>
+
+<div class="label-box">Problem</div>
+<p>After the 500 error was fixed, clicking the Download button on any merit list file returned a 404 Not Found error on the live Hostinger server. Files were being uploaded successfully but could not be retrieved.</p>
+
+<div class="label-box note">Root Cause</div>
+<p>Hostinger's LiteSpeed web server does not serve files from the <span class="code-inline">public/storage/</span> directory as static files when it is a real folder (not a symlink). The <span class="code-inline">php artisan storage:link</span> command creates a symlink, but Hostinger does not honour symlinks in shared hosting.</p>
+<p>Additionally, the filesystem disk root was pointing to <span class="code-inline">storage/app/public</span> (the default Laravel path) rather than <span class="code-inline">public/storage</span> (where Hostinger's web root expects files).</p>
+
+<div class="label-box fix">Fix Applied — 4 Files Changed</div>
+
+<h3>1. config/filesystems.php</h3>
+<p>Changed the <span class="code-inline">public</span> disk root so files write directly to the web-accessible path:</p>
+<span class="code">// BEFORE
+'root' => storage_path('app/public'),
+
+// AFTER
+'root' => public_path('storage'),</span>
+
+<h3>2. routes/web.php — Added PHP-Served Download Route</h3>
+<p>Added a route that serves files through PHP, bypassing the web server's static file restrictions entirely:</p>
+<span class="code">Route::get('/merit-file/{meritList}', function (InstitutionMeritList $meritList) {
+    $disk = Storage::disk('public');
+    if (! $disk->exists($meritList->file_path)) {
+        abort(404, 'File not found.');
+    }
+    return $disk->response($meritList->file_path, $meritList->original_name);
+})->name('merit.file');</span>
+
+<h3>3 &amp; 4. portal/show.blade.php and portal/merit_lists.blade.php</h3>
+<p>Updated all download links from <span class="code-inline">asset('storage/' . $ml->file_path)</span> to <span class="code-inline">$ml->downloadUrl()</span> which now resolves to the new named route.</p>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 6
+════════════════════════════════════════════════════════════ -->
+<div class="change-block red" style="margin-top:18pt;">
+  <div class="change-number">Change 06 · 14 April 2026 · Bug Fix</div>
+  <div class="change-title">Baseline Enrollment — "Failed" Count Not Saving or Displaying</div>
+</div>
+
+<div class="label-box">Problem</div>
+<p>On the Baseline Enrollment page, HOI users enter two values per class: <strong>Promoted</strong> (students passed from previous class) and <strong>Failed</strong> (students repeating the same class). Entering a value in the Failed field had absolutely no effect — it was not saved to the database and always displayed as 0.</p>
+
+<div class="label-box note">Root Cause</div>
+<p>Three separate points in the data flow were broken simultaneously:</p>
+<ol>
+  <li>The controller <strong>save()</strong> method only saved <span class="code-inline">existing_enrollment</span> (promoted + failed total) and never saved <span class="code-inline">promoted_count</span> or <span class="code-inline">failed_count</span> individually</li>
+  <li>The Alpine.js component initialized both fields from <span class="code-inline">existing_enrollment</span> and a hardcoded <span class="code-inline">0</span>, not from the actual DB columns</li>
+  <li>The locked (read-only) view displayed <span class="code-inline">{{ number_format($ic->failed_count) }}</span> but the column was always 0 because it was never written</li>
+</ol>
+
+<div class="label-box fix">Fix Applied — 2 Files Changed</div>
+
+<h3>app/Http/Controllers/Hoi/EnrollmentController.php</h3>
+<span class="code">// BEFORE — only saved total
+$ic->update([
+    'existing_enrollment' => $promoted + $failed,
+    'enrollment_status'   => $action === 'submit' ? 'verified' : 'draft',
+]);
+
+// AFTER — saves all three columns
+$ic->update([
+    'existing_enrollment' => $promoted + $failed,
+    'promoted_count'      => $promoted,
+    'failed_count'        => $failed,
+    'enrollment_status'   => $action === 'submit' ? 'verified' : 'draft',
+]);</span>
+
+<h3>resources/views/hoi/enrollment/index.blade.php</h3>
+<p>Three fixes in this view file:</p>
+<ul class="checklist">
+  <li>Alpine.js <span class="code-inline">rows</span> now initializes from <span class="code-inline">promoted_count</span> and <span class="code-inline">failed_count</span> DB columns</li>
+  <li>Form inputs now have correct name attributes: <span class="code-inline">enrollment[N][promoted]</span> and <span class="code-inline">enrollment[N][failed]</span></li>
+  <li>Locked (submitted) view now reads <span class="code-inline">$ic->promoted_count</span> and <span class="code-inline">$ic->failed_count</span> instead of showing 0</li>
+</ul>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 7
+════════════════════════════════════════════════════════════ -->
+<div class="change-block green" style="margin-top:18pt;">
+  <div class="change-number">Change 07 · 15 April 2026 · Enhancement</div>
+  <div class="change-title">FDE Merit Lists — Live Search Filter + EMIS Code in Dropdown</div>
+</div>
+
+<p><strong>File Modified:</strong> <span class="code-inline">resources/views/fde/merit_lists/index.blade.php</span></p>
+
+<div class="label-box note">Problem</div>
+<p>The FDE Merit List management page had no search functionality. With hundreds of institutions, finding a specific school required scrolling through the entire page. Also, the institution dropdown in the upload form showed only the school name with no EMIS code, making it difficult to identify the correct school when multiple schools have similar names.</p>
+
+<div class="label-box fix">Changes Made</div>
+<ul class="checklist">
+  <li>Added an Alpine.js live search bar — filters institution cards in real-time as the user types a school name or EMIS number</li>
+  <li>Added a "No results" message when the search finds no matching schools</li>
+  <li>Updated the upload form's institution dropdown to show: <span class="code-inline">[EMIS: 1234] School Name</span></li>
+  <li>Search works on both the school name and the EMIS code simultaneously</li>
+</ul>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 8
+════════════════════════════════════════════════════════════ -->
+<div class="change-block" style="margin-top:18pt;">
+  <div class="change-number">Change 08 · 16 April 2026 · Enhancement</div>
+  <div class="change-title">Daily Admissions — Unified Table with Morning/Evening Shift Toggle</div>
+</div>
+
+<p><strong>File Modified:</strong> <span class="code-inline">resources/views/hoi/admissions/daily.blade.php</span></p>
+
+<div class="label-box note">Problem</div>
+<p>The Daily Admissions page displayed two completely separate full-width tables — one for Morning Shift and one for Evening Shift — stacked vertically. HOI users had to scroll far down to reach the Evening Shift table. For morning-only schools, the Evening table was still rendered but was empty and unused.</p>
+
+<div class="label-box fix">Changes Made</div>
+<p>The two separate tables were merged into a single unified table. A pill-style toggle button appears above the table for schools with an evening shift:</p>
+
+<table>
+  <tr><th>Feature</th><th>Detail</th></tr>
+  <tr><td>Toggle button</td><td>🌅 Morning Shift (blue) | 🌆 Evening Shift (indigo) — only shown if school has evening shift</td></tr>
+  <tr><td>Reactive columns</td><td>Regular Boys/Girls, OOSC Boys/Girls, P2G Boys/Girls, Today's Total — all switch based on active tab</td></tr>
+  <tr><td>Morning-only schools</td><td>No toggle shown at all — clean single-table view</td></tr>
+  <tr><td>Data integrity</td><td>All 12 shift fields still submitted to the server — no data lost when switching tabs</td></tr>
+  <tr><td>Old table</td><td>Hidden with @if(false) — not deleted, preserved for reference</td></tr>
+</table>
+
+<h3>Alpine.js Additions</h3>
+<table>
+  <tr><th>Variable / Function</th><th>Purpose</th></tr>
+  <tr><td><span class="code-inline">activeShift: 'morning'</span></td><td>Tracks which shift tab is currently active</td></tr>
+  <tr><td><span class="code-inline">shiftRowTotal(cls)</span></td><td>Sums the 6 input fields for the currently active shift only (used in Today's Total column)</td></tr>
+  <tr><td><span class="code-inline">rowTotal(cls)</span></td><td>Retained — sums all 12 fields across both shifts (used for capacity checks)</td></tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 9
+════════════════════════════════════════════════════════════ -->
+<div class="change-block red" style="margin-top:18pt;">
+  <div class="change-number">Change 09 · 19 April 2026 · Bug Fix</div>
+  <div class="change-title">Daily Admissions — All Classes Showing "Full" / Available = 0</div>
+</div>
+
+<p><strong>File Modified:</strong> <span class="code-inline">app/Http/Controllers/Hoi/DailyAdmissionController.php</span></p>
+
+<div class="label-box">Problem</div>
+<p>Every class on the Daily Admissions page was showing <strong>Available = 0</strong> and the red "🚫 Full" badge, even for classes where Total Seats = 40 and Existing Students = 14 (Available should be 26). The entire admissions table was disabled and HOI users could not enter any data.</p>
+
+<div class="label-box note">Root Cause</div>
+<p>The available seats formula subtracted cumulative admissions from all prior days (<span class="code-inline">$cumRegular</span>) from the available count:</p>
+<span class="code">// WRONG formula
+$available = max(0, $ic->total_seats - $ic->existing_enrollment - $cumRegular);</span>
+<p>Schools that had any historical test/draft admission records had a large <span class="code-inline">$cumRegular</span> value, making <span class="code-inline">available = 0</span>. The formula counted ALL prior day records regardless of their status (draft, submitted, verified).</p>
+
+<div class="label-box fix">Fix Applied</div>
+<p>Simplified the formula to match the user-defined business logic: Available = Total Seats − Existing Enrollment (static capacity, does not decrease with daily admissions):</p>
+<span class="code">// CORRECT formula
+$available = max(0, $ic->total_seats - $ic->existing_enrollment);</span>
+
+<table>
+  <tr><th>Example</th><th>Before Fix</th><th>After Fix</th></tr>
+  <tr><td>Total=40, Existing=14, Prior Admissions=26</td><td>Available = 0 (🚫 Full)</td><td>Available = 26 ✅</td></tr>
+  <tr><td>Total=50, Existing=20, Prior Admissions=0</td><td>Available = 30 ✅</td><td>Available = 30 ✅</td></tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 10
+════════════════════════════════════════════════════════════ -->
+<div class="change-block orange" style="margin-top:18pt;">
+  <div class="change-number">Change 10 · 19 April 2026 · Enhancement</div>
+  <div class="change-title">Daily Admissions — "⚙️ Not Set" Badge for Unconfigured Classes</div>
+</div>
+
+<p><strong>File Modified:</strong> <span class="code-inline">resources/views/hoi/admissions/daily.blade.php</span></p>
+
+<div class="label-box note">Problem</div>
+<p>When a class had <span class="code-inline">total_seats = 0</span> in the database (because the HOI never entered a value in Class Setup, or the field defaulted to 0), the class appeared with the "🚫 Full" badge — the same badge used for genuinely full classes. This was confusing and misleading because the class was not full, it had simply never been configured.</p>
+
+<div class="label-box fix">Changes Made</div>
+
+<table>
+  <tr><th>State</th><th>Old Behaviour</th><th>New Behaviour</th></tr>
+  <tr><td>total_seats = 0 (not configured)</td><td>🚫 Full (red) — row greyed out and disabled</td><td>⚙️ Not Set (amber) — row visible, yellow background</td></tr>
+  <tr><td>total_seats &gt; 0, available = 0 (genuinely full)</td><td>🚫 Full (red) — correct</td><td>🚫 Full (red) — unchanged ✅</td></tr>
+  <tr><td>total_seats &gt; 0, available &gt; 0 (open)</td><td>No badge — correct</td><td>No badge — unchanged ✅</td></tr>
+</table>
+
+<h3>Alpine.js Changes</h3>
+<span class="code">// NEW function
+isNotConfigured(cls) {
+    return cls.total_seats === 0;
+},
+
+// UPDATED function — now only fires for genuinely full classes
+isFull(cls) {
+    return cls.total_seats > 0 && cls.available <= 0;
+},</span>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHANGE 11
+════════════════════════════════════════════════════════════ -->
+<div class="change-block green" style="margin-top:18pt;">
+  <div class="change-number">Change 11 · 19 April 2026 · Enhancement</div>
+  <div class="change-title">Admin Institution Types — Added XI-XII and XI-XIV</div>
+</div>
+
+<div class="label-box note">Problem</div>
+<p>The three admin institution views (index, create, edit) had an incomplete school type dropdown missing <strong>XI-XII</strong> and <strong>XI-XIV</strong>. These are valid institution types used by real Islamabad schools. Other views (FDE schools, public portal) already had the full list of 10 types.</p>
+
+<div class="label-box fix">Fix Applied — 3 Files Changed</div>
+
+<table>
+  <tr><th>File</th><th>Change</th></tr>
+  <tr><td><span class="code-inline">resources/views/admin/institutions/index.blade.php</span></td><td>Added XI-XII and XI-XIV to Type filter dropdown</td></tr>
+  <tr><td><span class="code-inline">resources/views/admin/institutions/create.blade.php</span></td><td>Added XI-XII and XI-XIV to Type select on Add Institution form</td></tr>
+  <tr><td><span class="code-inline">resources/views/admin/institutions/edit.blade.php</span></td><td>Added XI-XII and XI-XIV to Type select on Edit Institution form</td></tr>
+</table>
+
+<p>Complete type list after fix: I-V · I-VIII · I-X · I-XII · VI-VIII · VI-X · VI-XII · <strong>XI-XII · XI-XIV</strong> · Model College</p>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     FILES UPLOAD CHECKLIST
+════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1>Files Upload Checklist</h1>
+
+<p>All files listed below must be uploaded to the live Hostinger server. Upload controllers first, then views, then config files.</p>
+
+<h2>New Files — Must Be Created on Server</h2>
+<table>
+  <tr><th>#</th><th>File Path</th><th>Feature</th></tr>
+  <tr><td>1</td><td><span class="code-inline">app/Models/InstitutionMeritList.php</span></td><td>Merit Lists</td></tr>
+  <tr><td>2</td><td><span class="code-inline">app/Http/Controllers/Hoi/MeritListController.php</span></td><td>Merit Lists</td></tr>
+  <tr><td>3</td><td><span class="code-inline">app/Http/Controllers/Fde/MeritListController.php</span></td><td>Merit Lists</td></tr>
+  <tr><td>4</td><td><span class="code-inline">resources/views/hoi/merit_lists/index.blade.php</span></td><td>Merit Lists</td></tr>
+  <tr><td>5</td><td><span class="code-inline">resources/views/fde/merit_lists/index.blade.php</span></td><td>Merit Lists</td></tr>
+  <tr><td>6</td><td><span class="code-inline">resources/views/portal/merit_lists.blade.php</span></td><td>Merit Lists</td></tr>
+  <tr><td>7</td><td><span class="code-inline">app/Models/StaffPostType.php</span></td><td>Staff Strength</td></tr>
+  <tr><td>8</td><td><span class="code-inline">app/Models/StaffStrengthRegister.php</span></td><td>Staff Strength</td></tr>
+  <tr><td>9</td><td><span class="code-inline">app/Models/StaffStrengthEntry.php</span></td><td>Staff Strength</td></tr>
+  <tr><td>10</td><td><span class="code-inline">database/seeders/StaffPostTypeSeeder.php</span></td><td>Staff Strength</td></tr>
+</table>
+
+<h2>Modified Files — Upload Updated Versions</h2>
+<table>
+  <tr><th>#</th><th>File Path</th><th>Change Summary</th><th>Priority</th></tr>
+  <tr><td>1</td><td><span class="code-inline">config/filesystems.php</span></td><td>Public disk root changed for Hostinger</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>2</td><td><span class="code-inline">routes/web.php</span></td><td>Merit list routes + file download route</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>3</td><td><span class="code-inline">resources/views/layouts/app.blade.php</span></td><td>7 new sidebar navigation links</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>4</td><td><span class="code-inline">app/Http/Controllers/Hoi/EnrollmentController.php</span></td><td>Saves promoted_count and failed_count</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>5</td><td><span class="code-inline">resources/views/hoi/enrollment/index.blade.php</span></td><td>Fixed Alpine.js init + form inputs + locked view</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>6</td><td><span class="code-inline">app/Http/Controllers/Hoi/DailyAdmissionController.php</span></td><td>Available seats formula corrected</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>7</td><td><span class="code-inline">resources/views/hoi/admissions/daily.blade.php</span></td><td>Unified table + shift toggle + Not Set badge</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>8</td><td><span class="code-inline">resources/views/portal/show.blade.php</span></td><td>Merit list download link fix</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>9</td><td><span class="code-inline">resources/views/portal/merit_lists.blade.php</span></td><td>Merit list download link fix</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>10</td><td><span class="code-inline">app/Http/Controllers/Hoi/ClassSetupController.php</span></td><td>Total seats validation (min:0)</td><td><span class="badge badge-orange">Medium</span></td></tr>
+  <tr><td>11</td><td><span class="code-inline">resources/views/admin/institutions/index.blade.php</span></td><td>XI-XII, XI-XIV + Model Colleges filter</td><td><span class="badge badge-orange">Medium</span></td></tr>
+  <tr><td>12</td><td><span class="code-inline">resources/views/admin/institutions/create.blade.php</span></td><td>XI-XII, XI-XIV types added</td><td><span class="badge badge-orange">Medium</span></td></tr>
+  <tr><td>13</td><td><span class="code-inline">resources/views/admin/institutions/edit.blade.php</span></td><td>XI-XII, XI-XIV types added</td><td><span class="badge badge-orange">Medium</span></td></tr>
+  <tr><td>14</td><td><span class="code-inline">resources/views/fde/merit_lists/index.blade.php</span></td><td>Live search + EMIS in dropdown</td><td><span class="badge badge-green">Normal</span></td></tr>
+</table>
+
+<h2>Database Migrations — Run on Server</h2>
+<table>
+  <tr><th>#</th><th>Migration File</th><th>Purpose</th></tr>
+  <tr><td>1</td><td><span class="code-inline">0037_create_institution_merit_lists_table.php</span></td><td>Creates merit lists table</td></tr>
+  <tr><td>2</td><td><span class="code-inline">0038_add_file_size_to_institution_merit_lists_table.php</span></td><td>Adds file_size column</td></tr>
+  <tr><td>3</td><td><span class="code-inline">2026_04_02_..._create_staff_post_types_table.php</span></td><td>Staff post types table</td></tr>
+  <tr><td>4</td><td><span class="code-inline">2026_04_02_..._create_staff_strength_registers_table.php</span></td><td>Staff strength registers table</td></tr>
+  <tr><td>5</td><td><span class="code-inline">2026_04_02_..._create_staff_strength_entries_table.php</span></td><td>Staff strength entries table</td></tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SERVER COMMANDS
+════════════════════════════════════════════════════════════ -->
+<h1>Server Commands After Deployment</h1>
+
+<p>Run the following commands in order via Hostinger SSH/Terminal after uploading all files:</p>
+
+<span class="code"># Step 1: Run pending database migrations
+php artisan migrate
+
+# Step 2: Seed staff post types (run once only)
+php artisan db:seed --class=StaffPostTypeSeeder
+
+# Step 3: Clear all caches
+php artisan view:clear
+php artisan route:clear
+php artisan config:clear
+php artisan cache:clear</span>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     KNOWN ISSUE
+════════════════════════════════════════════════════════════ -->
+<h1>Known Issue — IMSB School Data Fix Required</h1>
+
+<div class="change-block orange">
+  <div class="change-title">School: IMSB (VI-X) RAWAL DAM</div>
+  <p><strong>Issue:</strong> Classes showing "⚙️ Not Set" or incorrect Available values in Daily Admissions</p>
+  <p><strong>Cause:</strong> Total Seats was never properly saved in Class Setup for this school (stored as 0 in database)</p>
+</div>
+
+<p><strong>Manual Fix Required (no code change needed):</strong></p>
+<ol>
+  <li>Log in as the HOI user for IMSB (VI-X) RAWAL DAM</li>
+  <li>Navigate to <strong>Classes &amp; Sections</strong></li>
+  <li>For each class showing the amber "⚙️ Not Set" badge, enter the correct <strong>Total Seats</strong> value</li>
+  <li>Click <strong>Save</strong></li>
+  <li>Navigate to <strong>Daily Admissions</strong> — Available seats will now calculate correctly as:<br>
+      <strong>Available = Total Seats − Existing Enrollment</strong></li>
+</ol>
+
+
+<div class="footer-note">
+  FDE Admission Portal 2026 — Development Changes Report<br>
+  Period: 01 April 2026 to 19 April 2026 · Generated: 20 April 2026<br>
+  Federal Directorate of Education, Islamabad · For Internal Use Only
+</div>
+
+</body>
+</html>

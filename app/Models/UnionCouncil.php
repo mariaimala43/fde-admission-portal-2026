@@ -26,4 +26,9 @@ class UnionCouncil extends Model
     {
         return $this->hasMany(Institution::class, 'uc_id');
     }
+
+    public function controlRoom()
+    {
+        return $this->hasOne(UcControlRoom::class, 'uc_id');
+    }
 }

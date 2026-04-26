@@ -35,10 +35,22 @@ class ReferralController extends Controller
         $status        = $request->input('status');
         $institutionId = $request->input('institution_id');
         $search        = $request->input('search');
+        $classId       = $request->input('class_id');
+        $sectorId      = $request->input('sector_id');
+        $gender        = $request->input('gender');
+        $shift         = $request->input('shift');
+        $dateFrom      = $request->input('date_from');
+        $dateTo        = $request->input('date_to');
 
         $referrals = Referral::with(['institution.sector', 'classModel', 'referredBy', 'actionedBy'])
             ->when($status,        fn($q) => $q->where('status', $status))
             ->when($institutionId, fn($q) => $q->where('institution_id', $institutionId))
+            ->when($classId,       fn($q) => $q->where('class_id', $classId))
+            ->when($gender,        fn($q) => $q->where('gender', $gender))
+            ->when($shift,         fn($q) => $q->where('shift', $shift))
+            ->when($dateFrom,      fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo,        fn($q) => $q->whereDate('created_at', '<=', $dateTo))
+            ->when($sectorId, fn($q) => $q->whereHas('institution', fn($q2) => $q2->where('sector_id', $sectorId)))
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($q2) use ($search) {
                     $q2->where('student_name', 'like', "%{$search}%")
@@ -60,11 +72,19 @@ class ReferralController extends Controller
             SUM(status = 're_referred') as re_referred
         ")->first();
 
+        $sectors = Sector::orderBy('name')->get(['id', 'name']);
+
         $institutions = Institution::where('is_active', true)
+            ->when($sectorId, fn($q) => $q->where('sector_id', $sectorId))
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
 
-        return view('fde.referrals.index', compact('referrals', 'stats', 'institutions', 'status', 'search'));
+        $classes = Classes::where('is_active', true)->orderBy('order')->get(['id', 'name']);
+
+        return view('fde.referrals.index', compact(
+            'referrals', 'stats', 'sectors', 'institutions', 'classes',
+            'status', 'search', 'classId', 'sectorId', 'gender', 'shift', 'dateFrom', 'dateTo'
+        ));
     }
 
     // ─────────────────────────────────────────────────────────────────

@@ -46,17 +46,31 @@
                 Location
             </h3>
 
+            @php
+                $currentSectorName = $institution->unionCouncil?->sector?->name
+                    ?? $institution->sector?->name
+                    ?? '—';
+            @endphp
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Union Council</label>
-                    <select name="uc_id" id="uc_id" required
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Union Council <span class="text-red-500">*</span>
+                    </label>
+                    <select name="uc_id" id="uc_id" required onchange="syncSectorFromUC(this)"
                         class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">— Select UC —</option>
-                        @foreach ($ucs as $uc)
-                            <option value="{{ $uc->id }}"
-                                {{ old('uc_id', $institution->uc_id) == $uc->id ? 'selected' : '' }}>
-                                {{ $uc->name }} ({{ $uc->code }})
-                            </option>
+                        @foreach ($sectors as $sector)
+                            <optgroup label="{{ $sector->name }}">
+                                @foreach ($sector->unionCouncils as $uc)
+                                    <option value="{{ $uc->id }}"
+                                        data-sector-id="{{ $sector->id }}"
+                                        data-sector-name="{{ $sector->name }}"
+                                        {{ old('uc_id', $institution->uc_id) == $uc->id ? 'selected' : '' }}>
+                                        {{ $uc->code }} — {{ $uc->name }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
                         @endforeach
                     </select>
                     @error('uc_id')
@@ -64,21 +78,16 @@
                     @enderror
                 </div>
 
+                {{-- Sector: always derived from UC, displayed read-only --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Sector</label>
-                    <select name="sector_id" id="sector_id" required
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">— Select Sector —</option>
-                        @foreach ($sectors as $sector)
-                            <option value="{{ $sector->id }}" data-uc="{{ $sector->uc_id }}"
-                                {{ old('sector_id', $institution->sector_id) == $sector->id ? 'selected' : '' }}>
-                                {{ $sector->name }} ({{ $sector->code }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('sector_id')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Sector
+                        <span class="text-gray-400 font-normal text-xs">(auto from UC)</span>
+                    </label>
+                    <div id="sector_display"
+                        class="w-full border border-blue-200 bg-blue-50 rounded-lg px-4 py-2.5 text-sm font-semibold text-blue-800 min-h-[42px]">
+                        {{ $currentSectorName }}
+                    </div>
                 </div>
             </div>
 
@@ -98,7 +107,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">School Type</label>
                     <select name="type" required
                         class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        @foreach (['I-V', 'I-VIII', 'I-X', 'I-XII', 'VI-VIII', 'VI-X', 'VI-XII', 'Model College'] as $type)
+                        @foreach (['I-V', 'I-VIII', 'I-X', 'I-XII', 'VI-VIII', 'VI-X', 'VI-XII', 'XI-XII', 'XI-XIV', 'Model College'] as $type)
                             <option value="{{ $type }}"
                                 {{ old('type', $institution->type) == $type ? 'selected' : '' }}>
                                 {{ $type }}
@@ -178,17 +187,19 @@
     </div>
 
     <script>
-        document.getElementById('uc_id').addEventListener('change', function() {
-            const ucId = this.value;
-            const selector = document.getElementById('sector_id');
-            const options = selector.querySelectorAll('option');
+        function syncSectorFromUC(select) {
+            const opt     = select.options[select.selectedIndex];
+            const name    = opt.dataset.sectorName || '';
+            const display = document.getElementById('sector_display');
+            display.textContent = name || '— select a UC first —';
+            display.className   = name
+                ? 'w-full border border-blue-200 bg-blue-50 rounded-lg px-4 py-2.5 text-sm font-semibold text-blue-800 min-h-[42px]'
+                : 'w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-2.5 text-sm text-gray-500 min-h-[42px]';
+        }
 
-            options.forEach(function(opt) {
-                if (!opt.value) return;
-                opt.style.display = (!ucId || opt.dataset.uc === ucId) ? '' : 'none';
-            });
-
-            selector.value = '';
+        // Update sector display when UC changes
+        document.getElementById('uc_id').addEventListener('change', function () {
+            syncSectorFromUC(this);
         });
     </script>
 

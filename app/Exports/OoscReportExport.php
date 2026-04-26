@@ -14,7 +14,7 @@ class OoscReportExport implements FromArray, WithTitle, WithStyles, WithColumnWi
 {
     public function __construct(protected array $data) {}
 
-    public function title(): string { return 'OOSC & P2P Report'; }
+    public function title(): string { return 'OOSC & P2G Report'; }
 
     public function columnWidths(): array
     {
@@ -30,10 +30,10 @@ class OoscReportExport implements FromArray, WithTitle, WithStyles, WithColumnWi
         $to   = $this->data['to']->format('d M Y');
 
         $rows = [
-            ['FDE OOSC & PRIVATE-TO-PUBLIC TRACKING REPORT', '', '', '', '', '', '', ''],
+            ['FDE OOSC & PRIVATE TO GOVERNMENT TRACKING REPORT', '', '', '', '', '', '', ''],
             ["Period: {$from} to {$to}", '', '', '', '', '', '', ''],
             [''],
-            ['School', 'Sector', 'OOSC Boys', 'OOSC Girls', 'OOSC Total', 'P2P Boys', 'P2P Girls', 'P2P Total'],
+            ['School', 'Sector', 'OOSC Boys', 'OOSC Girls', 'OOSC Total', 'P2G Boys', 'P2G Girls', 'P2G Total'],
         ];
 
         foreach ($this->data['institutions'] as $inst) {

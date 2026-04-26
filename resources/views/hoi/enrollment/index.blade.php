@@ -8,249 +8,343 @@
         <div>
             <h2 class="page-title">Baseline Enrollment</h2>
             <p class="page-sub">
-                {{ $institution->name }} — Enter how many students are currently enrolled in each class.
+                {{ $institution->name }} — Enter promoted and failed students per class.
             </p>
         </div>
         @if ($allSubmitted)
-            <span class="badge badge-green" style="font-size:13px;padding:6px 16px;">✅ All Submitted</span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                ✅ Enrollment Submitted
+            </span>
         @endif
     </div>
 
-    {{-- ── Over-Capacity Warning Banner ────────────────────────────── --}}
-    @if ($isOverCapacity)
-        <div class="capacity-warning">
-            <svg class="capacity-warning__icon" width="20" height="20" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-            </svg>
+    {{-- ── Validation error ───────────────────────────────────────── --}}
+    @if ($errors->any())
+        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-5 text-sm flex items-start gap-2">
+            <span class="mt-0.5 shrink-0">⚠️</span>
             <div>
-                <p class="capacity-warning__title">⚠️ Intake Capacity Exceeded</p>
-                <p class="capacity-warning__body">
-                    Total enrollment <strong>({{ number_format($totalEnrollment) }})</strong> exceeds
-                    intake capacity <strong>({{ number_format($totalSeats) }})</strong> by
-                    <strong>{{ number_format($overBy) }} student(s)</strong>.
-                    No further admissions can be entered until capacity is reviewed by FDE.
-                </p>
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
             </div>
         </div>
     @endif
 
-    {{-- ── Stats Cards ──────────────────────────────────────────────── --}}
-    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+    {{-- ── Alpine data prep ──────────────────────────────────────── --}}
+    @php
+        $enrollmentRows = $classes->values()->map(fn($ic) => [
+            // Combined (non-evening schools)
+            'promoted'        => (int) $ic->promoted_count,
+            'failed'          => (int) $ic->failed_count,
+            'cap'             => (int) $ic->existing_enrollment,
+            // Per-shift (evening schools)
+            'morning_promoted'=> (int) $ic->morning_promoted,
+            'morning_failed'  => (int) $ic->morning_failed,
+            'morning_cap'     => (int) $ic->morning_existing,
+            'evening_promoted'=> (int) $ic->evening_promoted,
+            'evening_failed'  => (int) $ic->evening_failed,
+            'evening_cap'     => (int) $ic->evening_existing,
+        ]);
+    @endphp
 
-        {{-- Intake Capacity --}}
-        <div class="stat-card stat-card--green">
-            <p class="stat-label">Intake Capacity</p>
-            <p class="stat-num stat-num--green">{{ number_format($totalSeats) }}</p>
-        </div>
+    {{-- ── All in one Alpine scope ──────────────────────────────────── --}}
+    <div x-data="enrollmentPage()">
 
-        {{-- Existing Enrollment --}}
-        <div class="stat-card stat-card--orange">
-            <p class="stat-label">Existing Enrollment</p>
-            <p class="stat-num stat-num--orange">{{ number_format($totalEnrolled) }}</p>
-        </div>
-
-        {{-- Seats Available --}}
-        <div class="stat-card {{ $totalAvailable > 0 ? 'stat-card--green' : 'stat-card--red' }}">
-            <p class="stat-label">Seats Available</p>
-            <p class="stat-num {{ $totalAvailable > 0 ? 'stat-num--green' : 'stat-num--red' }}">
-                {{ number_format($totalAvailable) }}
-            </p>
-            @if ($isOverCapacity)
-                <p class="stat-sub" style="color:#f87171;">FULL</p>
-            @endif
-        </div>
-
-        {{-- Newly Admitted --}}
-        <div class="stat-card stat-card--blue">
-            <p class="stat-label">Newly Admitted</p>
-            <p class="stat-num stat-num--blue">{{ number_format($totalNewAdmit) }}</p>
-        </div>
-
-        {{-- Total Enrollment — spans 2 cols, hero card --}}
-        <div class="stat-card md:col-span-2 {{ $isOverCapacity ? 'stat-card--hero-red' : 'stat-card--hero-green' }}">
-            <p class="stat-label">Total Enrollment</p>
-            <p class="stat-num stat-num--white">{{ number_format($totalEnrollment) }}</p>
-            @if ($isOverCapacity)
-                <p class="stat-sub">▲ {{ number_format($overBy) }} over capacity</p>
-            @else
-                <p class="stat-sub">{{ number_format($totalAvailable) }} seats remaining</p>
-            @endif
-        </div>
-
-    </div>
-
-    {{-- ── Enrollment Form ───────────────────────────────────────────── --}}
-    <form method="POST" action="{{ route('hoi.enrollment.save') }}">
-        @csrf
-
-        <div class="fde-table-wrap mb-6">
-            <div class="overflow-x-auto">
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="text-left">Class</th>
-                            <th class="text-center">Sections</th>
-                            <th class="text-center col-orange">
-                                Existing Enrollment
-                            </th>
-                            <th class="text-center col-green">
-                                Intake Capacity
-                            </th>
-                            <th class="text-center col-green">
-                                Seats Available
-                                <span class="th-sub">(Auto-Calculated)</span>
-                            </th>
-                            <th class="text-center col-blue">
-                                Newly Admitted
-                                <span class="th-sub">(Daily Updates)</span>
-                            </th>
-                            <th class="text-center col-accent">
-                                Total Enrollment
-                                <span class="th-sub">(Auto-Calculated)</span>
-                            </th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @foreach ($classes as $index => $ic)
-                            @php
-                                $editable = $ic->isEnrollmentEditable();
-                                $secs = ($sections[$ic->class_id] ?? collect())->pluck('name')->join(', ') ?: '-';
-                                $secCount = ($sections[$ic->class_id] ?? collect())->count();
-                                $admitted = $newlyAdmitted[$ic->class_id] ?? 0;
-                                $seatsAvail = max(0, $ic->total_seats - $ic->existing_enrollment - $admitted);
-                                $totalEnrl = $ic->existing_enrollment + $admitted;
-                            @endphp
-
-                            <tr x-data="{ seats: {{ $ic->total_seats }}, enrolled: {{ $ic->existing_enrollment }}, admitted: {{ $admitted }} }">
-
-                                {{-- Class Name --}}
-                                <td>
-                                    <span class="font-semibold">{{ $ic->classModel?->name }}</span>
-                                    @if ($ic->classModel?->is_ece)
-                                        <span class="badge badge-purple" style="margin-left:6px;">ECE</span>
-                                    @endif
-                                    <input type="hidden" name="enrollment[{{ $index }}][class_id]"
-                                        value="{{ $ic->class_id }}" />
-                                </td>
-
-                                {{-- Sections --}}
-                                <td class="text-center">
-                                    <span class="font-medium">{{ max(1, $secCount) }}</span>
-                                    @if ($secs !== '-')
-                                        <div class="th-sub" style="font-size:11px;">{{ $secs }}</div>
-                                    @endif
-                                </td>
-
-                                {{-- Existing Enrollment --}}
-                                <td class="text-center">
-                                    @if ($editable)
-                                        <input type="number" name="enrollment[{{ $index }}][existing]"
-                                            class="input-compact" x-model.number="enrolled" :max="seats"
-                                            min="0" />
-                                    @else
-                                        <span class="font-bold stat-num--orange" style="font-size:17px;">
-                                            {{ number_format($ic->existing_enrollment) }}
-                                        </span>
-                                        <input type="hidden" name="enrollment[{{ $index }}][existing]"
-                                            value="{{ $ic->existing_enrollment }}" />
-                                    @endif
-                                </td>
-
-                                {{-- Intake Capacity --}}
-                                <td class="text-center">
-                                    <span class="font-bold stat-num--green" style="font-size:17px;">
-                                        {{ number_format($ic->total_seats) }}
-                                    </span>
-                                </td>
-
-                                {{-- Seats Available (reactive) --}}
-                                <td class="text-center">
-                                    @if ($editable)
-                                        <span class="font-bold" style="font-size:17px;"
-                                            :class="(seats - enrolled - admitted) > 0 ? 'stat-num--green' : 'stat-num--red'"
-                                            x-text="Math.max(0, seats - enrolled - admitted)">
-                                        </span>
-                                    @else
-                                        <span class="font-bold {{ $seatsAvail > 0 ? 'stat-num--green' : 'stat-num--red' }}"
-                                            style="font-size:17px;">
-                                            {{ number_format($seatsAvail) }}
-                                        </span>
-                                    @endif
-                                </td>
-
-                                {{-- Newly Admitted --}}
-                                <td class="text-center">
-                                    <span class="font-bold stat-num--blue" style="font-size:17px;">
-                                        {{ number_format($admitted) }}
-                                    </span>
-                                </td>
-
-                                {{-- Total Enrollment (reactive) --}}
-                                <td class="text-center td-accent">
-                                    @if ($editable)
-                                        <span class="font-bold stat-num--green" style="font-size:17px;"
-                                            x-text="enrolled + admitted">
-                                        </span>
-                                    @else
-                                        <span class="font-bold stat-num--green" style="font-size:17px;">
-                                            {{ number_format($totalEnrl) }}
-                                        </span>
-                                    @endif
-                                </td>
-
-                            </tr>
-                        @endforeach
-                    </tbody>
-
-                    {{-- Totals Footer --}}
-                    <tfoot>
-                        <tr>
-                            <td>TOTAL</td>
-                            <td class="text-center">
-                                {{ $classes->sum(fn($ic) => max(1, ($sections[$ic->class_id] ?? collect())->count())) }}
-                            </td>
-                            <td class="text-center stat-num--orange">
-                                {{ number_format($totalEnrolled) }}
-                            </td>
-                            <td class="text-center stat-num--green">
-                                {{ number_format($totalSeats) }}
-                            </td>
-                            <td class="text-center {{ $totalAvailable > 0 ? 'stat-num--green' : 'stat-num--red' }}">
-                                {{ number_format($totalAvailable) }}
-                            </td>
-                            <td class="text-center stat-num--blue">
-                                {{ number_format($totalNewAdmit) }}
-                            </td>
-                            <td class="text-center td-accent">
-                                {{ number_format($totalEnrolled + $totalNewAdmit) }}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
+        {{-- ── Stats Cards ──────────────────────────────────────────── --}}
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="stat-card stat-card--orange">
+                <p class="stat-label">Total Existing Students</p>
+                <p class="stat-num stat-num--orange" x-text="totalExisting()"></p>
+            </div>
+            <div class="stat-card stat-card--green">
+                <p class="stat-label">Total Promoted</p>
+                <p class="stat-num stat-num--green" x-text="totalPromoted()"></p>
+            </div>
+            <div class="stat-card stat-card--red">
+                <p class="stat-label">Total Failed</p>
+                <p class="stat-num stat-num--red" x-text="totalFailed()"></p>
             </div>
         </div>
 
-        {{-- ── Action Buttons ────────────────────────────────────────── --}}
-        @if (!$allSubmitted)
+        {{-- ── Enrollment Form ───────────────────────────────────────── --}}
+        <form method="POST" action="{{ route('hoi.enrollment.save') }}">
+            @csrf
+
+            <div class="fde-table-wrap mb-6">
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="text-left">Class</th>
+
+                                @if (!$hasEvening)
+                                    {{-- ── Morning-only columns ── --}}
+                                    <th class="text-center col-green">
+                                        Promoted
+                                        <span class="th-sub">(Passed from previous class)</span>
+                                    </th>
+                                    <th class="text-center" style="color:#f87171;">
+                                        Failed
+                                        <span class="th-sub">(Repeating same class)</span>
+                                    </th>
+                                    <th class="text-center col-orange">
+                                        Total Existing
+                                        <span class="th-sub">(Promoted + Failed)</span>
+                                    </th>
+                                    <th class="text-center" style="color:#94a3b8;">
+                                        Existing Students
+                                        <span class="th-sub">(cap from Class Setup)</span>
+                                    </th>
+                                @else
+                                    {{-- ── Evening school columns ── --}}
+                                    <th class="text-center" style="color:#3b82f6;">
+                                        🌅 Morning Promoted
+                                        <span class="th-sub">(Passed)</span>
+                                    </th>
+                                    <th class="text-center" style="color:#f87171;">
+                                        🌅 Morning Failed
+                                        <span class="th-sub">(Repeating)</span>
+                                    </th>
+                                    <th class="text-center" style="color:#f59e0b;">
+                                        Morning Total
+                                    </th>
+                                    <th class="text-center" style="color:#94a3b8;">
+                                        Morn. Cap
+                                    </th>
+                                    <th class="text-center" style="color:#6366f1;">
+                                        🌆 Evening Promoted
+                                        <span class="th-sub">(Passed)</span>
+                                    </th>
+                                    <th class="text-center" style="color:#f87171;">
+                                        🌆 Evening Failed
+                                        <span class="th-sub">(Repeating)</span>
+                                    </th>
+                                    <th class="text-center" style="color:#f59e0b;">
+                                        Evening Total
+                                    </th>
+                                    <th class="text-center" style="color:#94a3b8;">
+                                        Even. Cap
+                                    </th>
+                                @endif
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach ($classes as $index => $ic)
+                                <tr>
+                                    {{-- Class Name --}}
+                                    <td>
+                                        <span class="font-semibold">{{ $ic->classModel?->name }}</span>
+                                        @if ($ic->classModel?->is_ece)
+                                            <span class="badge badge-purple" style="margin-left:6px;">ECE</span>
+                                        @endif
+                                        <input type="hidden" name="enrollment[{{ $index }}][class_id]"
+                                            value="{{ $ic->class_id }}" />
+                                    </td>
+
+                                    @if (!$hasEvening)
+                                        {{-- ── Morning-only inputs ── --}}
+
+                                        {{-- Promoted --}}
+                                        <td class="text-center">
+                                            <input type="number" min="0" max="99999"
+                                                x-model.number="rows[{{ $index }}].promoted"
+                                                name="enrollment[{{ $index }}][promoted]"
+                                                class="input-compact" />
+                                        </td>
+
+                                        {{-- Failed --}}
+                                        <td class="text-center">
+                                            <input type="number" min="0" max="99999"
+                                                x-model.number="rows[{{ $index }}].failed"
+                                                name="enrollment[{{ $index }}][failed]"
+                                                class="input-compact" />
+                                        </td>
+
+                                        {{-- Total (reactive, red if over) --}}
+                                        <td class="text-center">
+                                            <span class="font-bold" style="font-size:17px;"
+                                                :class="isOverLimit({{ $index }}) ? 'text-red-500' : 'stat-num--orange'"
+                                                x-text="rows[{{ $index }}].promoted + rows[{{ $index }}].failed"></span>
+                                            <p x-show="isOverLimit({{ $index }})"
+                                               class="text-xs text-red-500 mt-0.5 font-medium">Exceeds cap!</p>
+                                            <input type="hidden" name="enrollment[{{ $index }}][existing]"
+                                                :value="rows[{{ $index }}].promoted + rows[{{ $index }}].failed" />
+                                        </td>
+
+                                        {{-- Cap (read-only) --}}
+                                        <td class="text-center">
+                                            <span class="font-semibold text-gray-400" style="font-size:15px;">
+                                                {{ $ic->existing_enrollment > 0 ? number_format($ic->existing_enrollment) : '—' }}
+                                            </span>
+                                        </td>
+
+                                    @else
+                                        {{-- ── Evening school inputs ── --}}
+
+                                        {{-- Morning Promoted --}}
+                                        <td class="text-center" style="background:#eff6ff;">
+                                            <input type="number" min="0" max="99999"
+                                                x-model.number="rows[{{ $index }}].morning_promoted"
+                                                name="enrollment[{{ $index }}][morning_promoted]"
+                                                class="input-compact" style="border-color:#bfdbfe;" />
+                                        </td>
+
+                                        {{-- Morning Failed --}}
+                                        <td class="text-center" style="background:#eff6ff;">
+                                            <input type="number" min="0" max="99999"
+                                                x-model.number="rows[{{ $index }}].morning_failed"
+                                                name="enrollment[{{ $index }}][morning_failed]"
+                                                class="input-compact" style="border-color:#bfdbfe;" />
+                                        </td>
+
+                                        {{-- Morning Total --}}
+                                        <td class="text-center" style="background:#eff6ff;">
+                                            <span class="font-bold" style="font-size:16px;"
+                                                :class="isOverLimitMorning({{ $index }}) ? 'text-red-500' : 'stat-num--orange'"
+                                                x-text="rows[{{ $index }}].morning_promoted + rows[{{ $index }}].morning_failed"></span>
+                                            <p x-show="isOverLimitMorning({{ $index }})"
+                                               class="text-xs text-red-500 mt-0.5">Exceeds cap!</p>
+                                        </td>
+
+                                        {{-- Morning Cap --}}
+                                        <td class="text-center" style="color:#94a3b8;background:#f8fafc;">
+                                            <span class="font-semibold" style="font-size:14px;">
+                                                {{ $ic->morning_existing > 0 ? number_format($ic->morning_existing) : '—' }}
+                                            </span>
+                                        </td>
+
+                                        {{-- Evening Promoted --}}
+                                        <td class="text-center" style="background:#eef2ff;">
+                                            <input type="number" min="0" max="99999"
+                                                x-model.number="rows[{{ $index }}].evening_promoted"
+                                                name="enrollment[{{ $index }}][evening_promoted]"
+                                                class="input-compact" style="border-color:#c7d2fe;" />
+                                        </td>
+
+                                        {{-- Evening Failed --}}
+                                        <td class="text-center" style="background:#eef2ff;">
+                                            <input type="number" min="0" max="99999"
+                                                x-model.number="rows[{{ $index }}].evening_failed"
+                                                name="enrollment[{{ $index }}][evening_failed]"
+                                                class="input-compact" style="border-color:#c7d2fe;" />
+                                        </td>
+
+                                        {{-- Evening Total --}}
+                                        <td class="text-center" style="background:#eef2ff;">
+                                            <span class="font-bold" style="font-size:16px;"
+                                                :class="isOverLimitEvening({{ $index }}) ? 'text-red-500' : 'stat-num--orange'"
+                                                x-text="rows[{{ $index }}].evening_promoted + rows[{{ $index }}].evening_failed"></span>
+                                            <p x-show="isOverLimitEvening({{ $index }})"
+                                               class="text-xs text-red-500 mt-0.5">Exceeds cap!</p>
+                                        </td>
+
+                                        {{-- Evening Cap --}}
+                                        <td class="text-center" style="color:#94a3b8;background:#f8fafc;">
+                                            <span class="font-semibold" style="font-size:14px;">
+                                                {{ $ic->evening_existing > 0 ? number_format($ic->evening_existing) : '—' }}
+                                            </span>
+                                        </td>
+                                    @endif
+                                </tr>
+                            @endforeach
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <td>TOTAL</td>
+                                @if (!$hasEvening)
+                                    <td class="text-center stat-num--green" x-text="totalPromoted()">—</td>
+                                    <td class="text-center" style="color:#f87171;" x-text="totalFailed()">—</td>
+                                    <td class="text-center stat-num--orange" x-text="totalExisting()">
+                                        {{ number_format($totalEnrolled) }}
+                                    </td>
+                                    <td class="text-center" style="color:#94a3b8;">
+                                        {{ number_format($classes->sum('existing_enrollment')) }}
+                                    </td>
+                                @else
+                                    <td class="text-center" style="color:#3b82f6;" x-text="totalMorningPromoted()">—</td>
+                                    <td class="text-center" style="color:#f87171;" x-text="totalMorningFailed()">—</td>
+                                    <td class="text-center stat-num--orange" x-text="totalMorningExisting()">—</td>
+                                    <td class="text-center" style="color:#94a3b8;">{{ number_format($classes->sum('morning_existing')) }}</td>
+                                    <td class="text-center" style="color:#6366f1;" x-text="totalEveningPromoted()">—</td>
+                                    <td class="text-center" style="color:#f87171;" x-text="totalEveningFailed()">—</td>
+                                    <td class="text-center stat-num--orange" x-text="totalEveningExisting()">—</td>
+                                    <td class="text-center" style="color:#94a3b8;">{{ number_format($classes->sum('evening_existing')) }}</td>
+                                @endif
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            {{-- ── Action Buttons ─────────────────────────────────────── --}}
             <div class="flex flex-wrap gap-3 items-center">
-                <button type="submit" name="action" value="save" class="btn btn-secondary">
+                <button type="submit" name="action" value="save" class="btn btn-secondary"
+                    :disabled="hasAnyOverLimit()"
+                    :class="hasAnyOverLimit() ? 'opacity-50 cursor-not-allowed' : ''">
                     💾 Save Draft
                 </button>
                 <button type="submit" name="action" value="submit" class="btn btn-primary"
-                    onclick="return confirm('Submit enrollment? This cannot be edited after submission.')">
+                    :disabled="hasAnyOverLimit()"
+                    :class="hasAnyOverLimit() ? 'opacity-50 cursor-not-allowed' : ''"
+                    onclick="return !hasAnyOverLimit() && confirm('Submit enrollment? This records the baseline for the academic year. You can still edit it later if needed.')">
                     ✅ Submit Enrollment
                 </button>
                 <a href="{{ route('dashboard') }}" class="btn btn-ghost">← Back</a>
+                <p x-show="hasAnyOverLimit()" class="text-sm text-red-600 font-medium">
+                    ⚠️ Fix highlighted classes before saving.
+                </p>
             </div>
-        @else
-            <div class="fde-alert fde-alert-success">
-                ✅ Enrollment has been submitted. Contact FDE Cell if changes are needed.
-            </div>
-        @endif
 
-    </form>
+        </form>
+    </div>
+
+    <script>
+        function enrollmentPage() {
+            return {
+                rows: @json($enrollmentRows),
+
+                // ── Combined totals (non-evening or overall) ──
+                totalPromoted() { return this.rows.reduce((s, r) => s + (r.promoted || 0), 0); },
+                totalFailed()   { return this.rows.reduce((s, r) => s + (r.failed   || 0), 0); },
+                totalExisting() { return this.rows.reduce((s, r) => s + (r.promoted || 0) + (r.failed || 0), 0); },
+
+                // ── Per-shift totals (evening schools) ──
+                totalMorningPromoted() { return this.rows.reduce((s, r) => s + (r.morning_promoted || 0), 0); },
+                totalMorningFailed()   { return this.rows.reduce((s, r) => s + (r.morning_failed   || 0), 0); },
+                totalMorningExisting() { return this.rows.reduce((s, r) => s + (r.morning_promoted || 0) + (r.morning_failed || 0), 0); },
+                totalEveningPromoted() { return this.rows.reduce((s, r) => s + (r.evening_promoted || 0), 0); },
+                totalEveningFailed()   { return this.rows.reduce((s, r) => s + (r.evening_failed   || 0), 0); },
+                totalEveningExisting() { return this.rows.reduce((s, r) => s + (r.evening_promoted || 0) + (r.evening_failed || 0), 0); },
+
+                // ── Over-limit checks ──
+                isOverLimit(i) {
+                    const r = this.rows[i];
+                    if (!r || r.cap <= 0) return false;
+                    // For evening classes use the live shift inputs (not stale DB promoted_count)
+                    const total = (r.morning_cap > 0 || r.evening_cap > 0)
+                        ? (r.morning_promoted + r.morning_failed) + (r.evening_promoted + r.evening_failed)
+                        : (r.promoted + r.failed);
+                    return total > r.cap;
+                },
+                isOverLimitMorning(i) {
+                    const r = this.rows[i];
+                    if (!r || r.morning_cap <= 0) return false;
+                    return (r.morning_promoted + r.morning_failed) > r.morning_cap;
+                },
+                isOverLimitEvening(i) {
+                    const r = this.rows[i];
+                    if (!r || r.evening_cap <= 0) return false;
+                    return (r.evening_promoted + r.evening_failed) > r.evening_cap;
+                },
+                hasAnyOverLimit() {
+                    return this.rows.some((r, i) =>
+                        this.isOverLimit(i) || this.isOverLimitMorning(i) || this.isOverLimitEvening(i)
+                    );
+                },
+            }
+        }
+    </script>
 
 @endsection

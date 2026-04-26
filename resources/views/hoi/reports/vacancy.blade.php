@@ -39,7 +39,7 @@
         </div>
 
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Existing Enrollment</p>
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Promoted Students</p>
             <p class="text-2xl font-bold text-orange-500">{{ number_format($totalExisting) }}</p>
         </div>
 
@@ -124,7 +124,7 @@
                                 </span>
                             </td>
 
-                            {{-- Existing Enrollment --}}
+                            {{-- Promoted Students --}}
                             <td class="px-3 py-3 text-center bg-orange-50">
                                 <span class="font-semibold text-orange-700">
                                     {{ number_format($row->existing_enrollment) }}

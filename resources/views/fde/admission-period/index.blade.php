@@ -76,6 +76,26 @@
             </div>
         </div>
 
+        {{-- ── Open / Close Admissions ─────────────────────────────────────── --}}
+        <div class="flex gap-3 mb-5">
+            <form method="POST" action="{{ route('fde.admission-period.open') }}">
+                @csrf
+                <button type="submit"
+                    onclick="return confirm('Open admissions for ALL active institutions? Each school\'s dashboard will show Admissions: Open.')"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition">
+                    🟢 Open Admissions for All Schools
+                </button>
+            </form>
+            <form method="POST" action="{{ route('fde.admission-period.close') }}">
+                @csrf
+                <button type="submit"
+                    onclick="return confirm('Close admissions for ALL active institutions?')"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition">
+                    🔴 Close Admissions for All Schools
+                </button>
+            </form>
+        </div>
+
         {{-- ── Daily Cutoff Status ───────────────────────────────────────── --}}
         @if ($stats->is_open)
             <div

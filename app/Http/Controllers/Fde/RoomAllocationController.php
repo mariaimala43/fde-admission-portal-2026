@@ -12,6 +12,7 @@ use App\Models\DailyAdmission;
 use App\Models\AcademicYear;
 use App\Models\Sector;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RoomAllocationController extends Controller
 {
@@ -22,6 +23,23 @@ class RoomAllocationController extends Controller
     public function index(Request $request)
     {
         $academicYear = AcademicYear::where('is_active', true)->first();
+
+        // Newly admitted students in classes that have room allocations this year
+        $admittedInAllocatedRooms = DailyAdmission::join(
+                'room_allocations',
+                fn ($join) => $join
+                    ->on('room_allocations.institution_id', '=', 'daily_admissions.institution_id')
+                    ->on('room_allocations.class_id',       '=', 'daily_admissions.class_id')
+            )
+            ->when($academicYear, fn ($q) =>
+                $q->where('daily_admissions.academic_year_id', $academicYear->id)
+            )
+            ->selectRaw('
+                SUM(morning_boys + evening_boys + morning_girls + evening_girls +
+                    morning_oosc_boys + evening_oosc_boys + morning_oosc_girls + evening_oosc_girls +
+                    morning_p2p_boys  + evening_p2p_boys  + morning_p2p_girls  + evening_p2p_girls) as total
+            ')
+            ->value('total') ?? 0;
 
         $query = NewConstructionRoom::with([
             'institution.sector',
@@ -118,13 +136,17 @@ class RoomAllocationController extends Controller
         $sectors = Sector::orderBy('name')->get(['id', 'name']);
 
         // ── System-wide summary stats ─────────────────────────────────
+        $totalSeats = NewConstructionRoom::sum('rooms_total') * 40;
+
         $stats = (object) [
-            'total_schools'   => NewConstructionRoom::count(),
-            'total_rooms'     => NewConstructionRoom::sum('rooms_total'),
-            'allocated_rooms' => NewConstructionRoom::sum('rooms_allocated'),
-            'completed'       => NewConstructionRoom::where('construction_status', 'completed')->count(),
-            'near_completion' => NewConstructionRoom::where('construction_status', 'near_completion')->count(),
-            'total_seats'     => NewConstructionRoom::sum('rooms_total') * 40,
+            'total_schools'      => NewConstructionRoom::count(),
+            'total_rooms'        => NewConstructionRoom::sum('rooms_total'),
+            'allocated_rooms'    => NewConstructionRoom::sum('rooms_allocated'),
+            'completed'          => NewConstructionRoom::where('construction_status', 'completed')->count(),
+            'near_completion'    => NewConstructionRoom::where('construction_status', 'near_completion')->count(),
+            'total_seats'        => $totalSeats,
+            'admitted_in_rooms'  => $admittedInAllocatedRooms,
+            'capacity_available' => max(0, $totalSeats - $admittedInAllocatedRooms),
         ];
 
         return view('fde.rooms.index', compact('records', 'sectors', 'stats', 'academicYear'));
@@ -217,4 +239,35 @@ class RoomAllocationController extends Controller
             'room', 'allocations', 'schoolTotals', 'academicYear'
         ));
     }
+
+    public function exportPdf(Request $request)
+    {
+        $search = $request->input('search');
+        $status = $request->input('construction_status');
+
+        $records = NewConstructionRoom::with(['institution.sector'])
+            ->when($request->filled('sector_id'), fn ($q) =>
+                $q->whereHas('institution', fn ($i) =>
+                    $i->where('sector_id', $request->sector_id)
+                )
+            )
+            ->when($status, fn ($q) =>
+                $q->where('construction_status', $status)
+            )
+            ->join('institutions', 'new_construction_rooms.institution_id', '=', 'institutions.id')
+            ->orderBy('new_construction_rooms.construction_status')
+            ->orderBy('institutions.name')
+            ->select('new_construction_rooms.*')
+            ->get();
+
+        $generatedAt = now()->format('d M Y, h:i A');
+
+        $pdf = Pdf::loadView('fde.rooms.pdf', compact('records', 'generatedAt', 'search', 'status'))
+                  ->setPaper('a4', 'landscape');
+
+        $filename = 'new-construction-rooms-' . now()->format('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
 }

@@ -131,7 +131,7 @@
                     @foreach ($institutions as $inst)
                         <option value="{{ $inst->id }}"
                             {{ old('institution_id', $user->institution_id) == $inst->id ? 'selected' : '' }}>
-                            {{ $inst->name }}{{ $inst->code ? ' (' . $inst->code . ')' : '' }}
+                            {{ $inst->code ? $inst->code . ' — ' : '' }}{{ $inst->name }}
                         </option>
                     @endforeach
                 </select>

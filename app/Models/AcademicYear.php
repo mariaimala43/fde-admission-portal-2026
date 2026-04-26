@@ -37,8 +37,8 @@ class AcademicYear extends Model
     {
         $today = now()->toDateString();
         return $this->is_active
-            && $today >= $this->admission_start
-            && $today <= $this->admission_end;
+            && $today >= $this->admission_start?->toDateString()
+            && $today <= $this->admission_end?->toDateString();
     }
 
     // Check if daily cutoff has passed for today

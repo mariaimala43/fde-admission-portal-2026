@@ -28,7 +28,7 @@
     </div>
 
     {{-- ── Summary Cards ────────────────────────────────────────────────── --}}
-    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
             <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Schools</p>
             <p class="text-2xl font-bold text-blue-900">{{ $stats->total_schools }}</p>
@@ -50,9 +50,16 @@
             <p class="text-2xl font-bold text-purple-700">{{ number_format($stats->allocated_rooms) }}</p>
         </div>
         <div class="bg-blue-900 rounded-xl shadow-sm p-4 text-center">
-            <p class="text-xs text-blue-200 uppercase tracking-wider mb-1">Capacity Added</p>
-            <p class="text-2xl font-bold text-white">{{ number_format($stats->total_seats) }}</p>
-            <p class="text-xs text-blue-300 mt-0.5">seats (×40/room)</p>
+            <p class="text-xs text-blue-200 uppercase tracking-wider mb-1">Capacity Available</p>
+            <p class="text-2xl font-bold text-white">{{ number_format($stats->capacity_available) }}</p>
+            <p class="text-xs text-blue-300 mt-0.5">
+                of {{ number_format($stats->total_seats) }} total
+                @if ($stats->admitted_in_rooms > 0)
+                    &middot; {{ number_format($stats->admitted_in_rooms) }} admitted
+                @else
+                    seats (×40/room)
+                @endif
+            </p>
         </div>
     </div>
 
@@ -61,10 +68,10 @@
         class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-5 flex flex-wrap gap-3 items-end">
 
         <div class="flex-1 min-w-[160px]">
-            <label class="block text-xs text-gray-500 mb-1">Cluster / Sector</label>
+            <label class="block text-xs text-gray-500 mb-1">Sector</label>
             <select name="sector_id"
                 class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none">
-                <option value="">All Clusters</option>
+                <option value="">All Sectors</option>
                 @foreach ($sectors as $sector)
                     <option value="{{ $sector->id }}" {{ request('sector_id') == $sector->id ? 'selected' : '' }}>
                         {{ $sector->name }}
@@ -109,28 +116,33 @@
     </form>
 
     {{-- ── Main Table ────────────────────────────────────────────────────── --}}
+    <p class="block md:hidden text-xs text-gray-500 mb-2">Scroll right to see all columns, or view on a larger screen for
+        full detail.</p>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="min-w-full text-sm">
                 <thead class="bg-gray-50 text-xs uppercase text-gray-400 border-b border-gray-100">
                     <tr>
-                        <th class="px-4 py-3 text-left">#</th>
-                        <th class="px-4 py-3 text-left">School</th>
-                        <th class="px-4 py-3 text-center">Cluster</th>
-                        <th class="px-4 py-3 text-center">Construction</th>
+                        <th class="px-4 py-3 text-left hidden md:table-cell">#</th>
+                        <th class="px-4 py-3 text-left max-w-[160px] min-w-[120px]">School</th>
+                        <th class="px-4 py-3 text-center hidden md:table-cell">Sector</th>
+                        <th class="px-4 py-3 text-center hidden md:table-cell">Construction</th>
+                        <th class="px-4 py-3 text-left hidden md:table-cell">Remarks</th>
                         <th class="px-4 py-3 text-center">Rooms</th>
-                        <th class="px-4 py-3 text-center border-l border-gray-100 bg-purple-50 text-purple-700">Grade
+                        <th
+                            class="px-4 py-3 text-center border-l border-gray-100 bg-purple-50 text-purple-700 hidden lg:table-cell">
+                            Grade
                             Allocated</th>
-                        <th class="px-4 py-3 text-center bg-blue-50 text-blue-700">Existing<br><span
+                        <th class="px-4 py-3 text-center bg-blue-50 text-blue-700 hidden lg:table-cell">Existing<br><span
                                 class="normal-case font-normal text-gray-400">Enrollment</span></th>
-                        <th class="px-4 py-3 text-center bg-sky-50 text-sky-700">New Boys</th>
-                        <th class="px-4 py-3 text-center bg-pink-50 text-pink-700">New Girls</th>
+                        <th class="px-4 py-3 text-center bg-sky-50 text-sky-700 hidden md:table-cell">New Boys</th>
+                        <th class="px-4 py-3 text-center bg-pink-50 text-pink-700 hidden md:table-cell">New Girls</th>
                         <th class="px-4 py-3 text-center bg-indigo-50 text-indigo-700">Total<br><span
                                 class="normal-case font-normal text-gray-400">Enrollment</span></th>
                         <th class="px-4 py-3 text-center bg-green-50 text-green-700">Available<br><span
                                 class="normal-case font-normal text-gray-400">Seats</span></th>
-                        <th class="px-4 py-3 text-center">Fill %</th>
+                        <th class="px-4 py-3 text-center hidden lg:table-cell">Fill %</th>
                         <th class="px-4 py-3 text-center">Details</th>
                     </tr>
                 </thead>
@@ -154,11 +166,12 @@
 
                         <tr class="hover:bg-gray-50 transition">
                             {{-- # --}}
-                            <td class="px-4 py-3 text-gray-400 text-xs">{{ $loop->iteration }}</td>
+                            <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">{{ $loop->iteration }}</td>
 
                             {{-- School --}}
-                            <td class="px-4 py-3">
-                                <p class="font-semibold text-gray-800 text-xs leading-tight">
+                            <td class="px-4 py-3 max-w-[160px]">
+                                <p class="font-semibold text-gray-800 text-xs leading-tight truncate max-w-[160px]"
+                                    title="{{ $room->institution?->name ?? '—' }}">
                                     {{ $room->institution?->name ?? '—' }}
                                 </p>
                                 <p class="text-xs text-gray-400 mt-0.5">
@@ -167,15 +180,15 @@
                                 </p>
                             </td>
 
-                            {{-- Cluster --}}
-                            <td class="px-4 py-3 text-center">
+                            {{-- Sector --}}
+                            <td class="px-4 py-3 text-center hidden md:table-cell">
                                 <span class="text-xs text-gray-600 font-medium">
                                     {{ $room->institution?->sector?->name ?? ($room->notes ?? '—') }}
                                 </span>
                             </td>
 
                             {{-- Construction Status --}}
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-4 py-3 text-center hidden md:table-cell">
                                 @if ($room->construction_status === 'completed')
                                     <span
                                         class="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
@@ -189,6 +202,11 @@
                                 @endif
                             </td>
 
+                            {{-- Remarks --}}
+                            <td class="px-4 py-3 text-xs text-gray-600 hidden md:table-cell max-w-[160px]">
+                                {{ $room->notes ?? '—' }}
+                            </td>
+
                             {{-- Rooms --}}
                             <td class="px-4 py-3 text-center">
                                 <span class="font-bold text-blue-900">{{ $room->rooms_total }}</span>
@@ -198,7 +216,7 @@
                             </td>
 
                             {{-- Grade Allocated --}}
-                            <td class="px-4 py-3 text-center bg-purple-50">
+                            <td class="px-4 py-3 text-center bg-purple-50 hidden lg:table-cell">
                                 @if ($grades)
                                     <span class="text-xs font-semibold text-purple-700">{{ $grades }}</span>
                                 @else
@@ -206,28 +224,28 @@
                                 @endif
                             </td>
 
-                            {{-- Existing Enrollment --}}
-                            <td class="px-4 py-3 text-center bg-blue-50">
+                            {{-- Promoted Students --}}
+                            <td class="px-4 py-3 text-center bg-blue-50 hidden lg:table-cell">
                                 <span class="font-medium text-blue-700">
                                     {{ $room->allocations->count() > 0 ? number_format($totalExisting) : '—' }}
                                 </span>
                             </td>
 
                             {{-- New Boys --}}
-                            <td class="px-4 py-3 text-center bg-sky-50">
+                            <td class="px-4 py-3 text-center bg-sky-50 hidden md:table-cell">
                                 <span class="font-medium text-sky-700">
                                     {{ $room->allocations->count() > 0 ? number_format($totalBoys) : '—' }}
                                 </span>
                             </td>
 
                             {{-- New Girls --}}
-                            <td class="px-4 py-3 text-center bg-pink-50">
+                            <td class="px-4 py-3 text-center bg-pink-50 hidden md:table-cell">
                                 <span class="font-medium text-pink-600">
                                     {{ $room->allocations->count() > 0 ? number_format($totalGirls) : '—' }}
                                 </span>
                             </td>
 
-                            {{-- Total Enrollment --}}
+                            {{-- Total Capacity --}}
                             <td class="px-4 py-3 text-center bg-indigo-50">
                                 @if ($room->allocations->count() > 0)
                                     <span class="font-bold {{ $isOver ? 'text-red-600' : 'text-indigo-700' }}">
@@ -253,7 +271,7 @@
                             </td>
 
                             {{-- Fill % with mini bar --}}
-                            <td class="px-4 py-3 text-center w-24">
+                            <td class="px-4 py-3 text-center w-24 hidden lg:table-cell">
                                 @if ($room->allocations->count() > 0)
                                     <div class="flex flex-col items-center gap-1">
                                         <span
@@ -281,7 +299,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="13" class="px-6 py-12 text-center text-gray-400">
+                            <td colspan="14" class="px-6 py-12 text-center text-gray-400">
                                 No new construction rooms found.
                             </td>
                         </tr>

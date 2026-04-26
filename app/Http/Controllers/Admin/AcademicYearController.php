@@ -90,4 +90,24 @@ class AcademicYearController extends Controller
         return redirect()->route('admin.academic-years.index')
             ->with('success', "'{$academicYear->name}' is now the active academic year.");
     }
+
+    // ── Delete academic year ────────────────────────────────
+    public function destroy(AcademicYear $academicYear)
+    {
+        if ($academicYear->is_active) {
+            return back()->with('error', 'Cannot delete the active academic year. Set another year as active first.');
+        }
+
+        // Block if any admission data exists for this year
+        $hasData = \App\Models\DailyAdmission::where('academic_year_id', $academicYear->id)->exists();
+        if ($hasData) {
+            return back()->with('error', "Cannot delete: \"{$academicYear->name}\" has admission records linked to it.");
+        }
+
+        $name = $academicYear->name;
+        $academicYear->delete();
+
+        return redirect()->route('admin.academic-years.index')
+            ->with('success', "Academic year \"{$name}\" has been deleted.");
+    }
 }

@@ -12,6 +12,7 @@ use App\Models\StudentTransfer;
 use App\Models\Institution;
 use App\Models\InstitutionClass;
 use App\Models\Classes;
+use App\Models\Sector;
 use App\Models\AcademicYear;
 
 class StudentTransferController extends Controller
@@ -34,11 +35,33 @@ class StudentTransferController extends Controller
         if ($request->filled('to_institution')) {
             $query->where('to_institution_id', $request->to_institution);
         }
+        if ($request->filled('class_id')) {
+            $query->where('class_id', $request->class_id);
+        }
+        if ($request->filled('student_name')) {
+            $s = $request->student_name;
+            $query->where(fn($q) => $q->where('student_name', 'like', "%{$s}%")->orWhere('father_name', 'like', "%{$s}%"));
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('sector_id')) {
+            $sectorId = $request->sector_id;
+            $query->where(fn($q) =>
+                $q->whereHas('fromInstitution', fn($q2) => $q2->where('sector_id', $sectorId))
+                  ->orWhereHas('toInstitution', fn($q2) => $q2->where('sector_id', $sectorId))
+            );
+        }
 
         $transfers    = $query->paginate(30)->withQueryString();
         $institutions = Institution::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $classes      = Classes::orderBy('order')->get(['id', 'name']);
+        $sectors      = Sector::orderBy('name')->get(['id', 'name']);
 
-        return view('fde.transfers.index', compact('transfers', 'institutions'));
+        return view('fde.transfers.index', compact('transfers', 'institutions', 'classes', 'sectors'));
     }
 
     // ── Show create form ──────────────────────────────────────────────

@@ -20,6 +20,10 @@ use App\Http\Controllers\Hoi\AdmissionCorrectionController as HoiCorrectionContr
 use App\Http\Controllers\Hoi\StudentTransferController as HoiTransferController;
 use App\Http\Controllers\Hoi\ReferralController as HoiReferralController;
 use App\Http\Controllers\Hoi\AdmissionMonitoringController as HoiMonitoringController;
+use App\Http\Controllers\Hoi\FacilityController;
+use App\Http\Controllers\Hoi\AdmissionQuotaController;
+use App\Http\Controllers\Hoi\NotificationController as HoiNotificationController;
+use App\Http\Controllers\Hoi\MeritListController as HoiMeritListController;
 use App\Http\Controllers\Fde\DashboardController as FdeDashboardController;
 use App\Http\Controllers\Fde\SchoolsReportController;
 use App\Http\Controllers\Fde\MasterReportController;
@@ -31,6 +35,7 @@ use App\Http\Controllers\Fde\AdmissionMonitoringController as FdeMonitoringContr
 use App\Http\Controllers\Fde\EnrollmentOverrideController;
 use App\Http\Controllers\Fde\AdmissionOverrideController;
 use App\Http\Controllers\Fde\AdmissionCorrectionController as FdeCorrectionController;
+use App\Http\Controllers\Fde\AdmissionEditGrantController;
 use App\Http\Controllers\Fde\AuditLogController;
 use App\Http\Controllers\Fde\PortalSettingsController;
 use App\Http\Controllers\Fde\SeatConfigurationController;
@@ -38,10 +43,21 @@ use App\Http\Controllers\Fde\AdmissionPeriodController;
 use App\Http\Controllers\Aeo\DashboardController as AeoDashboardController;
 use App\Http\Controllers\Aeo\MonitoringController as AeoMonitoringController;
 use App\Http\Controllers\Director\MonitoringController as DirectorMonitoringController;
+use App\Http\Controllers\Director\DashboardController as DirectorDashboardController;
 use App\Http\Controllers\Public\PortalController;
 use App\Http\Controllers\Hoi\RoomAllocationController as HoiRoomController;
 use App\Http\Controllers\Fde\RoomAllocationController as FdeRoomController;
 use App\Http\Controllers\Fde\AiAgentDataController;
+use App\Http\Controllers\Fde\AppSettingsController;
+use App\Http\Controllers\Fde\SystemResetController;
+use App\Http\Controllers\Fde\UcControlRoomController;
+use App\Http\Controllers\Fde\CollegeController;
+use App\Http\Controllers\Fde\MeritListController as FdeMeritListController;
+use App\Http\Controllers\Fde\AnnouncementController;
+use App\Http\Controllers\Hoi\StaffStrengthController as HoiStaffStrengthController;
+use App\Http\Controllers\Fde\StaffStrengthController as FdeStaffStrengthController;
+use App\Http\Controllers\Aeo\StaffStrengthController as AeoStaffStrengthController;
+use App\Http\Controllers\Director\StaffStrengthController as DirectorStaffStrengthController;
 
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -51,12 +67,23 @@ use App\Http\Controllers\Fde\AiAgentDataController;
 Route::get('/', fn() => redirect()->route('login'));
 
 Route::get( '/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']    )->name('login.post');
+Route::post('/login', [AuthController::class, 'login']    )->name('login.post')->middleware('throttle:5,1');
 
 Route::prefix('portal')->name('portal.')->group(function () {
-    Route::get('/',                    [PortalController::class, 'index'])->name('index');
-    Route::get('school/{institution}', [PortalController::class, 'show'] )->name('show');
+    Route::get('/',                    [PortalController::class, 'index']     )->name('index');
+    Route::get('merit-lists',          [PortalController::class, 'meritLists'])->name('merit-lists');
+    Route::get('school/{institution}', [PortalController::class, 'show']      )->name('show');
+    Route::get('seats',                [PortalController::class, 'seats']     )->name('seats');
 });
+
+// Merit list file download — served through Laravel (works on any hosting)
+Route::get('/merit-file/{meritList}', function (\App\Models\InstitutionMeritList $meritList) {
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+    if (! $disk->exists($meritList->file_path)) {
+        abort(404, 'File not found.');
+    }
+    return $disk->response($meritList->file_path, $meritList->original_name);
+})->name('merit.file');
 
 Route::get( '/forgot-password', [ForgotPasswordController::class, 'showForm']     )->name('password.request');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
@@ -91,16 +118,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get( 'classes', [ClassSetupController::class, 'index'])->name('classes.setup')->middleware('can:section.manage');
         Route::post('classes', [ClassSetupController::class, 'save'] )->name('classes.save')->middleware('can:section.manage');
 
+        // Facility settings
+        Route::get( 'facilities', [FacilityController::class, 'index'])->name('facilities.index');
+        Route::post('facilities', [FacilityController::class, 'save'] )->name('facilities.save');
+
         // Baseline enrollment
         Route::get( 'enrollment', [EnrollmentController::class, 'index'])->name('enrollment.index');
         Route::post('enrollment', [EnrollmentController::class, 'save'] )->name('enrollment.save');
+
+        // Admission quota (HOI-set capacity per class)
+        Route::get( 'admission-quota', [AdmissionQuotaController::class, 'index'])->name('quota.index');
+        Route::post('admission-quota', [AdmissionQuotaController::class, 'save'] )->name('quota.save');
 
         // Daily admissions
         Route::get( 'admissions/daily', [DailyAdmissionController::class, 'index'])->name('admissions.daily');
         Route::post('admissions/daily', [DailyAdmissionController::class, 'save'] )->name('admissions.save');
 
         // Admission report
-        Route::get('admissions/report',  [AdmissionReportController::class, 'index']  )->name('admissions.report');
+        Route::get('admissions/report',       [AdmissionReportController::class, 'index']       )->name('admissions.report');
+        Route::get('admissions/report/excel', [AdmissionReportController::class, 'exportExcel'] )->name('admissions.report.excel');
+        Route::get('admissions/report/pdf',   [AdmissionReportController::class, 'exportPdf']   )->name('admissions.report.pdf');
 
         // Vacancy position report
         Route::get('reports/vacancy',    [AdmissionReportController::class, 'vacancy'] )->name('reports.vacancy');
@@ -123,23 +160,43 @@ Route::middleware(['auth'])->group(function () {
         Route::post('transfers/{transfer}/info',   [HoiTransferController::class, 'requestInfo'])->name('transfers.request-info');
 
         // Referrals
-        Route::get(   'referrals',                   [HoiReferralController::class, 'index'] )->name('referrals.index');
-        Route::patch( 'referrals/{referral}/accept', [HoiReferralController::class, 'accept'])->name('referrals.accept');
-        Route::patch( 'referrals/{referral}/reject', [HoiReferralController::class, 'reject'])->name('referrals.reject');
+        Route::get(   'referrals',                                [HoiReferralController::class, 'index']          )->name('referrals.index');
+        Route::get(   'referrals/{referral}',                     [HoiReferralController::class, 'show']           )->name('referrals.show');
+        Route::patch( 'referrals/{referral}/accept',              [HoiReferralController::class, 'accept']         )->name('referrals.accept');
+        Route::patch( 'referrals/{referral}/reject',              [HoiReferralController::class, 'reject']         )->name('referrals.reject');
+        Route::post(  'referrals/{referral}/update-test',         [HoiReferralController::class, 'updateTest']     )->name('referrals.update-test');
+        Route::post(  'referrals/{referral}/update-admission',    [HoiReferralController::class, 'updateAdmission'])->name('referrals.update-admission');
 
         // Monitoring
         Route::prefix('monitoring')->name('monitoring.')->group(function () {
             Route::get(  '/',                     [HoiMonitoringController::class, 'index']           )->name('index');
             Route::get(  '/{monitoring}',         [HoiMonitoringController::class, 'show']            )->name('show');
-            Route::patch('/{monitoring}/test',    [HoiMonitoringController::class, 'updateTestStatus'])->name('test');
-            Route::patch('/{monitoring}/doc',     [HoiMonitoringController::class, 'updateDocStatus'] )->name('doc');
+            Route::patch('/{monitoring}/test', [HoiMonitoringController::class, 'updateTestStatus'])->name('test');
+            Route::patch('/{monitoring}/doc',  [HoiMonitoringController::class, 'updateDocStatus'] )->name('doc');
         });
        Route::prefix('rooms')->name('rooms.')->group(function () {
             Route::get(    '/',             [HoiRoomController::class, 'index']  )->name('index');
             Route::post(   '/',             [HoiRoomController::class, 'store']  )->name('store');
             Route::put(    '/{allocation}', [HoiRoomController::class, 'update'] )->name('update');
             Route::delete( '/{allocation}', [HoiRoomController::class, 'destroy'])->name('destroy');
+            Route::get( '/export',        [HoiRoomController::class, 'exportPdf'])->name('export');
         });
+
+        // In-app notifications (daily admission reminders)
+        Route::get(    'notifications',              [HoiNotificationController::class, 'index']      )->name('notifications.index');
+        Route::post(   'notifications/mark-all-read',[HoiNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+        Route::post(   'notifications/{id}/read',    [HoiNotificationController::class, 'markRead']   )->name('notifications.mark-read');
+        Route::delete( 'notifications/{id}',         [HoiNotificationController::class, 'destroy']    )->name('notifications.destroy');
+
+        // Merit list file uploads (per school)
+        Route::resource('merit-lists', HoiMeritListController::class)->only(['index', 'store', 'destroy']);
+
+        // Staff Strength Register
+        Route::prefix('staff-strength')->name('staff-strength.')->group(function () {
+            Route::get( '/',     [HoiStaffStrengthController::class, 'index'])->name('index');
+            Route::post('/save', [HoiStaffStrengthController::class, 'save'] )->name('save');
+        });
+
     });
 
 
@@ -149,8 +206,11 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:fde_cell'])->prefix('fde')->name('fde.')->group(function () {
 
         Route::get('dashboard',             [FdeDashboardController::class,  'index'])->name('dashboard');
-        Route::get('schools',               [SchoolsReportController::class, 'index'])->name('schools.index');
-        Route::get('schools/{institution}', [SchoolsReportController::class, 'show'] )->name('schools.show');
+        Route::get( 'schools',                              [SchoolsReportController::class, 'index']          )->name('schools.index');
+        Route::get( 'schools/{institution}',               [SchoolsReportController::class, 'show']           )->name('schools.show');
+        Route::post('schools/{institution}/reset-admissions', [SchoolsReportController::class, 'resetAdmissions'])->name('schools.reset-admissions');
+        Route::post('schools/{institution}/quota',            [SchoolsReportController::class, 'saveQuota']       )->name('schools.save-quota');
+
         Route::get('reports/master',        [MasterReportController::class,  'index'])->name('reports.master');
 
         // Analytics
@@ -161,7 +221,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('reports/oosc',      [ReportDashboardController::class, 'ooscReport'])   ->name('reports.oosc');
 
         // Exports
-        Route::get('export/master',  [ExportController::class, 'masterReport']) ->name('export.master');
+        Route::get('export/master', [MasterReportController::class, 'export'])->name('export.master');
         Route::get('export/vacancy', [ExportController::class, 'vacancyReport'])->name('export.vacancy');
         Route::get('export/oosc',    [ExportController::class, 'ooscReport'])   ->name('export.oosc');
 
@@ -206,10 +266,11 @@ Route::middleware(['auth'])->group(function () {
             Route::post( '/sync',              [FdeMonitoringController::class, 'sync']             )->name('sync');
         });
 
-        //Rooms
-      Route::prefix('rooms')->name('rooms.')->group(function () {
-            Route::get( '/',      [FdeRoomController::class, 'index'])->name('index');
-            Route::get( '/{room}',[FdeRoomController::class, 'show'] )->name('show');
+        // Rooms
+        Route::prefix('rooms')->name('rooms.')->group(function () {
+            Route::get( '/',         [FdeRoomController::class, 'index']    )->name('index');
+            Route::get( '/export',   [FdeRoomController::class, 'exportPdf'])->name('export');
+            Route::get( '/{room}',   [FdeRoomController::class, 'show']     )->name('show');
         });
 
         // Correction requests
@@ -218,6 +279,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get( '/{correction}',          [FdeCorrectionController::class, 'show']   )->name('show');
             Route::post('/{correction}/approve',  [FdeCorrectionController::class, 'approve'])->name('approve');
             Route::post('/{correction}/reject',   [FdeCorrectionController::class, 'reject'] )->name('reject');
+        });
+
+        // Edit Grants — Option B (FDE grants HOI temporary post-lock edit permission)
+        Route::prefix('admission-grants')->name('admission-grants.')->group(function () {
+            Route::get( '/',               [AdmissionEditGrantController::class, 'index'] )->name('index');
+            Route::get( '/create',         [AdmissionEditGrantController::class, 'create'])->name('create');
+            Route::post('/',               [AdmissionEditGrantController::class, 'store'] )->name('store');
+            Route::post('/{grant}/revoke', [AdmissionEditGrantController::class, 'revoke'])->name('revoke');
         });
 
         // Audit log
@@ -229,8 +298,10 @@ Route::middleware(['auth'])->group(function () {
 
         // Admission period management
         Route::prefix('admission-period')->name('admission-period.')->middleware('can:admission_period.manage')->group(function () {
-            Route::get('/',                          [AdmissionPeriodController::class, 'index'] )->name('index');
-            Route::put('/{academicYear}',            [AdmissionPeriodController::class, 'update'])->name('update');
+            Route::get('/',                          [AdmissionPeriodController::class, 'index']          )->name('index');
+            Route::put('/{academicYear}',            [AdmissionPeriodController::class, 'update']         )->name('update');
+            Route::post('/open',                     [AdmissionPeriodController::class, 'openAdmissions'] )->name('open');
+            Route::post('/close',                    [AdmissionPeriodController::class, 'closeAdmissions'])->name('close');
         });
 
         // Seat configuration
@@ -238,8 +309,9 @@ Route::middleware(['auth'])->group(function () {
             Route::get( '/',                    [SeatConfigurationController::class, 'index'] )->name('index');
             Route::get( '/{institution}',       [SeatConfigurationController::class, 'edit']  )->name('edit');
             Route::put( '/{institution}',       [SeatConfigurationController::class, 'update'])->name('update');
-            Route::post('/{institution}/lock',  [SeatConfigurationController::class, 'lock']  )->name('lock');
-            Route::post('/{institution}/unlock',[SeatConfigurationController::class, 'unlock'])->name('unlock');
+            Route::post('/{institution}/lock',  [SeatConfigurationController::class, 'lock']        )->name('lock');
+            Route::post('/{institution}/unlock',[SeatConfigurationController::class, 'unlock']      )->name('unlock');
+            Route::post('/{institution}/sync',  [SeatConfigurationController::class, 'syncClasses'] )->name('sync');
         });
 
         // Portal settings
@@ -247,15 +319,48 @@ Route::middleware(['auth'])->group(function () {
             Route::get( '/', [PortalSettingsController::class, 'index'] )->name('index');
             Route::put( '/', [PortalSettingsController::class, 'update'])->name('update');
         });
-        
-       // AI Report Studio page
+
+        // Merit list management (FDE can upload for any institution)
+        Route::prefix('merit-lists')->name('merit-lists.')->group(function () {
+            Route::get( '/',               [FdeMeritListController::class, 'index']  )->name('index');
+            Route::post('/',               [FdeMeritListController::class, 'store']  )->name('store');
+            Route::delete('/{meritList}',  [FdeMeritListController::class, 'destroy'])->name('destroy');
+        });
+        // Theme Customizer
+        Route::get( 'theme',       [\App\Http\Controllers\Fde\ThemeController::class, 'index']  )->name('theme.index');
+        Route::put( 'theme',       [\App\Http\Controllers\Fde\ThemeController::class, 'update'] )->name('theme.update');
+        Route::post('theme/reset', [\App\Http\Controllers\Fde\ThemeController::class, 'reset']  )->name('theme.reset');
+
+            // AI Report Studio page
         Route::get('ai-reports', [AiAgentDataController::class, 'studio'])->name('ai.reports');
+        Route::post('api/ai-insights', [AiAgentDataController::class,'insights']);
 
         // Data + Claude API routes (also inside same group, or nested prefix)
         Route::prefix('api')->name('api.')->group(function () {
             Route::get('agent-data',   [AiAgentDataController::class, 'agentData'])->name('agent-data');
             Route::post('ai-generate', [AiAgentDataController::class, 'generate'] )->name('ai-generate');
         });
+
+        // Staff Strength Register
+        Route::prefix('staff-strength')->name('staff-strength.')->group(function () {
+            Route::get( '/',                              [FdeStaffStrengthController::class, 'index']      )->name('index');
+            Route::get( '/{staffStrength}',               [FdeStaffStrengthController::class, 'show']       )->name('show');
+            Route::get( '/{staffStrength}/edit',          [FdeStaffStrengthController::class, 'edit']       )->name('edit');
+            Route::put( '/{staffStrength}',               [FdeStaffStrengthController::class, 'update']     )->name('update');
+            Route::post('/{staffStrength}/lock',          [FdeStaffStrengthController::class, 'lock']       )->name('lock');
+            Route::post('/{staffStrength}/unlock',        [FdeStaffStrengthController::class, 'unlock']     )->name('unlock');
+            Route::get( '/{staffStrength}/export-pdf',    [FdeStaffStrengthController::class, 'exportPdf']  )->name('export-pdf');
+            Route::get( '/{staffStrength}/export-excel',  [FdeStaffStrengthController::class, 'exportExcel'])->name('export-excel');
+        });
+
+                // ── App / Dashboard Settings ──────────────────────────────────────
+        Route::get( 'app-settings',        [AppSettingsController::class, 'index']  )->name('app-settings.index');
+        Route::put( 'app-settings',        [AppSettingsController::class, 'update'] )->name('app-settings.update');
+
+        // ── System Reset ──────────────────────────────────────────────────
+        Route::get( 'system-reset',        [SystemResetController::class, 'index']  )->name('system-reset.index');
+        Route::post('system-reset/execute',[SystemResetController::class, 'reset']  )->name('system-reset.execute');
+
 
     });
 
@@ -282,6 +387,12 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{monitoring}', [AeoMonitoringController::class, 'show'] )->name('show');
         });
 
+        // Staff Strength Register — read-only, sector-scoped
+        Route::prefix('staff-strength')->name('staff-strength.')->group(function () {
+            Route::get('/',                [AeoStaffStrengthController::class, 'index'])->name('index');
+            Route::get('/{staffStrength}', [AeoStaffStrengthController::class, 'show'] )->name('show');
+        });
+
     }); // end role:aeo
 
 
@@ -290,8 +401,8 @@ Route::middleware(['auth'])->group(function () {
     // ════════════════════════════════════════════════════════════════════════
     Route::middleware(['role:director'])->prefix('director')->name('director.')->group(function () {
 
-        // Dashboard — AeoDashboardController handles $isDirector=true (all sectors, no filter)
-        Route::get('dashboard', [AeoDashboardController::class, 'index'])->name('dashboard');
+        // Executive Dashboard — dedicated controller with rich analytics
+        Route::get('dashboard', [DirectorDashboardController::class, 'index'])->name('dashboard');
 
         // Reports — ReportDashboardController: sectorIds() returns null for director (no restriction)
         //           renders aeo.reports.* blades (read-only, no FDE action buttons)
@@ -300,6 +411,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('reports/vacancy',   [ReportDashboardController::class, 'vacancyReport'])->name('reports.vacancy');
         Route::get('reports/gender',    [ReportDashboardController::class, 'genderReport'] )->name('reports.gender');
         Route::get('reports/oosc',      [ReportDashboardController::class, 'ooscReport']   )->name('reports.oosc');
+        Route::get('reports/master',    [MasterReportController::class,    'index']        )->name('reports.master');
 
         // Exports
         Route::get('export/vacancy', [ExportController::class, 'vacancyReport'])->name('export.vacancy');
@@ -312,7 +424,23 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{monitoring}', [DirectorMonitoringController::class, 'show'] )->name('show');
         });
 
+        // Staff Strength Register — read-only + export, system-wide
+        Route::prefix('staff-strength')->name('staff-strength.')->group(function () {
+            Route::get('/',                              [DirectorStaffStrengthController::class, 'index']      )->name('index');
+            Route::get('/{staffStrength}',               [DirectorStaffStrengthController::class, 'show']       )->name('show');
+            Route::get('/{staffStrength}/export-pdf',    [DirectorStaffStrengthController::class, 'exportPdf']  )->name('export-pdf');
+            Route::get('/{staffStrength}/export-excel',  [DirectorStaffStrengthController::class, 'exportExcel'])->name('export-excel');
+        });
+
     }); // end role:director
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  ANNOUNCEMENTS — FDE Cell only, named announcements.* to match views
+    // ════════════════════════════════════════════════════════════════════════
+    Route::middleware(['role:fde_cell'])
+        ->group(function () {
+            Route::resource('announcements', AnnouncementController::class);
+        });
 
     // ════════════════════════════════════════════════════════════════════════
     //  ADMIN — FDE Cell only
@@ -320,17 +448,16 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:fde_cell'])->prefix('admin')->name('admin.')->group(function () {
 
         Route::resource('ucs', UnionCouncilController::class)
-            ->except(['destroy', 'show'])
+            ->except(['show'])
             ->parameters(['ucs' => 'unionCouncil']);
 
         Route::resource('sectors', SectorController::class)
-            ->except(['destroy', 'show']);
+            ->except(['show']);
 
-        Route::resource('institutions', InstitutionController::class)
-            ->except(['destroy']);
+        Route::resource('institutions', InstitutionController::class);
 
         Route::resource('users', UserController::class)
-            ->except(['destroy', 'show']);
+            ->except(['show']);
         Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
             ->name('users.toggle-status');
 
@@ -339,9 +466,39 @@ Route::middleware(['auth'])->group(function () {
 
         // Academic Years CRUD
         Route::resource('academic-years', AcademicYearController::class)
-            ->except(['destroy', 'show']);
+            ->except(['show']);
         Route::post('academic-years/{academicYear}/set-active', [AcademicYearController::class, 'setActive'])
             ->name('academic-years.set-active');
     });
+
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  UC CONTROL ROOMS — accessible to all 4 roles (read-only listing)
+    // ════════════════════════════════════════════════════════════════════════
+    Route::middleware(['role:fde_cell|hoi|aeo|director'])
+         ->prefix('uc-control-rooms')
+         ->name('uc.control-rooms.')
+         ->group(function () {
+
+        Route::get('/',           [UcControlRoomController::class, 'index']     )->name('index');
+        Route::get('/export-pdf', [UcControlRoomController::class, 'exportPdf'] )->name('export-pdf');
+        Route::get('/{ucControlRoom}', [UcControlRoomController::class, 'show'] )->name('show');
+    });
+
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  COLLEGES — Model + Ex-FG (all roles; hoi/aeo/director see own scope)
+    // ════════════════════════════════════════════════════════════════════════
+    Route::middleware(['role:fde_cell|hoi|aeo|director'])
+         ->prefix('colleges')
+         ->name('fde.colleges.')
+         ->group(function () {
+
+        Route::get('model',             [CollegeController::class, 'modelColleges'])->name('model');
+        Route::get('ex-fg',             [CollegeController::class, 'exFgColleges'] )->name('ex-fg');
+        Route::get('export-pdf/{type}', [CollegeController::class, 'exportPdf']    )->name('export-pdf');
+        Route::get('{institution}',     [CollegeController::class, 'profile']       )->name('profile');
+    });
+
 
 });

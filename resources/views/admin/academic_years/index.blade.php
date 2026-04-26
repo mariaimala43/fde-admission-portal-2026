@@ -15,8 +15,14 @@
     </div>
 
     @if (session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 mb-5 text-sm">✅
-            {{ session('success') }}</div>
+        <div class="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 mb-5 text-sm">
+            ✅ {{ session('success') }}
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 mb-5 text-sm">
+            ❌ {{ session('error') }}
+        </div>
     @endif
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -76,6 +82,15 @@
                                             onclick="return confirm('Set {{ $year->name }} as the active academic year?')"
                                             class="px-3 py-1.5 text-xs font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                                             Set Active
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.academic-years.destroy', $year) }}"
+                                        onsubmit="return confirm('Delete academic year \'{{ addslashes($year->name) }}\'? This cannot be undone.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition">
+                                            Delete
                                         </button>
                                     </form>
                                 @endif

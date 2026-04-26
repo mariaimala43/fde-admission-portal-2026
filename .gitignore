@@ -23,3 +23,27 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /.claude
+
+# Training / demo videos (large binaries — not tracked in git)
+/public/videos/
+/hoi_demo_video/
+
+# Tutorial video generator — runtime output (git-ignored)
+/video-tutorial/audio_clips/
+/video-tutorial/slides/
+/video-tutorial/*.mp4
+
+# Large binary / zip backup (not for git)
+/fdeadmission
+
+# Accidental empty files
+"'Dr"
+"'Prof"
+"updateOrInsert("
+
+# Windows shortcuts
+*.lnk
+
+# Deployment docs (optional — remove line to track them)
+DEPLOYMENT_REPORT.md
+PLAN.md

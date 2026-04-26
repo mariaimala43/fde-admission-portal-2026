@@ -35,7 +35,7 @@ class OverallSummarySheet implements FromArray, WithTitle, WithStyles, WithColum
             ['FDE MASTER ADMISSION REPORT', '', '', '', '', '', '', '', '', ''],
             ["Academic Year: {$year}", '', '', "Period: {$from} to {$to}", '', '', '', '', '', ''],
             [''],
-            ['Class', 'Schools', 'Total Seats', 'Existing', 'Regular', 'OOSC', 'P2P', 'Total Admitted', 'Total Filled', 'Remaining'],
+            ['Class', 'Schools', 'Total Seats', 'Existing', 'Regular', 'OOSC', 'P2G', 'Total Admitted', 'Total Filled', 'Remaining'],
         ];
 
         foreach ($this->data['overallByClass'] as $row) {

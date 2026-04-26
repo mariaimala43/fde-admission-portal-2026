@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Classes;
+use App\Models\StudentTransfer;
 
 class Institution extends Model
 {
@@ -31,6 +32,9 @@ class Institution extends Model
         'has_meal_program',
         'has_evening_classes',
         'admission_status',
+        'ib_number',
+        'hoi_name',
+        'hoi_contact',
         'is_active',
         // is_cambridge is NOT in fillable — protected
     ];
@@ -95,12 +99,12 @@ class Institution extends Model
 
     public function outgoingTransfers()
     {
-        return $this->hasMany(Transfer::class, 'from_institution_id');
+        return $this->hasMany(StudentTransfer::class, 'from_institution_id');
     }
 
     public function incomingTransfers()
     {
-        return $this->hasMany(Transfer::class, 'to_institution_id');
+        return $this->hasMany(StudentTransfer::class, 'to_institution_id');
     }
 
     public function referrals()
@@ -131,5 +135,10 @@ class Institution extends Model
     public function seatsLockedBy()
     {
         return $this->belongsTo(User::class, 'seats_locked_by');
+    }
+
+    public function meritLists()
+    {
+        return $this->hasMany(InstitutionMeritList::class)->latest();
     }
 }

@@ -58,9 +58,15 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5">
         <form method="GET" class="flex flex-wrap gap-3 items-end">
             <div>
-                <label class="block text-xs text-gray-500 mb-1">Search</label>
+                <label class="block text-xs text-gray-500 mb-1">Search User</label>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Name, email or phone…"
-                    class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56" />
+                    class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48" />
+            </div>
+
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">School / EMIS</label>
+                <input type="text" name="school" value="{{ request('school') }}" placeholder="School name or EMIS…"
+                    class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48" />
             </div>
 
             <div>
@@ -68,8 +74,8 @@
                 <select name="role"
                     class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Roles</option>
-                    <option value="hoi" {{ request('role') === 'hoi' ? 'selected' : '' }}>HOI</option>
-                    <option value="aeo" {{ request('role') === 'aeo' ? 'selected' : '' }}>AEO</option>
+                    <option value="hoi"      {{ request('role') === 'hoi'      ? 'selected' : '' }}>HOI</option>
+                    <option value="aeo"      {{ request('role') === 'aeo'      ? 'selected' : '' }}>AEO</option>
                     <option value="fde_cell" {{ request('role') === 'fde_cell' ? 'selected' : '' }}>FDE Cell</option>
                     <option value="director" {{ request('role') === 'director' ? 'selected' : '' }}>Director</option>
                 </select>
@@ -80,7 +86,7 @@
                 <select name="status"
                     class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All</option>
-                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
             </div>
@@ -89,7 +95,7 @@
                 Filter
             </button>
 
-            @if (request()->hasAny(['search', 'role', 'status']))
+            @if (request()->hasAny(['search', 'school', 'role', 'status']))
                 <a href="{{ route('admin.users.index') }}"
                     class="px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-500 hover:bg-gray-50">
                     Clear
@@ -103,14 +109,15 @@
         <table class="w-full text-sm">
             <thead class="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-100">
                 <tr>
-                    <th class="px-5 py-3 text-left">#</th>
-                    <th class="px-5 py-3 text-left">Name</th>
-                    <th class="px-5 py-3 text-left">Email</th>
-                    <th class="px-5 py-3 text-left">Phone</th>
-                    <th class="px-5 py-3 text-center">Role</th>
-                    <th class="px-5 py-3 text-left">Assignment</th>
-                    <th class="px-5 py-3 text-center">Status</th>
-                    <th class="px-5 py-3 text-center">Actions</th>
+                    <th class="px-4 py-3 text-left">#</th>
+                    <th class="px-4 py-3 text-left">Name</th>
+                    <th class="px-4 py-3 text-left hidden md:table-cell">Email</th>
+                    <th class="px-4 py-3 text-left hidden lg:table-cell">Phone</th>
+                    <th class="px-4 py-3 text-center">Role</th>
+                    <th class="px-4 py-3 text-left hidden sm:table-cell">Assignment</th>
+                    <th class="px-4 py-3 text-center hidden sm:table-cell">EMIS</th>
+                    <th class="px-4 py-3 text-center">Status</th>
+                    <th class="px-4 py-3 text-center">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -133,12 +140,13 @@
                         };
                     @endphp
                     <tr class="hover:bg-gray-50 transition-colors {{ !$user->is_active ? 'opacity-60' : '' }}">
-                        <td class="px-5 py-3 text-gray-400 text-xs">{{ $loop->iteration }}</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs">
+                            {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}
+                        </td>
 
-                        <td class="px-5 py-3">
+                        <td class="px-4 py-3">
                             <div class="flex items-center gap-2.5">
-                                <div
-                                    class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center
+                                <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center
                                             text-blue-800 text-xs font-bold shrink-0">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </div>
@@ -146,17 +154,17 @@
                             </div>
                         </td>
 
-                        <td class="px-5 py-3 text-gray-500">{{ $user->email }}</td>
+                        <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ $user->email }}</td>
 
-                        <td class="px-5 py-3 text-gray-500">{{ $user->phone ?? '—' }}</td>
+                        <td class="px-4 py-3 text-gray-500 hidden lg:table-cell">{{ $user->phone ?? '—' }}</td>
 
-                        <td class="px-5 py-3 text-center">
+                        <td class="px-4 py-3 text-center">
                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ $roleBadge }}">
                                 {{ $roleLabel }}
                             </span>
                         </td>
 
-                        <td class="px-5 py-3 text-gray-600 text-xs">
+                        <td class="px-4 py-3 text-gray-600 text-xs hidden sm:table-cell">
                             @if ($role === 'hoi' && $user->institution)
                                 <span class="font-medium">{{ $user->institution->name }}</span>
                             @elseif($role === 'aeo' && $user->sectors->isNotEmpty())
@@ -171,17 +179,25 @@
                             @endif
                         </td>
 
-                        <td class="px-5 py-3 text-center">
-                            @if ($user->is_active)
-                                <span
-                                    class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Active</span>
+                        <td class="px-4 py-3 text-center hidden sm:table-cell">
+                            @if ($role === 'hoi' && $user->institution)
+                                <span class="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                                    {{ $user->institution->code ?? '—' }}
+                                </span>
                             @else
-                                <span
-                                    class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">Inactive</span>
+                                <span class="text-gray-300">—</span>
                             @endif
                         </td>
 
-                        <td class="px-5 py-3">
+                        <td class="px-4 py-3 text-center">
+                            @if ($user->is_active)
+                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Active</span>
+                            @else
+                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">Inactive</span>
+                            @endif
+                        </td>
+
+                        <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-2">
                                 <a href="{{ route('admin.users.edit', $user) }}"
                                     class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</a>
@@ -196,13 +212,22 @@
                                             {{ $user->is_active ? 'Deactivate' : 'Activate' }}
                                         </button>
                                     </form>
+                                    <span class="text-gray-200">|</span>
+                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
+                                        onsubmit="return confirm('Permanently delete user \'{{ addslashes($user->name) }}\'? This cannot be undone.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-400 hover:text-red-700 text-sm font-medium">
+                                            Delete
+                                        </button>
+                                    </form>
                                 @endif
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-10 text-center text-gray-400">
+                        <td colspan="9" class="px-6 py-10 text-center text-gray-400">
                             No users found.
                             <a href="{{ route('admin.users.create') }}" class="text-blue-600 hover:underline">Add one</a>.
                         </td>

@@ -19,7 +19,24 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-2xl" x-data="{ role: '{{ old('role') }}' }">
+    @php
+        $institutionsJson = $institutions->map(fn($i) => [
+            'id'        => $i->id,
+            'name'      => $i->name . ($i->code ? ' (' . $i->code . ')' : ''),
+            'sector_id' => $i->sector_id,
+        ])->values()->toJson();
+    @endphp
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-2xl"
+        x-data="{
+            role: '{{ old('role') }}',
+            hoiSector: '{{ old('hoi_sector') }}',
+            allInstitutions: {{ $institutionsJson }},
+            get filteredInstitutions() {
+                if (!this.hoiSector) return [];
+                return this.allInstitutions.filter(i => i.sector_id == this.hoiSector);
+            }
+        }">
 
         <form method="POST" action="{{ route('admin.users.store') }}">
             @csrf
@@ -109,8 +126,24 @@
                 @enderror
             </div>
 
-            {{-- Institution — HOI only --}}
+            {{-- Sector filter — HOI only (step 1) --}}
             <div class="mb-5" x-show="role === 'hoi'" x-cloak>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Sector <span class="text-red-500">*</span>
+                </label>
+                <select name="hoi_sector" x-model="hoiSector"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">— Select Sector —</option>
+                    @foreach ($sectors as $sector)
+                        <option value="{{ $sector->id }}">{{ $sector->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Select a sector to filter institutions.</p>
+            </div>
+
+            {{-- Institution — HOI only (step 2, filtered by sector) --}}
+            <div class="mb-5" x-show="role === 'hoi' && hoiSector" x-cloak>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
                     Assign Institution <span class="text-red-500">*</span>
                 </label>
@@ -119,11 +152,11 @@
                            focus:outline-none focus:ring-2 focus:ring-blue-500
                            @error('institution_id') border-red-400 @enderror">
                     <option value="">— Select Institution —</option>
-                    @foreach ($institutions as $inst)
-                        <option value="{{ $inst->id }}" {{ old('institution_id') == $inst->id ? 'selected' : '' }}>
-                            {{ $inst->name }}{{ $inst->code ? ' (' . $inst->code . ')' : '' }}
-                        </option>
-                    @endforeach
+                    <template x-for="inst in filteredInstitutions" :key="inst.id">
+                        <option :value="inst.id"
+                            :selected="inst.id == {{ old('institution_id', 'null') }}"
+                            x-text="inst.code + ' — ' + inst.name"></option>
+                    </template>
                 </select>
                 @error('institution_id')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

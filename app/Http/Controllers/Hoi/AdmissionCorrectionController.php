@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\Hoi;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreAdmissionCorrectionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -120,28 +121,10 @@ class AdmissionCorrectionController extends Controller
     }
 
     // ── Store correction request ──────────────────────────────────────
-    public function store(Request $request)
+    public function store(StoreAdmissionCorrectionRequest $request)
     {
         $institution = Auth::user()->institution;
         abort_if(!$institution, 403);
-
-        $request->validate([
-            'admission_date'       => 'required|date',
-            'class_id'             => 'required|integer|exists:classes,id',
-            'reason'               => 'required|string|max:1000',
-            'new_morning_boys'     => 'required|integer|min:0|max:9999',
-            'new_morning_girls'    => 'required|integer|min:0|max:9999',
-            'new_evening_boys'     => 'nullable|integer|min:0|max:9999',
-            'new_evening_girls'    => 'nullable|integer|min:0|max:9999',
-            'new_morning_oosc_boys'  => 'nullable|integer|min:0|max:9999',
-            'new_morning_oosc_girls' => 'nullable|integer|min:0|max:9999',
-            'new_morning_p2p_boys'   => 'nullable|integer|min:0|max:9999',
-            'new_morning_p2p_girls'  => 'nullable|integer|min:0|max:9999',
-            'new_evening_oosc_boys'  => 'nullable|integer|min:0|max:9999',
-            'new_evening_oosc_girls' => 'nullable|integer|min:0|max:9999',
-            'new_evening_p2p_boys'   => 'nullable|integer|min:0|max:9999',
-            'new_evening_p2p_girls'  => 'nullable|integer|min:0|max:9999',
-        ]);
 
         $entry = DailyAdmission::where('institution_id', $institution->id)
             ->where('admission_date', $request->admission_date)

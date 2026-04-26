@@ -4,15 +4,15 @@
 
 @section('content')
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Transfer Request #{{ $transfer->id }}</h2>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Transfer Request #{{ $transfer->id }}</h2>
             <p class="text-sm text-gray-500 mt-1">
                 {{ $transfer->fromInstitution->name }} → {{ $transfer->toInstitution->name }}
             </p>
         </div>
         <a href="{{ route('hoi.transfers.index') }}"
-            class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition">
+            class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-4 py-2 transition">
             ← Back to Transfers
         </a>
     </div>
@@ -42,7 +42,7 @@
                     </span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">From School</p>
                         <p class="font-semibold text-gray-800">{{ $transfer->fromInstitution->name }}</p>

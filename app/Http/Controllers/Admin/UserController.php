@@ -33,6 +33,14 @@ class UserController extends Controller
             );
         }
 
+        if ($request->filled('school')) {
+            $school = $request->school;
+            $query->whereHas('institution', fn($q) =>
+                $q->where('name', 'like', "%{$school}%")
+                  ->orWhere('code', 'like', "%{$school}%")
+            );
+        }
+
         if ($request->filled('role')) {
             $query->role($request->role);
         }
@@ -58,8 +66,9 @@ class UserController extends Controller
     // ── Show create form ───────────────────────────────────
     public function create()
     {
-        $institutions = Institution::where('is_active', true)->orderBy('name')->get();
-        $sectors      = Sector::orderBy('name')->get();
+        $institutions = Institution::where('is_active', true)->orderBy('code')->get();
+        $sectors      = Sector::withCount(['aeos as has_aeo' => fn($q) => $q->where('is_active', true)])
+            ->orderBy('name')->get();
 
         return view('admin.users.create', compact('institutions', 'sectors'));
     }
@@ -126,8 +135,9 @@ class UserController extends Controller
     {
         $user->load('sectors');
 
-        $institutions = Institution::where('is_active', true)->orderBy('name')->get();
-        $sectors      = Sector::orderBy('name')->get();
+        $institutions = Institution::where('is_active', true)->orderBy('code')->get();
+        $sectors      = Sector::withCount(['aeos as has_aeo' => fn($q) => $q->where('is_active', true)])
+            ->orderBy('name')->get();
         $userRole     = $user->getRoleNames()->first();
 
         return view('admin.users.edit', compact('user', 'institutions', 'sectors', 'userRole'));
@@ -215,5 +225,29 @@ class UserController extends Controller
         );
 
         return back()->with('success', "{$user->name} has been {$status}.");
+    }
+
+    // ── Delete user ────────────────────────────────────────
+    public function destroy(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        $name = $user->name;
+
+        AuditLog::record(
+            action: 'deleted',
+            modelType: 'User',
+            modelId: $user->id,
+            oldValues: ['name' => $name, 'email' => $user->email]
+        );
+
+        $user->sectors()->detach();
+        $user->roles()->detach();
+        $user->delete();
+
+        return redirect()->route('admin.users.index')
+            ->with('success', "User \"{$name}\" has been deleted.");
     }
 }

@@ -5,9 +5,12 @@
 namespace App\Http\Controllers\Fde;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Institution;
 use App\Models\InstitutionClass;
+use App\Models\Classes;
 use App\Models\AcademicYear;
+use App\Helpers\SchoolClassHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -111,6 +114,13 @@ class SeatConfigurationController extends Controller
             'seats_locked_at' => now(),
         ]);
 
+        AuditLog::record(
+            action:        'locked',
+            modelType:     Institution::class,
+            modelId:       $institution->id,
+            institutionId: $institution->id,
+        );
+
         return redirect()->route('fde.seats.edit', $institution)
             ->with('success', "Seat configuration locked for {$institution->name}. HOI can no longer change class setup.");
     }
@@ -129,7 +139,59 @@ class SeatConfigurationController extends Controller
             'seats_locked_at' => null,
         ]);
 
+        AuditLog::record(
+            action:        'unlocked',
+            modelType:     Institution::class,
+            modelId:       $institution->id,
+            reason:        $request->unlock_reason,
+            institutionId: $institution->id,
+        );
+
         return redirect()->route('fde.seats.edit', $institution)
             ->with('success', "Seat configuration unlocked. HOI can now edit class setup.");
+    }
+
+    // ── Sync Missing Classes ──────────────────────────────────────────
+    // Creates institution_class rows for any classes that should exist
+    // based on the school type but are not yet configured. Sets seats to 0.
+    // Non-destructive — never deletes or modifies existing rows.
+    public function syncClasses(Institution $institution)
+    {
+        $allowedOrders = SchoolClassHelper::allowedClassOrders($institution->type);
+
+        $regularIds = Classes::whereIn('order', $allowedOrders)
+            ->where('is_ece', false)
+            ->where('is_active', true)
+            ->pluck('id');
+
+        $eceIds = $institution->has_ece
+            ? Classes::where('is_ece', true)->where('is_active', true)->pluck('id')
+            : collect();
+
+        $targetIds = $regularIds->merge($eceIds)->unique()->values();
+
+        $existingIds = InstitutionClass::where('institution_id', $institution->id)->pluck('class_id');
+
+        $missingIds = $targetIds->diff($existingIds);
+
+        if ($missingIds->isEmpty()) {
+            return redirect()->route('fde.seats.edit', $institution)
+                ->with('success', 'All expected classes are already configured. Nothing to sync.');
+        }
+
+        DB::transaction(function () use ($institution, $missingIds) {
+            foreach ($missingIds as $classId) {
+                InstitutionClass::create([
+                    'institution_id'      => $institution->id,
+                    'class_id'            => $classId,
+                    'total_seats'         => 0,
+                    'existing_enrollment' => 0,
+                    'is_active'           => true,
+                ]);
+            }
+        });
+
+        return redirect()->route('fde.seats.edit', $institution)
+            ->with('success', "Synced {$missingIds->count()} missing class(es) for {$institution->name}. Please set seat counts.");
     }
 }

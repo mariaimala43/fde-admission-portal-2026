@@ -21,6 +21,12 @@ class Sector extends Model
         return $this->hasMany(UnionCouncil::class);
     }
 
+    // Alias for controllers that eager-load singular form
+    public function unionCouncil()
+    {
+        return $this->hasMany(UnionCouncil::class);
+    }
+
     public function institutions()
     {
         return $this->hasMany(Institution::class);
@@ -39,3 +45,4 @@ class Sector extends Model
     return $this->hasMany(User::class);
     }
 }
+

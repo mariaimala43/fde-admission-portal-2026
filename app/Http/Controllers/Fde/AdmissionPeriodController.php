@@ -62,4 +62,24 @@ class AdmissionPeriodController extends Controller
         return redirect()->route('fde.admission-period.index')
             ->with('success', "Admission period updated for {$academicYear->name}.");
     }
+
+    // ── Open admissions for all active institutions ───────────────────
+    public function openAdmissions()
+    {
+        $count = Institution::where('is_active', true)->count();
+        Institution::where('is_active', true)->update(['admission_status' => 'open']);
+
+        return redirect()->route('fde.admission-period.index')
+            ->with('success', "✅ Admissions opened for {$count} institution(s).");
+    }
+
+    // ── Close admissions for all active institutions ──────────────────
+    public function closeAdmissions()
+    {
+        $count = Institution::where('is_active', true)->count();
+        Institution::where('is_active', true)->update(['admission_status' => 'closed']);
+
+        return redirect()->route('fde.admission-period.index')
+            ->with('success', "🔴 Admissions closed for {$count} institution(s).");
+    }
 }

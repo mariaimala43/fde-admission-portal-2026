@@ -4,7 +4,7 @@
 
 @section('content')
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Audit Log</h2>
             <p class="text-sm text-gray-500 mt-1">All write actions across the portal — immutable record</p>
@@ -36,6 +36,7 @@
     </div>
 
     {{-- ── Filters ─────────────────────────────────────────────────────── --}}
+    @php $activeFilters = collect(request()->except(['page','_token']))->filter(fn($v) => $v !== '' && $v !== null)->count(); @endphp
     <form method="GET" class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-5">
         <div class="flex flex-wrap gap-3 items-end">
 
@@ -109,7 +110,7 @@
             </div>
 
             <button type="submit" class="px-5 py-2 bg-blue-900 text-white text-sm rounded-lg hover:bg-blue-800 transition">
-                Filter
+                Filter @if ($activeFilters > 0)<span class="ml-1 inline-flex items-center justify-center w-5 h-5 bg-white text-blue-900 rounded-full text-xs font-bold">{{ $activeFilters }}</span>@endif
             </button>
 
             @if (request()->hasAny(['user_id', 'role', 'field', 'institution_id', 'from', 'to']))
@@ -122,17 +123,23 @@
     </form>
 
     {{-- ── Log Table ───────────────────────────────────────────────────── --}}
+    <p class="block sm:hidden text-xs text-gray-400 mb-2 flex items-center gap-1">
+        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        Swipe right to see all columns
+    </p>
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b-2 border-gray-100 bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date & Time</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">User</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Institution</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Field</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Old → New</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">View</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Date & Time</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">User</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Institution</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Field</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Old → New</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">View</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -146,33 +153,39 @@
                             };
                         @endphp
                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden sm:table-cell">
                                 {{ $log->created_at->format('d M Y') }}<br>
-                                <span class="text-gray-400">{{ $log->created_at->format('H:i:s') }}</span>
+                                <span class="text-gray-400 text-xs">{{ $log->created_at->format('H:i:s') }}</span>
                             </td>
-                            <td class="px-4 py-3">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
                                 <p class="font-medium text-gray-800 text-sm">{{ $log->changedBy?->name ?? '—' }}</p>
                                 <span class="text-xs px-2 py-0.5 rounded-full font-semibold {{ $roleBadge }}">
                                     {{ strtoupper($log->role_at_time ?? '—') }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-700">
-                                {{ $log->monitoring?->institution?->name ?? '—' }}
+                            <td class="px-3 py-3 max-w-[128px] sm:max-w-none">
+                                <div class="truncate text-gray-900 max-w-[120px] sm:max-w-none"
+                                    title="{{ $log->monitoring?->institution?->name ?? '—' }}">
+                                    {{ $log->monitoring?->institution?->name ?? '—' }}
+                                </div>
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-700 font-medium">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap font-medium hidden sm:table-cell">
                                 {{ $log->fieldLabel() }}
                             </td>
-                            <td class="px-4 py-3 text-xs">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden sm:table-cell">
                                 @if ($log->old_value)
-                                    <span class="text-red-500 line-through">{{ $log->old_value }}</span>
+                                    <span class="text-red-500 line-through text-xs">{{ $log->old_value }}</span>
                                     <span class="mx-1 text-gray-400">→</span>
                                 @endif
-                                <span class="text-green-700 font-semibold">{{ $log->new_value ?? '—' }}</span>
+                                <span class="text-green-700 font-semibold text-xs">{{ $log->new_value ?? '—' }}</span>
                             </td>
-                            <td class="px-4 py-3 text-center">
-                                <a href="{{ route('fde.audit.show', $log) }}"
-                                    class="text-xs px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition">
-                                    👁 View
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
+                                <a href="{{ route('fde.audit.show', $log) }}" title="View"
+                                    class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-3 text-xs sm:text-sm rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
+                                    <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span class="hidden sm:inline">View</span>
                                 </a>
                             </td>
                         </tr>

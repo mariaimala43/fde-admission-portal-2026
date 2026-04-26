@@ -4,7 +4,7 @@
 
 @section('content')
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Admission Monitoring — All Records</h2>
             <p class="text-sm text-gray-500 mt-1">Full system view · {{ $academicYear?->name }}</p>
@@ -28,6 +28,7 @@
     @endif
 
     {{-- ── Filters ──────────────────────────────────────────────────────── --}}
+    @php $activeFilters = collect(request()->except(['page','_token']))->filter(fn($v) => $v !== '' && $v !== null)->count(); @endphp
     <form method="GET" action="{{ route('fde.monitoring.index') }}"
         class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-5 flex flex-wrap gap-3 items-end">
 
@@ -92,29 +93,60 @@
         </div>
 
         <div>
+            <label class="block text-xs text-gray-500 mb-1">Merit Status</label>
+            <select name="merit_status"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="">All</option>
+                @foreach (['pending' => 'Pending', 'selected' => 'Selected', 'waiting' => 'Waiting', 'rejected' => 'Rejected'] as $val => $lbl)
+                    <option value="{{ $val }}" {{ request('merit_status') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Date From</label>
+            <input type="date" name="date_from" value="{{ request('date_from') }}"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        </div>
+
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Date To</label>
+            <input type="date" name="date_to" value="{{ request('date_to') }}"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        </div>
+
+        <div>
             <label class="block text-xs text-gray-500 mb-1">Search School</label>
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Name or code…"
                 class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-blue-400">
         </div>
 
         <button type="submit"
-            class="px-5 py-2 bg-blue-900 text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition">Filter</button>
-        <a href="{{ route('fde.monitoring.index') }}" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">Clear</a>
+            class="px-5 py-2 bg-blue-900 text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition">
+            Filter @if ($activeFilters > 0)<span class="ml-1 inline-flex items-center justify-center w-5 h-5 bg-white text-blue-900 rounded-full text-xs font-bold">{{ $activeFilters }}</span>@endif
+        </button>
+        <a href="{{ route('fde.monitoring.index') }}" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">Clear</a>
     </form>
 
     {{-- ── Records Table ────────────────────────────────────────────────── --}}
+    <p class="block sm:hidden text-xs text-gray-400 mb-2 flex items-center gap-1">
+        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        Swipe right to see all columns
+    </p>
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b-2 border-gray-100 bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">School / Class</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Workflow</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Test</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Merit</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Docs</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Override</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Date</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">School / Class</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Workflow</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Test</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Merit</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Docs</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Override</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,24 +156,25 @@
                            {{ $record->isBlocked() ? 'bg-red-50' : '' }}
                            {{ $record->isFinalized() ? 'bg-green-50' : '' }}">
 
-                            <td class="px-4 py-3 text-gray-500 text-xs">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden sm:table-cell">
                                 {{ $record->admission_date->format('d M Y') }}
                             </td>
 
-                            <td class="px-4 py-3">
-                                <p class="font-medium text-gray-800 text-xs">{{ $record->institution->name }}</p>
+                            <td class="px-3 py-3 max-w-[128px] sm:max-w-none">
+                                <div class="truncate font-medium text-gray-900 max-w-[120px] sm:max-w-none"
+                                    title="{{ $record->institution->name }}">{{ $record->institution->name }}</div>
                                 <p class="text-xs text-gray-400">{{ $record->classModel?->name }} ·
                                     {{ $record->institution->sector?->name }}</p>
                             </td>
 
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center">
                                 <span class="text-xs px-2 py-1 rounded-full font-semibold {{ $record->workflowBadge() }}">
                                     {{ $record->workflowLabel() }}
                                 </span>
                             </td>
 
                             {{-- Test override --}}
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center hidden md:table-cell">
                                 <button type="button"
                                     onclick="openOverrideModal({{ $record->id }}, 'test', '{{ $record->test_status }}')"
                                     class="text-xs px-2 py-1 rounded-full font-semibold {{ $record->testStatusBadge() }} hover:opacity-80">
@@ -150,7 +183,7 @@
                             </td>
 
                             {{-- Merit override --}}
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center hidden md:table-cell">
                                 <button type="button"
                                     onclick="openOverrideModal({{ $record->id }}, 'merit', '{{ $record->merit_status }}')"
                                     class="text-xs px-2 py-1 rounded-full font-semibold {{ $record->meritStatusBadge() }} hover:opacity-80">
@@ -159,7 +192,7 @@
                             </td>
 
                             {{-- Doc override --}}
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center hidden sm:table-cell">
                                 <button type="button"
                                     onclick="openOverrideModal({{ $record->id }}, 'doc', '{{ $record->doc_status }}')"
                                     class="text-xs px-2 py-1 rounded-full font-semibold {{ $record->docStatusBadge() }} hover:opacity-80">
@@ -170,10 +203,13 @@
                                 </button>
                             </td>
 
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center">
                                 <a href="{{ route('fde.monitoring.show', $record) }}"
-                                    class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
-                                    Audit Log
+                                    class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-3 text-xs sm:text-sm rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
+                                    <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span class="hidden sm:inline">Audit Log</span>
                                 </a>
                             </td>
                         </tr>

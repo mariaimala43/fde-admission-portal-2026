@@ -58,6 +58,9 @@ class ExportController extends Controller
     // ─────────────────────────────────────────────────────────────────
     public function masterReport(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $this->authorize('reports.export');
 
         // AEO cannot access master report (FDE-only in RolesSeeder)
@@ -74,10 +77,11 @@ class ExportController extends Controller
             ? Carbon::parse($request->input('to'))->endOfDay()
             : now()->endOfDay();
 
-        $sectorId = $request->input('sector_id');
-        $type     = $request->input('type');
-        $gender   = $request->input('gender');
-        $format   = $request->input('format', 'pdf');
+        $sectorId   = $request->input('sector_id');
+        $type       = $request->input('type');
+        $gender     = $request->input('gender');
+        $classLevel = $request->input('class_level'); // 'all' | 'ece' | 'non_ece'
+        $format     = $request->input('format', 'pdf');
 
         $institutions = Institution::with(['sector', 'unionCouncil'])
             ->where('is_active', true)
@@ -88,7 +92,10 @@ class ExportController extends Controller
             ->orderBy('sector_id')->orderBy('name')
             ->get();
 
-        $allClasses = Classes::orderBy('is_ece')->orderBy('order')->get();
+        $allClasses = Classes::orderBy('is_ece')->orderBy('order')
+            ->when($classLevel === 'ece',     fn($q) => $q->where('is_ece', true))
+            ->when($classLevel === 'non_ece', fn($q) => $q->where('is_ece', false))
+            ->get();
 
         $seatData = InstitutionClass::whereIn('institution_id', $institutions->pluck('id'))
             ->where('is_active', true)
@@ -182,6 +189,9 @@ class ExportController extends Controller
     // ─────────────────────────────────────────────────────────────────
     public function vacancyReport(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $this->authorize('reports.export');
 
         $academicYear = AcademicYear::where('is_active', true)->first();
@@ -230,6 +240,9 @@ class ExportController extends Controller
     // ─────────────────────────────────────────────────────────────────
     public function ooscReport(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $this->authorize('reports.export');
 
         $academicYear = AcademicYear::where('is_active', true)->first();

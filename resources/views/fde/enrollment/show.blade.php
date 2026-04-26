@@ -38,7 +38,7 @@
         </div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
             <p class="text-xl font-bold text-orange-600">{{ number_format($totalEnrolled) }}</p>
-            <p class="text-xs text-gray-400 mt-0.5">Existing Enrollment</p>
+            <p class="text-xs text-gray-400 mt-0.5">Promoted Students</p>
         </div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
             <p class="text-xl font-bold text-blue-600">{{ number_format($totalAdmitted) }}</p>
@@ -82,9 +82,9 @@
                         <th class="px-4 py-3 text-left">Class</th>
                         <th class="px-4 py-3 text-center">Sections</th>
                         <th class="px-4 py-3 text-center">Intake Capacity</th>
-                        <th class="px-4 py-3 text-center">Existing Enrollment</th>
-                        <th class="px-4 py-3 text-center">Verified Admissions</th>
+                        <th class="px-4 py-3 text-center">Promoted Students</th>
                         <th class="px-4 py-3 text-center">Available Seats</th>
+                        <th class="px-4 py-3 text-center">Verified Admissions</th>
                         <th class="px-4 py-3 text-center">Enrollment Status</th>
                     </tr>
                 </thead>
@@ -108,12 +108,24 @@
                             <td class="px-4 py-3 text-center font-semibold text-blue-900">
                                 {{ number_format($ic->total_seats) }}</td>
                             <td class="px-4 py-3 text-center font-semibold text-orange-600">
-                                {{ number_format($ic->existing_enrollment) }}</td>
-                            <td class="px-4 py-3 text-center text-blue-700">{{ number_format($admitted) }}</td>
+                                {{ number_format($ic->existing_enrollment) }}
+                                @if ($ic->promoted_count + $ic->failed_count > 0)
+                                    <div class="text-xs text-gray-400 mt-0.5">
+                                        Promoted: <span
+                                            class="text-green-600 font-semibold">{{ number_format($ic->promoted_count) }}</span>
+                                        @if ($ic->failed_count > 0)
+                                            &middot;
+                                            Repeaters: <span
+                                                class="text-red-500 font-semibold">{{ number_format($ic->failed_count) }}</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </td>
                             <td
                                 class="px-4 py-3 text-center font-semibold {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">
                                 {{ number_format($available) }}
                             </td>
+                            <td class="px-4 py-3 text-center text-blue-700">{{ number_format($admitted) }}</td>
                             <td class="px-4 py-3 text-center">
                                 <span class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $badge }}">
                                     {{ $ic->enrollmentStatusLabel() }}
@@ -239,7 +251,19 @@
                                     <td class="px-4 py-3 text-center text-blue-900 font-semibold">
                                         {{ number_format($ic->total_seats) }}</td>
                                     <td class="px-4 py-3 text-center text-orange-600 font-semibold">
-                                        {{ number_format($ic->existing_enrollment) }}</td>
+                                        {{ number_format($ic->existing_enrollment) }}
+                                        @if ($ic->promoted_count + $ic->failed_count > 0)
+                                            <div class="text-xs text-gray-400 mt-0.5">
+                                                Promoted: <span
+                                                    class="text-green-600 font-semibold">{{ number_format($ic->promoted_count) }}</span>
+                                                @if ($ic->failed_count > 0)
+                                                    &middot;
+                                                    Repeaters: <span
+                                                        class="text-red-500 font-semibold">{{ number_format($ic->failed_count) }}</span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 text-center">
                                         <input type="number" name="enrollment[{{ $index }}][existing]"
                                             value="{{ old("enrollment.{$index}.existing", $ic->existing_enrollment) }}"

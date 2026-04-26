@@ -10,12 +10,13 @@ class SectorSeeder extends Seeder
     public function run(): void
     {
         $sectors = [
-            ['name' => 'Urban-I',  'code' => 'URBAN-I'],
-            ['name' => 'Urban-II', 'code' => 'URBAN-II'],
-            ['name' => 'B.K',      'code' => 'B-K'],
-            ['name' => 'Tarnol',   'code' => 'TARNOL'],
-            ['name' => 'Sihala',   'code' => 'SIHALA'],
-            ['name' => 'Nilore',   'code' => 'NILORE'],
+            ['name' => 'Urban-I',         'code' => 'URBAN-I'],
+            ['name' => 'Urban-II',        'code' => 'URBAN-II'],
+            ['name' => 'B.K',             'code' => 'B-K'],
+            ['name' => 'Tarnaul',         'code' => 'TARNAUL'],
+            ['name' => 'Sihala',          'code' => 'SIHALA'],
+            ['name' => 'Nilore',          'code' => 'NILORE'],
+            ['name' => 'MODEL COLLEGES',  'code' => 'MODEL'],
         ];
 
         foreach ($sectors as $s) {
@@ -25,6 +26,6 @@ class SectorSeeder extends Seeder
             );
         }
 
-        $this->command->info('6 Sectors seeded successfully.');
+        $this->command->info('7 Sectors seeded successfully (6 geographic + MODEL COLLEGES).');
     }
 }

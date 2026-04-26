@@ -6,7 +6,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\Institution;
 use App\Models\NewConstructionRoom;
 
@@ -14,36 +13,32 @@ class NewConstructionRoomsSeeder extends Seeder
 {
     /**
      * Data sourced from two FDE documents:
-     *   - "List of Completed Newly Constructed Classrooms – 205 Rooms"
-     *   - "New Construction Rooms (Near To Completion)" – 56 Rooms
+     *   - "List of Completed Newly Constructed Classrooms – 205 Rooms" (44 schools)
+     *   - "New Construction Rooms (Near To Completion) – 56 Rooms"     (12 schools)
      *
-     * Matching strategy: fuzzy name match against institutions table.
-     * Unmatched records are logged to storage/logs/unmatched_rooms.txt.
+     * Total: 56 schools / 261 rooms
+     * All names are exact matches from the institutions table.
      */
     public function run(): void
     {
-        $entries = $this->getData();
-
         $matched   = 0;
         $unmatched = [];
 
-        foreach ($entries as $entry) {
-            [$name, $sector, $rooms, $status] = $entry;
+        foreach ($this->getData() as [$name, $rooms, $status]) {
 
-            // Try to find the institution by name similarity
-            $institution = $this->findInstitution($name, $sector);
+            $institution = Institution::where('name', $name)->first();
 
             if (! $institution) {
-                $unmatched[] = "$name ($sector) — $rooms rooms";
+                $unmatched[] = "[$status]  $name  — $rooms rooms";
                 continue;
             }
 
             NewConstructionRoom::updateOrCreate(
                 ['institution_id' => $institution->id],
                 [
-                    'rooms_total'           => $rooms,
-                    'construction_status'   => $status,
-                    'source_document'       => $status === 'completed'
+                    'rooms_total'         => $rooms,
+                    'construction_status' => $status,
+                    'source_document'     => $status === 'completed'
                         ? 'List of Completed Newly Constructed Classrooms – 205 Rooms'
                         : 'New Construction Rooms (Near To Completion) – 56 Rooms',
                 ]
@@ -52,118 +47,86 @@ class NewConstructionRoomsSeeder extends Seeder
             $matched++;
         }
 
-        $this->command->info("✅ Matched and seeded: $matched institutions");
+        $this->command->info("✅  $matched schools added successfully.");
 
         if (count($unmatched)) {
-            $this->command->warn("⚠️  Could not match " . count($unmatched) . " entries:");
-            foreach ($unmatched as $u) {
-                $this->command->line("   - $u");
+            $this->command->warn('⚠️  Could not match ' . count($unmatched) . ' entries:');
+            foreach ($unmatched as $line) {
+                $this->command->line("   - $line");
             }
             $this->command->warn(
-                "   → These schools may not yet be in the institutions table.\n" .
-                "     Add them manually via Admin → Institutions, then re-run the seeder."
+                "\n   Add missing schools via Admin → Institutions, then re-run the seeder."
             );
         }
     }
 
-    /**
-     * Find institution by trying multiple name strategies.
-     * FDE institution names follow patterns like "IMSG (I-V) Alipur" or "IMCB, F-11/3"
-     */
-    private function findInstitution(string $name, string $sector): ?Institution
-    {
-        // Clean up the name for matching
-        $cleanName = trim($name);
-
-        // 1. Exact match
-        $inst = Institution::whereRaw('LOWER(name) = ?', [strtolower($cleanName)])->first();
-        if ($inst) return $inst;
-
-        // 2. Institution name LIKE %name%
-        $inst = Institution::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($cleanName) . '%'])->first();
-        if ($inst) return $inst;
-
-        // 3. Strip grade range (e.g. "(I-V)", "(VI-X)", "(I-VIII)") and try again
-        $strippedName = preg_replace('/\s*\([IVX]+-[IVX]+\)\s*/i', ' ', $cleanName);
-        $strippedName = trim(preg_replace('/\s+/', ' ', $strippedName));
-
-        $inst = Institution::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($strippedName) . '%'])->first();
-        if ($inst) return $inst;
-
-        // 4. Use last meaningful word(s) as keyword
-        $words = explode(' ', $strippedName);
-        $keyword = implode(' ', array_slice($words, -2));
-        if (strlen($keyword) > 3) {
-            $inst = Institution::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($keyword) . '%'])->first();
-            if ($inst) return $inst;
-        }
-
-        return null;
-    }
+    // ── Master data ───────────────────────────────────────────────────────
+    // Format: [exact_institution_name, rooms_total, status]
+    // Names copied exactly from institutions table — no fuzzy matching needed.
 
     private function getData(): array
     {
-        // [name, sector/cluster, rooms, status]
         return [
-            // ── COMPLETED (205 rooms) ──────────────────────────────────────
-            ['IMS (I-V) E-7',                   'Urban-I',   4,  'completed'],
-            ['Kohsar School',                    'Urban-I',   3,  'completed'],
-            ['IMS (I-V) No.1 I-9/1',            'URBAN-II',  3,  'completed'],
-            ['IMCG I-8/3',                       'URBAN-II',  3,  'completed'],
-            ['IMS (I-V) I-8/1',                  'URBAN-II',  4,  'completed'],
-            ['IMS (I-V) AIOU Colony',            'URBAN-II',  2,  'completed'],
-            ['IMS (I-V) F-10/1',                 'URBAN-II',  2,  'completed'],
-            ['IMCCG F-10/3',                     'URBAN-II',  2,  'completed'],
-            ['IMCB F-11/3',                      'URBAN-II',  20, 'completed'],
-            ['IMPGCB H-8',                       'URBAN-II',  20, 'completed'],
-            ['IMS (I-V) No.1 G-10/2',           'URBAN-II',  2,  'completed'],
-            ['IMS (I-V) No.2 G-10/2',           'URBAN-II',  4,  'completed'],
-            ['IMS (I-V) G-10/3',                 'URBAN-II',  2,  'completed'],
-            ['IMSB (VI-X) G-11/2',              'URBAN-II',  2,  'completed'],
-            ['IMSG (I-X) G-10/3',               'URBAN-II',  2,  'completed'],
-            ['IMS (I-V) G-11/2',                 'URBAN-II',  5,  'completed'],
-            ['IMS (I-V) G-10/4',                 'URBAN-II',  2,  'completed'],
-            ['IMCB H-9',                         'URBAN-II',  20, 'completed'],
-            ['IMCB F-10/4',                      'URBAN-II',  4,  'completed'],
-            ['IMSB (I-V) Dhoke Mai Nawab',       'Sihala',    4,  'completed'],
-            ['IMSB (I-VIII) Koral',              'Sihala',    2,  'completed'],
-            ['IMSB (I-V) Channual Bangial',      'Nilore',    2,  'completed'],
-            ['IMSB (I-V) Jhang Syedan',          'Nilore',    8,  'completed'],
-            ['IMSG (I-V) Chapper Ghasota',       'Nilore',    4,  'completed'],
-            ['IMSB (I-V) Nilore',                'Nilore',    3,  'completed'],
-            ['IMSB (VI-X) Jhang Syedan',         'Nilore',    8,  'completed'],
-            ['IMCG Jagiot',                      'Nilore',    3,  'completed'],
-            ['IMCG Pehount',                     'Nilore',    3,  'completed'],
-            ['IMSB (I-V) Pind Mistrain',         'Nilore',    2,  'completed'],
-            ['IMSG (I-V) Tamma',                 'Nilore',    1,  'completed'],
-            ['IMSG (I-V) Alipur Frash',          'Nilore',    6,  'completed'],
-            ['IMSG (I-V) Seevra',                'Nilore',    2,  'completed'],
-            ['IMSG (I-VIII) Kijjnah',            'Nilore',    2,  'completed'],
-            ['IMSG (I-V) Nilore',                'Nilore',    6,  'completed'],
-            ['IMSB (I-V) Sirri',                 'Nilore',    2,  'completed'],
-            ['IMSG Chanoul Bangail',             'Nilore',    1,  'completed'],
-            ['IMCG Margalla',                    'Barakahu',  6,  'completed'],
-            ['IMSB (I-V) Pind Parian',           'Tarnol',    2,  'completed'],
-            ['IMSB (I-V) Golra',                 'Tarnol',    4,  'completed'],
-            ['IMSG (I-V) Bekha Syedan',          'Tarnol',    4,  'completed'],
-            ['IMSG (I-V) Dhoke Hashoo',          'Tarnol',    9,  'completed'],
-            ['IMSB (I-V) Tamman',                'Tarnol',    2,  'completed'],
-            ['IMSG (I-V) I-14/3',                'Tarnol',    9,  'completed'],
-            ['IMSG (I-V) Sarai Madhu',           'Tarnol',    4,  'completed'],
 
-            // ── NEAR COMPLETION (56 rooms) ─────────────────────────────────
-            ['IMCG (PG) F-7/4',                  'URBAN-I',   5,  'near_completion'],
-            ['IMSB (VI-X) G-10/3',              'URBAN-II',  6,  'near_completion'],
-            ['IMSG (I-X) G-11/2',               'URBAN-II',  4,  'near_completion'],
-            ['IMS (I-V) G-11/1',                 'URBAN-II',  6,  'near_completion'],
-            ['IMSG (VI-X) I-8/1',               'URBAN-II',  5,  'near_completion'],
-            ['IMSG (I-X) SaidPur',               'Bara Kahu', 3,  'near_completion'],
-            ['IMSG (I-V) Humak',                 'Sihala',    6,  'near_completion'],
-            ['IMSG (I-V) CBR Colony',            'Sihala',    3,  'near_completion'],
-            ['IMSG (I-V) Alipur South',          'Nilore',    3,  'near_completion'],
-            ['IMSB (VI-X) Tarlai',              'Nilore',    5,  'near_completion'],
-            ['IMSB (I-VIII) Kijnah',             'Nilore',    6,  'near_completion'],
-            ['IMSB (I-V) Sarai Kharbuza',        'Tarnol',    4,  'near_completion'],
+            // ── COMPLETED — 44 schools / 205 rooms ───────────────────────
+            ['IMS(I-V) E-7/4',                      4,  'completed'],
+            ['IMS(I-V) F-6/3 ',                        3,  'completed'],   // add via Admin if missing
+            ['IMS(I-V) No.1 I-9/1',                 3,  'completed'],
+            ['IMCG, I-8/3',                          3,  'completed'],
+            ['IMS(I-V) I-8/1',                       4,  'completed'],
+            ['IMS(I-V) AIOU Colony',                 2,  'completed'],
+            ['IMS(I-V) F-10/1',                      2,  'completed'],
+            ['IMCCG (COM), F-10/3',                  2,  'completed'],
+            ['IMCG, F-11/3',                         20, 'completed'],   // doc: "IMCB F-11/3"
+            ['IMPC H-8 ISLAMABAD',                   20, 'completed'],   // doc: "IMPGCB H-8"
+            ['IMS(I-V) No.1 G-10/2',                2,  'completed'],
+            ['IMS(I-V) No.2 G-10/2',                4,  'completed'],
+            ['IMS(I-V) G-10/3',                      2,  'completed'],
+            ['IMSB(VI-X) G-11/2',                    2,  'completed'],
+            ['IMSG(I-X) G-10/3',                     2,  'completed'],
+            ['IMS(I-V) G-11/2',                      5,  'completed'],
+            ['IMS(I-V) G-10/4',                      2,  'completed'],
+            ['IMCB, H-9',                            20, 'completed'],
+            ['IMCB, F-10/4',                         4,  'completed'],
+            ['IMSB (I-V) D/Mai Nawab',               4,  'completed'],   // doc: "Dhoke Mai Nawab"
+            ['IMSB (I-VIII), Koral',                 2,  'completed'],
+            ['IMSB(I-V) CH. BANGIAL',                2,  'completed'],   // doc: "Channual Bangial"
+            ['IMSB(I-V) JHANG SYDEN',                8,  'completed'],   // doc: "Jhang Syedan"
+            ['IMSG (I-V) CHAPPAR Ghasota (F.A)',     4,  'completed'],   // doc: "Chapper Ghasota"
+            ['IMSB(I-V)NILORE',                      3,  'completed'],
+            ['IMSB(VI-X)JHANG SYDEN',                8,  'completed'],   // doc: "IMSB (VI-X) Jhang Syedan"
+            ['IMCG,JAGIOT',                          3,  'completed'],
+            ['IMCG,PEHOUNT',                         3,  'completed'],
+            ['IMSB(I-V)PINDMISTRIAN',                2,  'completed'],   // doc: "Pind Mistrain"
+            ['IMSG(I-V)TAMMA',                       1,  'completed'],
+            ['IMSG(I-V)ALI PUR FRASH',               6,  'completed'],   // doc: "Alipur Frash"
+            ['IMSG(I-V) SEVERA',                     2,  'completed'],   // doc: "Seevra"
+            ['IMSG(I-VIII) KIJNAH',                  2,  'completed'],   // doc: "Kijjnah"
+            ['IMSG(I-V) NILORE',                     6,  'completed'],
+            ['IMSB(I-V) SIRRI',                      2,  'completed'],
+            ['IMSG (I-V) CHOUNIAL BANGIAL',          1,  'completed'],   // doc: "IMSG Chanoul Bangail"
+            ['IMCG (I-XII), MARGALLA TOWN',          6,  'completed'],   // doc: "IMCG Margalla"
+            ['IMSB (I-V) Pind Parian',               2,  'completed'],
+            ['IMSB (I-V) Golra',                     4,  'completed'],
+            ['IMSG (I-V) Bheka Syedan',              4,  'completed'],   // doc: "Bekha Syedan"
+            ['IMSG (I-V) Dhoke Hashoo',              9,  'completed'],
+            ['IMSB (I-V) Tamman',                    2,  'completed'],
+            ['IMSG (I-V) I-14/3',                    9,  'completed'],
+            ['IMSG (I-V) Sarae Madhu',               4,  'completed'],   // doc: "Sarai Madhu"
+
+            // ── NEAR COMPLETION — 12 schools / 56 rooms ──────────────────
+            ['IMCG (PG), F-7/4, Islamabad',          5,  'near_completion'],  // doc: "IMCG (PG) F-7/4"
+            ['IMSB(VI-X) G-10/3',                    6,  'near_completion'],
+            ['IMSG(I-X) G-11/2',                     4,  'near_completion'],
+            ['IMS(I-V) G-11/1',                      6,  'near_completion'],
+            ['IMSG(VI-X) I-8/1',                     5,  'near_completion'],
+            ['IMSG (I-X), SAID PUR',                 3,  'near_completion'],  // doc: "IMSG (I-X) SaidPur"
+            ['IMSG (I-V) Humak',                     6,  'near_completion'],
+            ['IMSG (I-V) CBR Colony',                3,  'near_completion'],
+            ['IMSG(I-V) ALI PUR SOUTH',              3,  'near_completion'],  // doc: "Alipur South"
+            ['IMSB(VI-X)TARLAI',                     5,  'near_completion'],  // doc: "IMSB (VI-X) Tarlai"
+            ['IMSB(I-VIII) KIJNAH',                  6,  'near_completion'],  // doc: "Kijnah"
+            ['IMSB (I-V) Sarae Karboza',             4,  'near_completion'],  // doc: "Sarai Kharbuza"
         ];
     }
 }

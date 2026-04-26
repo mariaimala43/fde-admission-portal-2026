@@ -49,7 +49,7 @@
     </div>
 
     {{-- ── Grand Stats Cards ───────────────────────────────────────────── --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         @foreach ([['label' => 'Total Records', 'value' => $stats->total, 'color' => 'gray', 'icon' => '📋'], ['label' => 'Finalized', 'value' => $stats->finalized, 'color' => 'green', 'icon' => '✅'], ['label' => 'Test Failed', 'value' => $stats->test_failed, 'color' => 'red', 'icon' => '❌'], ['label' => 'Merit Rejected', 'value' => $stats->merit_rejected, 'color' => 'red', 'icon' => '🚫'], ['label' => 'Provisional Docs', 'value' => $stats->doc_provisional, 'color' => 'orange', 'icon' => '📄'], ['label' => 'Affidavit Cases', 'value' => $stats->doc_affidavit, 'color' => 'purple', 'icon' => '📎']] as $c)
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
                 <div class="text-lg mb-0.5">{{ $c['icon'] }}</div>
@@ -62,7 +62,7 @@
     {{-- ── Workflow Funnel ─────────────────────────────────────────────── --}}
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-5 mb-6">
         <h3 class="text-sm font-semibold text-gray-700 mb-4">Workflow Pipeline</h3>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             @foreach ([['stage' => 'Draft', 'value' => $stats->total - $stats->test_verification - $stats->merit_confirmation - $stats->doc_verification - $stats->finalized, 'color' => 'gray'], ['stage' => 'Test Verification', 'value' => $stats->test_verification, 'color' => 'blue'], ['stage' => 'Merit Confirmation', 'value' => $stats->merit_confirmation, 'color' => 'yellow'], ['stage' => 'Doc Review', 'value' => $stats->doc_verification, 'color' => 'orange'], ['stage' => 'Finalized', 'value' => $stats->finalized, 'color' => 'green']] as $stage)
                 <a href="{{ route('fde.monitoring.index', ['workflow' => str_replace(' ', '_', strtolower($stage['stage']))]) }}"
                     class="text-center p-3 rounded-xl bg-{{ $stage['color'] }}-50 border border-{{ $stage['color'] }}-100
@@ -79,31 +79,37 @@
         <div class="px-5 py-3 bg-blue-900 flex justify-between items-center">
             <span class="text-white font-bold text-sm">📊 Sector-wise Breakdown</span>
         </div>
-        <div class="overflow-x-auto">
+        <p class="block sm:hidden text-xs text-gray-400 mb-2 px-4 pt-2 flex items-center gap-1">
+            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            Swipe right to see all columns
+        </p>
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Sector</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Total</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-green-600 uppercase">Finalized</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-orange-600 uppercase">Provisional</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-purple-600 uppercase">Affidavit</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-red-600 uppercase">Test Failed</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-red-600 uppercase">Merit Rej.</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-blue-600 uppercase">Complete %</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Sector</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Total</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Finalized</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Provisional</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Affidavit</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Test Failed</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Merit Rej.</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Complete %</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($sectors as $sector)
                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-3 font-medium text-gray-800">{{ $sector->name }}</td>
-                            <td class="px-4 py-3 text-center text-gray-700 font-semibold">{{ $sector->m_total }}</td>
-                            <td class="px-4 py-3 text-center text-green-600 font-semibold">{{ $sector->m_finalized }}</td>
-                            <td class="px-4 py-3 text-center text-orange-600">{{ $sector->m_provisional }}</td>
-                            <td class="px-4 py-3 text-center text-purple-600">{{ $sector->m_affidavit }}</td>
-                            <td class="px-4 py-3 text-center text-red-600">{{ $sector->m_test_failed }}</td>
-                            <td class="px-4 py-3 text-center text-red-600">{{ $sector->m_merit_rej }}</td>
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap font-medium">{{ $sector->name }}</td>
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap font-semibold">{{ $sector->m_total }}</td>
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-green-600 font-semibold">{{ $sector->m_finalized }}</td>
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-orange-600 hidden sm:table-cell">{{ $sector->m_provisional }}</td>
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-purple-600 hidden sm:table-cell">{{ $sector->m_affidavit }}</td>
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-red-600 hidden md:table-cell">{{ $sector->m_test_failed }}</td>
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-red-600 hidden md:table-cell">{{ $sector->m_merit_rej }}</td>
+                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <div class="w-16 bg-gray-200 rounded-full h-1.5">
                                         <div class="bg-green-500 h-1.5 rounded-full"
@@ -115,7 +121,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-gray-400 text-sm">No data available.</td>
+                            <td colspan="8" class="px-3 py-8 text-center text-gray-400 text-sm">No data available.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -24,6 +24,8 @@ class DailyAdmission extends Model
         'evening_p2p_boys',  'evening_p2p_girls',
         // Aggregate totals (computed sum of morning+evening, kept for report queries)
         'oosc_boys', 'oosc_girls', 'p2p_boys', 'p2p_girls',
+        // Matric Tech program count (Classes 9 & 10 only, when institution has_matric_tech)
+        'matric_tech_count',
         'status', 'submitted_by', 'submitted_at',
         'verified_by', 'verified_at', 'return_reason',
         'overridden_by', 'override_reason', 'overridden_at',
@@ -52,6 +54,7 @@ class DailyAdmission extends Model
         'oosc_girls'          => 'integer',
         'p2p_boys'            => 'integer',
         'p2p_girls'           => 'integer',
+        'matric_tech_count'   => 'integer',
     ];
 
     // ── Totals ────────────────────────────────────────────────────────
@@ -79,8 +82,9 @@ class DailyAdmission extends Model
              + $this->evening_p2p_boys  + $this->evening_p2p_girls;
     }
 
-    public function ooscTotal(): int { return $this->oosc_boys + $this->oosc_girls; }
-    public function p2pTotal(): int  { return $this->p2p_boys + $this->p2p_girls; }
+    public function ooscTotal(): int      { return $this->oosc_boys + $this->oosc_girls; }
+    public function p2pTotal(): int       { return $this->p2p_boys + $this->p2p_girls; }
+    public function matricTechTotal(): int { return (int) $this->matric_tech_count; }
 
     /** Display total (report view only — NOT used in seat math) */
     public function displayTotal(): int { return $this->regularTotal() + $this->ooscTotal() + $this->p2pTotal(); }

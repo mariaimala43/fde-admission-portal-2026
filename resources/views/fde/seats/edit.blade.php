@@ -16,10 +16,21 @@
                 @endif
             </p>
         </div>
-        <a href="{{ route('fde.seats.index') }}"
-            class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition">
-            ← Back to All Schools
-        </a>
+        <div class="flex items-center gap-3">
+            {{-- Sync missing classes (fixes schools whose class list was truncated before SchoolClassHelper fix) --}}
+            <form method="POST" action="{{ route('fde.seats.sync', $institution) }}"
+                  onsubmit="return confirm('This will add any missing classes for a {{ addslashes($institution->type) }} school (seats set to 0). Continue?')">
+                @csrf
+                <button type="submit"
+                    class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
+                    🔄 Sync Missing Classes
+                </button>
+            </form>
+            <a href="{{ route('fde.seats.index') }}"
+                class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition">
+                ← Back to All Schools
+            </a>
+        </div>
     </div>
 
     @if (session('success'))
@@ -87,7 +98,15 @@
                 <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-10 text-center text-gray-400 text-sm">
                     <p class="text-3xl mb-3">📭</p>
                     <p class="font-medium text-gray-600">No classes configured yet</p>
-                    <p class="mt-1">The HOI needs to complete class setup first.</p>
+                    <p class="mt-1 mb-4">The HOI needs to complete class setup first, or use Sync to auto-create the expected classes.</p>
+                    <form method="POST" action="{{ route('fde.seats.sync', $institution) }}"
+                          onsubmit="return confirm('Create all expected classes for this {{ addslashes($institution->type) }} school with 0 seats?')">
+                        @csrf
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition font-medium">
+                            🔄 Sync Classes from School Type
+                        </button>
+                    </form>
                 </div>
             @else
                 <form method="POST" action="{{ route('fde.seats.update', $institution) }}">
@@ -266,7 +285,11 @@
                         <textarea name="unlock_reason" required minlength="10" maxlength="500" rows="3"
                             placeholder="e.g. HOI requested correction to seat counts after enrolment verified…"
                             class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none
-                                         focus:outline-none focus:ring-2 focus:ring-yellow-400"></textarea>
+                                         focus:outline-none focus:ring-2 focus:ring-yellow-400
+                                         @error('unlock_reason') border-red-400 @enderror">{{ old('unlock_reason') }}</textarea>
+                        @error('unlock_reason')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                         <p class="text-xs text-gray-400 mt-1">Minimum 10 characters.</p>
                     </div>
                 </div>
@@ -283,6 +306,15 @@
             </form>
         </div>
     </div>
+
+    {{-- Auto-reopen modal if validation failed on unlock_reason --}}
+    @if ($errors->has('unlock_reason'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('unlockModal').style.display = 'flex';
+        });
+    </script>
+    @endif
 
     {{-- Close unlock modal on backdrop click --}}
     <script>

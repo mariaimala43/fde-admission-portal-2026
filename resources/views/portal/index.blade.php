@@ -4,7 +4,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FDE Admission Portal 2026–27</title>
+    <title>{{ $settings['portal_title'] ?? 'FDE Admission Portal' }} — {{ now()->year }}</title>
+    @if (!empty($settings['portal_favicon']))
+        <link rel="icon" type="image/png" href="{{ Storage::url($settings['portal_favicon']) }}">
+    @elseif(!empty($settings['app_favicon']))
+        <link rel="icon" type="image/png" href="{{ Storage::url($settings['app_favicon']) }}">
+    @endif
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link
@@ -237,6 +242,8 @@
             display: flex;
             flex-direction: column;
             transition: all .25s ease;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .school-card:hover {
@@ -390,7 +397,38 @@
     </style>
 </head>
 
-<body class="page-bg" x-data="{ lang: 'en' }" :dir="lang === 'ur' ? 'rtl' : 'ltr'">
+@php
+    $bannerEnabled = !empty($settings['banner_enabled']);
+    $bannerMsg = $settings['banner_text'] ?? null;
+    $defaultBanner =
+        'Welcome! Admissions are now open for Academic Year ' .
+        ($academicYear?->name ?? '2026–27') .
+        '. Browse schools below and visit any school directly to enroll.';
+    $bannerDisplay = $bannerMsg ?: $defaultBanner;
+    $bannerColour = $settings['banner_colour'] ?? 'amber';
+    $bannerImageUrl = !empty($settings['banner_image']) ? asset('storage/' . $settings['banner_image']) : null;
+    $bannerBg = $bannerImageUrl
+        ? "background:url('{$bannerImageUrl}') center/cover no-repeat;background-color:#000;"
+        : match ($bannerColour) {
+            'blue' => 'background:#2563EB;',
+            'green' => 'background:#16a34a;',
+            'red' => 'background:#dc2626;',
+            'navy' => 'background:#1B3A6B;',
+            default => 'background:#f59e0b;',
+        };
+@endphp
+
+<body class="page-bg" x-data="{
+    lang: 'en',
+    bannerOpen: false,
+    init() {
+        this.bannerOpen = {{ $bannerEnabled ? 'true' : 'false' }} && !sessionStorage.getItem('fde_banner_dismissed');
+    },
+    dismissBanner() {
+        this.bannerOpen = false;
+        sessionStorage.setItem('fde_banner_dismissed', '1');
+    }
+}" :dir="lang === 'ur' ? 'rtl' : 'ltr'">
 
     {{-- Portal notice --}}
     @if (!empty($settings['portal_notice']))
@@ -400,6 +438,76 @@
         </div>
     @endif
 
+    {{-- ── Full-page Banner Overlay ── --}}
+    <div x-show="bannerOpen" x-cloak x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0" @click.self="dismissBanner()"
+        style="position:fixed;inset:0;z-index:50;{{ $bannerBg }};
+                display:flex;flex-direction:column;align-items:center;justify-content:center;">
+
+        @if ($bannerImageUrl)
+            {{-- Image banner: full-screen image with dismiss bar at bottom --}}
+            <div style="position:absolute;inset:0;overflow:hidden;">
+                <img src="{{ $bannerImageUrl }}" alt="Banner"
+                    style="width:100%;height:100%;object-fit:contain;background:#000;">
+            </div>
+            <div
+                style="position:absolute;bottom:0;left:0;right:0;
+                        background:linear-gradient(transparent,rgba(0,0,0,0.75));
+                        padding:1.5rem 2rem;display:flex;flex-direction:column;align-items:center;gap:0.75rem;">
+                @if (!empty($settings['banner_link_text']) && !empty($settings['banner_link_url']))
+                    <a href="{{ $settings['banner_link_url'] }}" target="_blank" rel="noopener"
+                        class="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full text-sm font-semibold"
+                        style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.35);">
+                        {{ $settings['banner_link_text'] }}
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                @endif
+                <button @click="dismissBanner()" class="px-8 py-2.5 rounded-full font-bold text-sm transition"
+                    style="background:#fff;color:#1f2937;" onmouseover="this.style.background='#f3f4f6'"
+                    onmouseout="this.style.background='#fff'">
+                    Continue to Portal →
+                </button>
+                <p style="font-size:0.65rem;color:rgba(255,255,255,0.4);">Tap anywhere on image to dismiss</p>
+            </div>
+        @else
+            {{-- Text/colour banner: centred card --}}
+            <div
+                style="max-width:560px;width:100%;margin:1.5rem;background:rgba(0,0,0,0.2);
+                        border:1px solid rgba(255,255,255,0.2);border-radius:1.5rem;
+                        padding:2.5rem;text-align:center;">
+                <div style="font-size:2.5rem;margin-bottom:1rem;">📢</div>
+                <p class="text-white font-bold text-xl leading-snug" style="margin-bottom:1.25rem;">
+                    {{ $bannerDisplay }}
+                </p>
+                @if (!empty($settings['banner_link_text']) && !empty($settings['banner_link_url']))
+                    <div style="margin-bottom:1rem;">
+                        <a href="{{ $settings['banner_link_url'] }}" target="_blank" rel="noopener"
+                            class="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold"
+                            style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);">
+                            {{ $settings['banner_link_text'] }}
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
+                @endif
+                <button @click="dismissBanner()" class="px-8 py-3 rounded-full font-bold text-sm transition"
+                    style="background:#fff;color:#1f2937;" onmouseover="this.style.background='#f3f4f6'"
+                    onmouseout="this.style.background='#fff'">
+                    Continue to Portal →
+                </button>
+                <p style="font-size:0.7rem;margin-top:0.75rem;color:rgba(255,255,255,0.45);">
+                    Click anywhere outside to dismiss
+                </p>
+            </div>
+        @endif
+    </div>
+
     {{-- ════════════════════════════════════════════════════
      NAVBAR
 ════════════════════════════════════════════════════ --}}
@@ -408,13 +516,24 @@
 
             {{-- Brand --}}
             <a href="{{ route('portal.index') }}" class="flex items-center gap-3 no-underline shrink-0">
-                <div class="w-9 h-9 rounded-full flex items-center justify-center"
-                    style="background:rgba(74,160,110,0.18);border:1px solid rgba(74,160,110,0.35);">
-                    <span style="font-size:18px;">🏛️</span>
-                </div>
+                @if (!empty($settings['portal_logo']))
+                    <img src="{{ Storage::url($settings['portal_logo']) }}"
+                        alt="{{ $settings['portal_title'] ?? 'FDE' }}"
+                        style="height:36px;width:auto;object-fit:contain;">
+                @elseif(!empty($settings['app_logo']))
+                    <img src="{{ Storage::url($settings['app_logo']) }}" alt="{{ $settings['app_name'] ?? 'FDE' }}"
+                        style="height:36px;width:auto;object-fit:contain;">
+                @else
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center"
+                        style="background:rgba(74,160,110,0.18);border:1px solid rgba(74,160,110,0.35);">
+                        <span style="font-size:18px;">🏛️</span>
+                    </div>
+                @endif
                 <div class="hidden sm:block">
-                    <p class="text-sm font-bold text-white leading-tight">FDE Admission Portal</p>
-                    <p class="text-xs" style="color:var(--muted);">Government of Pakistan</p>
+                    <p class="text-sm font-bold text-white leading-tight">
+                        {{ $settings['portal_title'] ?? 'FDE Admission Portal' }}</p>
+                    <p class="text-xs" style="color:var(--muted);">
+                        {{ $settings['portal_tagline'] ?? 'Government of Pakistan' }}</p>
                 </div>
             </a>
 
@@ -442,7 +561,8 @@
                     style="border-color:var(--border);color:var(--text);"
                     onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'"
                     onmouseout="this.style.borderColor='var(--border)'">Sign In</a>
-                <a href="{{ route('login') }}" class="btn-g" style="padding:8px 20px;font-size:13px;">Get Access</a>
+                <a href="{{ route('login') }}" class="btn-g" style="padding:8px 20px;font-size:13px;">Get
+                    Access</a>
             </div>
         </div>
     </nav>
@@ -470,7 +590,8 @@
                 <div>
                     <div class="flex items-center gap-2 mb-5 au">
                         <span class="dot"></span>
-                        <span class="text-xs font-semibold tracking-widest uppercase" style="color:var(--green-text);">
+                        <span class="text-xs font-semibold tracking-widest uppercase"
+                            style="color:var(--green-text);">
                             Admissions Open — Academic Year 2026–27
                         </span>
                     </div>
@@ -505,10 +626,11 @@
 
                     {{-- CTA row --}}
                     <div class="flex flex-wrap items-center gap-3 mb-12 au au3">
-                        <button onclick="document.getElementById('schools-section').scrollIntoView({behavior:'smooth'})"
+                        <button
+                            onclick="document.getElementById('schools-section').scrollIntoView({behavior:'smooth'})"
                             class="btn-g">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.35-4.35" />
                             </svg>
@@ -544,33 +666,73 @@
                 {{-- ── RIGHT: Glass feature cards ── --}}
                 <div class="grid grid-cols-2 gap-4 au au2">
 
-                    {{-- Banner image if set --}}
-                    @if (!empty($settings['banner_enabled']) && !empty($settings['banner_image']))
-                        <div class="col-span-2">
-                            <img src="{{ asset('storage/' . $settings['banner_image']) }}"
-                                class="w-full object-cover rounded-2xl" style="max-height:220px;" alt="Banner" />
-                        </div>
-                    @else
-                        {{-- Feature cards --}}
-                        @php $cards = [['🏫', 'Government Schools', 'All schools are official FDE institutions'], ['🎓', 'Free Education', 'No tuition fee from ECE to Class XII'], ['📋', 'Open Admissions', 'Check live seat availability instantly'], ['📞', 'Easy to Apply', 'Visit any school directly to enroll']]; @endphp
-                        @foreach ($cards as $c)
-                            <div class="glass p-5">
-                                <div class="icon-box mb-3">{{ $c[0] }}</div>
-                                <p class="text-sm font-semibold text-white mb-1">{{ $c[1] }}</p>
-                                <p class="text-xs leading-relaxed" style="color:var(--muted);">{{ $c[2] }}
-                                </p>
-                            </div>
-                        @endforeach
+                    {{-- Feature cards (all clickable) --}}
 
-                        {{-- Banner text if set --}}
-                        @if (!empty($settings['banner_enabled']) && !empty($settings['banner_text']))
-                            <div class="glass col-span-2 p-5" style="border-color:rgba(74,160,110,0.3);">
-                                <div class="flex items-start gap-3">
-                                    <div class="icon-box shrink-0">📢</div>
-                                    <p class="text-sm text-white leading-relaxed">{{ $settings['banner_text'] }}</p>
-                                </div>
-                            </div>
+                    {{-- Card 1: Total institutions --}}
+                    <a href="#schools-section" class="glass p-5 block transition"
+                        style="text-decoration:none;cursor:pointer;"
+                        onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--border-g)'"
+                        onmouseout="this.style.transform='';this.style.borderColor=''">
+                        <div class="icon-box mb-3">🏫</div>
+                        <p class="text-sm font-semibold text-white mb-1">Government Schools</p>
+                        <p class="text-xs leading-relaxed" style="color:var(--muted);">
+                            All <span class="text-white font-semibold">{{ number_format($totalInstitutions) }}</span>
+                            schools are official FDE institutions
+                        </p>
+                    </a>
+
+                    {{-- Card 2: Free Education --}}
+                    <a href="#schools-section" class="glass p-5 block transition"
+                        style="text-decoration:none;cursor:pointer;"
+                        onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--border-g)'"
+                        onmouseout="this.style.transform='';this.style.borderColor=''">
+                        <div class="icon-box mb-3">🎓</div>
+                        <p class="text-sm font-semibold text-white mb-1">Free Education</p>
+                        <p class="text-xs leading-relaxed" style="color:var(--muted);">No tuition fee from ECE to
+                            Class X</p>
+                    </a>
+
+                    {{-- Card 3: Open admissions count --}}
+                    <a href="#schools-section" class="glass p-5 block transition"
+                        style="text-decoration:none;cursor:pointer;"
+                        onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--border-g)'"
+                        onmouseout="this.style.transform='';this.style.borderColor=''">
+                        <div class="icon-box mb-3">📋</div>
+                        <p class="text-sm font-semibold text-white mb-1">Open Admissions</p>
+                        <p class="text-xs leading-relaxed" style="color:var(--muted);">
+                            <span class="text-white font-semibold">{{ number_format($openInstitutions) }}</span>
+                            schools accepting admissions right now
+                        </p>
+                    </a>
+
+                    {{-- Card 4: Merit Lists --}}
+                    <a href="{{ route('portal.merit-lists') }}" class="glass p-5 block transition"
+                        style="text-decoration:none;cursor:pointer;"
+                        onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(37,99,235,0.5)'"
+                        onmouseout="this.style.transform='';this.style.borderColor=''">
+                        <div class="icon-box mb-3">📄</div>
+                        <p class="text-sm font-semibold text-white mb-1">Merit Lists</p>
+                        @if ($institutionsWithMeritLists->count() > 0)
+                            <p class="text-xs leading-relaxed" style="color:var(--muted);">
+                                <span
+                                    class="text-white font-semibold">{{ $institutionsWithMeritLists->count() }}</span>
+                                {{ $institutionsWithMeritLists->count() === 1 ? 'school has' : 'schools have' }}
+                                merit lists — click a school card to download
+                            </p>
+                        @else
+                            <p class="text-xs leading-relaxed" style="color:var(--muted);">Merit lists will appear
+                                here when published by schools</p>
                         @endif
+                    </a>
+
+                    {{-- Banner text if set --}}
+                    @if (!empty($settings['banner_enabled']) && !empty($settings['banner_text']))
+                        <div class="glass col-span-2 p-5" style="border-color:rgba(74,160,110,0.3);">
+                            <div class="flex items-start gap-3">
+                                <div class="icon-box shrink-0">📢</div>
+                                <p class="text-sm text-white leading-relaxed">{{ $settings['banner_text'] }}</p>
+                            </div>
+                        </div>
                     @endif
 
                     {{-- Help card --}}
@@ -624,7 +786,7 @@
                 </div>
 
                 {{-- Filters --}}
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 px-5 py-4"
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 px-5 py-4"
                     style="border-bottom:1px solid var(--border);">
                     <select name="sector_id" class="f-select">
                         <option value="">All Sectors</option>
@@ -642,19 +804,28 @@
                     </select>
                     <select name="gender" class="f-select">
                         <option value="">Boys &amp; Girls</option>
-                        <option value="boys" {{ request('gender') == 'boys' ? 'selected' : '' }}>Boys
-                            Schools</option>
-                        <option value="girls" {{ request('gender') == 'girls' ? 'selected' : '' }}>Girls
-                            Schools</option>
+                        <option value="boys" {{ request('gender') == 'boys' ? 'selected' : '' }}>Boys Schools
+                        </option>
+                        <option value="girls" {{ request('gender') == 'girls' ? 'selected' : '' }}>Girls Schools
+                        </option>
                         <option value="co_education" {{ request('gender') == 'co_education' ? 'selected' : '' }}>
                             Co-Education</option>
                     </select>
                     <select name="type" class="f-select">
                         <option value="">All Types</option>
-                        @foreach (['I-V', 'I-VIII', 'I-X', 'I-XII', 'VI-VIII', 'VI-X', 'VI-XII', 'Model_College'] as $t)
+                        @foreach (['I-V', 'I-VIII', 'I-X', 'I-XII', 'VI-VIII', 'VI-X', 'VI-XII', 'XI-XII', 'XI-XIV', 'Model College'] as $t)
                             <option value="{{ $t }}" {{ request('type') == $t ? 'selected' : '' }}>
                                 {{ $t }}</option>
                         @endforeach
+                    </select>
+                    <select name="vacancy" class="f-select" onchange="this.closest('form').submit()">
+                        <option value="">Any Availability</option>
+                        <option value="has_seats" {{ request('vacancy') === 'has_seats' ? 'selected' : '' }}>Has
+                            Available Seats</option>
+                        <option value="nearly_full" {{ request('vacancy') === 'nearly_full' ? 'selected' : '' }}>
+                            Nearly Full (≥80%)</option>
+                        <option value="full" {{ request('vacancy') === 'full' ? 'selected' : '' }}>Fully Occupied
+                        </option>
                     </select>
                 </div>
 
@@ -681,6 +852,7 @@
                             'class_id',
                             'gender',
                             'type',
+                            'vacancy',
                             'has_transport',
                             'has_meal_program',
                             'has_matric_tech',
@@ -737,7 +909,9 @@
                         $ttlAvail = max(0, $ttlSeats - $ttlExist - $ttlAdmit);
                     @endphp
 
-                    <div class="school-card">
+                    <a href="{{ route('portal.show', $inst) }}" class="school-card"
+                        style="text-decoration:none;cursor:pointer;"
+                        aria-label="View details for {{ $inst->name }}">
                         <div class="{{ $ttlAvail > 0 ? 'card-bar' : 'card-bar-dim' }}"></div>
 
                         <div class="p-5 flex-1 flex flex-col">
@@ -745,6 +919,11 @@
                             <div class="flex justify-between items-start gap-3 mb-3">
                                 <div class="flex-1 min-w-0">
                                     <h3 class="font-semibold text-sm text-white leading-snug">{{ $inst->name }}</h3>
+                                    @if ($inst->hoi_name)
+                                        <p class="text-xs mt-0.5 font-medium" style="color:var(--green-text);">
+                                            👤 {{ $inst->hoi_name }}
+                                        </p>
+                                    @endif
                                     <p class="text-xs mt-0.5" style="color:var(--muted);">
                                         {{ $inst->sector?->name }} Sector
                                         @if ($inst->address)
@@ -777,6 +956,13 @@
                                 @if ($inst->has_ece)
                                     <span class="bdg bdg-pink">👶 ECE</span>
                                 @endif
+                                @if (isset($institutionsWithMeritLists[$inst->id]))
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-medium"
+                                        style="background:rgba(37,99,235,0.2);color:#93c5fd;
+                                                 border:1px solid rgba(37,99,235,0.3);">
+                                        📋 Merit List
+                                    </span>
+                                @endif
                             </div>
 
                             {{-- Class chips --}}
@@ -804,6 +990,12 @@
                                         @endif
                                     </div>
                                 </div>
+                            @elseif ($inst->type === 'Model College')
+                                <div class="mt-auto">
+                                    <p class="text-xs" style="color:var(--muted);">
+                                        📋 Admissions info coming soon
+                                    </p>
+                                </div>
                             @endif
                         </div>
 
@@ -811,22 +1003,20 @@
                         <div class="px-5 py-3 flex justify-between items-center"
                             style="border-top:1px solid var(--border);">
                             <span class="text-xs" style="color:var(--muted);">
-                                @if ($inst->contact_number)
+                                @if ($inst->contact_number ?? false)
                                     📞 {{ $inst->contact_number }}
                                 @endif
                             </span>
-                            <a href="{{ route('portal.show', $inst) }}"
-                                class="text-xs font-semibold flex items-center gap-1.5 transition"
-                                style="color:var(--green-text);" onmouseover="this.style.color='white'"
-                                onmouseout="this.style.color='var(--green-text)'">
+                            <span class="text-xs font-semibold flex items-center gap-1.5"
+                                style="color:var(--green-text);">
                                 View Details
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                                     <path d="M5 12h14M12 5l7 7-7 7" />
                                 </svg>
-                            </a>
+                            </span>
                         </div>
-                    </div>
+                    </a>
                 @endforeach
             </div>
         @endif
@@ -869,8 +1059,10 @@
                     <span style="font-size:15px;">🏛️</span>
                 </div>
                 <div>
-                    <p class="text-sm font-semibold text-white">Federal Directorate of Education</p>
-                    <p class="text-xs" style="color:var(--muted);">© {{ now()->year }} FDE Admissions Portal ·
+                    <p class="text-sm font-semibold text-white">
+                        {{ $settings['app_name'] ?? 'Federal Directorate of Education' }}</p>
+                    <p class="text-xs" style="color:var(--muted);">© {{ now()->year }}
+                        {{ $settings['portal_title'] ?? 'FDE Admissions Portal' }} ·
                         Islamabad Capital Territory</p>
                 </div>
             </div>

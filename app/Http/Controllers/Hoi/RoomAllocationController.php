@@ -9,6 +9,7 @@ use App\Models\NewConstructionRoom;
 use App\Models\RoomAllocation;
 use App\Models\Classes;
 use App\Models\InstitutionClass;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -150,6 +151,29 @@ class RoomAllocationController extends Controller
         });
 
         return back()->with('success', 'Allocation updated.');
+    }
+
+    // ── Export PDF — HOI's own school only ───────────────────────────
+    public function exportPdf()
+    {
+        $institution = Auth::user()->institution;
+        abort_if(! $institution, 403, 'No institution assigned.');
+
+        // Scope export to this HOI's school only
+        $records = NewConstructionRoom::with(['institution.sector'])
+            ->where('institution_id', $institution->id)
+            ->get();
+
+        $generatedAt = now()->format('d M Y, h:i A');
+        $search      = null;
+        $status      = null;
+
+        $pdf = Pdf::loadView('fde.rooms.pdf', compact('records', 'generatedAt', 'search', 'status'))
+                  ->setPaper('a4', 'landscape');
+
+        $filename = 'room-allocation-' . str($institution->name)->slug() . '-' . now()->format('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     // ── Delete a pending allocation ───────────────────────────────────

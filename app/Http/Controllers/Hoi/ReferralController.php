@@ -7,6 +7,8 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\AuditLog;
+use App\Models\Classes;
 use App\Models\Referral;
 use App\Models\DailyAdmission;
 use App\Models\InstitutionClass;
@@ -34,11 +36,13 @@ class ReferralController extends Controller
 
         abort_if(! $institution, 403, 'No institution assigned.');
 
-        $status = $request->input('status', 'pending');
+        $status  = $request->input('status', 'pending');
+        $classId = $request->input('class_id');
 
         $referrals = Referral::with(['classModel', 'referredBy'])
             ->where('institution_id', $institution->id)
             ->when($status !== 'all', fn($q) => $q->where('status', $status))
+            ->when($classId, fn($q) => $q->where('class_id', $classId))
             ->orderByDesc('created_at')
             ->paginate(20)
             ->withQueryString();
@@ -54,7 +58,9 @@ class ReferralController extends Controller
             ")
             ->first();
 
-        return view('hoi.referrals.index', compact('referrals', 'stats', 'status', 'institution'));
+        $classes = Classes::where('is_active', true)->orderBy('order')->get(['id', 'name']);
+
+        return view('hoi.referrals.index', compact('referrals', 'stats', 'status', 'institution', 'classes'));
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -176,5 +182,101 @@ class ReferralController extends Controller
 
         return redirect()->route('hoi.referrals.index')
             ->with('success', "Referral {$referral->reference_no} rejected.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  SHOW — detail view with tracking card
+    // ─────────────────────────────────────────────────────────────────
+    public function show(Referral $referral)
+    {
+        $institution = Auth::user()->institution;
+        abort_if(! $institution, 403);
+        abort_if($referral->institution_id !== $institution->id, 403);
+
+        $referral->load(['classModel', 'referredBy', 'actionedBy', 'testUpdatedBy', 'admissionUpdatedBy']);
+
+        return view('hoi.referrals.show', compact('referral', 'institution'));
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  UPDATE TEST — HOI records whether test was conducted + result
+    // ─────────────────────────────────────────────────────────────────
+    public function updateTest(Request $request, Referral $referral)
+    {
+        $institution = Auth::user()->institution;
+        abort_if(! $institution, 403);
+        abort_if($referral->institution_id !== $institution->id, 403);
+        abort_if(! $referral->canUpdateTest(), 422, 'Test details cannot be updated for this referral.');
+
+        $request->validate([
+            'test_conducted' => 'required|in:yes,no,exempted',
+            'test_result'    => 'required_if:test_conducted,yes|nullable|in:pass,fail',
+        ]);
+
+        // If no test / exempted → clear the result field
+        $testResult = $request->test_conducted === 'yes' ? $request->test_result : null;
+
+        $old = [
+            'test_conducted' => $referral->test_conducted,
+            'test_result'    => $referral->test_result,
+        ];
+
+        $referral->update([
+            'test_conducted'  => $request->test_conducted,
+            'test_result'     => $testResult,
+            'test_updated_at' => now(),
+            'test_updated_by' => Auth::id(),
+        ]);
+
+        AuditLog::record(
+            'updated',
+            'Referral',
+            $referral->id,
+            $old,
+            ['test_conducted' => $request->test_conducted, 'test_result' => $testResult],
+            "Test details updated for referral {$referral->reference_no}",
+            $referral->institution_id
+        );
+
+        return redirect()->route('hoi.referrals.show', $referral)
+            ->with('success', 'Test details saved successfully.');
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  UPDATE ADMISSION — HOI records final admission decision
+    // ─────────────────────────────────────────────────────────────────
+    public function updateAdmission(Request $request, Referral $referral)
+    {
+        $institution = Auth::user()->institution;
+        abort_if(! $institution, 403);
+        abort_if($referral->institution_id !== $institution->id, 403);
+        abort_if(! $referral->canUpdateAdmission(), 422, 'Admission status cannot be updated yet. Complete the test stage first.');
+
+        $request->validate([
+            'admission_status' => 'required|in:admitted,not_admitted',
+        ]);
+
+        $old = ['admission_status' => $referral->admission_status];
+
+        $referral->update([
+            'admission_status'     => $request->admission_status,
+            'admission_updated_at' => now(),
+            'admission_updated_by' => Auth::id(),
+        ]);
+
+        AuditLog::record(
+            'updated',
+            'Referral',
+            $referral->id,
+            $old,
+            ['admission_status' => $request->admission_status],
+            "Admission decision recorded for referral {$referral->reference_no}",
+            $referral->institution_id
+        );
+
+        $label = $request->admission_status === 'admitted' ? 'Admitted ✅' : 'Not Admitted';
+
+        return redirect()->route('hoi.referrals.show', $referral)
+            ->with('success', "Admission decision saved: {$label}.");
     }
 }

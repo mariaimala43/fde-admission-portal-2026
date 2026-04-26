@@ -1,13 +1,13 @@
 {{-- resources/views/fde/reports/oosc.blade.php --}}
 
 @extends('layouts.app')
-@section('title', 'OOSC & P2P Report')
+@section('title', 'OOSC & P2G Report')
 
 @section('content')
 
     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">OOSC & Private-to-Public Tracking</h2>
+            <h2 class="text-2xl font-bold text-gray-800">OOSC & Private to Government Tracking</h2>
             <p class="text-sm text-gray-500 mt-0.5">
                 Academic Year: <strong>{{ $academicYear?->name ?? '—' }}</strong>
                 &nbsp;·&nbsp; {{ $from->format('d M Y') }} — {{ $to->format('d M Y') }}
@@ -19,7 +19,7 @@
                 Back
             </a>
             @can('reports.export')
-                <a href="{{ route('fde.export.oosc', array_merge(request()->query(), ['format' => 'excel'])) }}"
+                <a href="{{ route($exportPrefix.'.export.oosc', array_merge(request()->query(), ['format' => 'excel'])) }}"
                     class="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition">
                     Excel
                 </a>
@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    <form method="GET" action="{{ route('fde.reports.oosc') }}"
+    <form method="GET" action="{{ route($exportPrefix.'.reports.oosc') }}"
         class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
         <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">From</label>
@@ -62,7 +62,7 @@
             <p class="text-2xl font-bold">{{ number_format($grandOosc) }}</p>
         </div>
         <div class="bg-orange-500 rounded-xl p-4 text-white text-center">
-            <p class="text-xs text-orange-100 mb-1">Total P2P</p>
+            <p class="text-xs text-orange-100 mb-1">Total P2G</p>
             <p class="text-2xl font-bold">{{ number_format($grandP2p) }}</p>
         </div>
         <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
@@ -88,9 +88,9 @@
                         <th class="text-center px-3 py-3 font-medium">OOSC Boys</th>
                         <th class="text-center px-3 py-3 font-medium">OOSC Girls</th>
                         <th class="text-center px-3 py-3 font-medium">OOSC Total</th>
-                        <th class="text-center px-3 py-3 font-medium">P2P Boys</th>
-                        <th class="text-center px-3 py-3 font-medium">P2P Girls</th>
-                        <th class="text-center px-3 py-3 font-medium">P2P Total</th>
+                        <th class="text-center px-3 py-3 font-medium">P2G Boys</th>
+                        <th class="text-center px-3 py-3 font-medium">P2G Girls</th>
+                        <th class="text-center px-3 py-3 font-medium">P2G Total</th>
                         <th class="text-center px-3 py-3 font-medium">Combined</th>
                     </tr>
                 </thead>
@@ -129,9 +129,9 @@
                         <th class="text-center px-3 py-3 font-medium">OOSC Boys</th>
                         <th class="text-center px-3 py-3 font-medium">OOSC Girls</th>
                         <th class="text-center px-3 py-3 font-medium">OOSC Total</th>
-                        <th class="text-center px-3 py-3 font-medium">P2P Boys</th>
-                        <th class="text-center px-3 py-3 font-medium">P2P Girls</th>
-                        <th class="text-center px-3 py-3 font-medium">P2P Total</th>
+                        <th class="text-center px-3 py-3 font-medium">P2G Boys</th>
+                        <th class="text-center px-3 py-3 font-medium">P2G Girls</th>
+                        <th class="text-center px-3 py-3 font-medium">P2G Total</th>
                         <th class="text-center px-3 py-3 font-medium">Combined</th>
                     </tr>
                 </thead>

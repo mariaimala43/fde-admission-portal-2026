@@ -16,28 +16,46 @@ use App\Models\DailyAdmission;
 use App\Models\Enrollment;
 use App\Models\Section;
 use App\Models\AcademicYear;
+use App\Models\AdmissionMonitoring;
+use App\Models\AdmissionMonitoringAudit;
+use App\Models\AdmissionCorrection;
+use App\Models\StudentTransfer;
+use App\Models\Referral;
+use App\Models\NewConstructionRoom;
+use App\Models\RoomAllocation;
+use App\Models\AuditLog;
 use App\Helpers\SchoolClassHelper;
 
 /**
- * TestingSeeder — Seeds realistic test data for the FDE Admission Portal.
+ * TestingSeeder — Seeds realistic test data for ALL 25 modules of the FDE Admission Portal.
  *
  * ASSUMES: Main DatabaseSeeder has already run (roles, classes, academic year,
  *          admin user, sectors, union councils, 432+ institutions).
  *
- * Creates:
- *   • 1 Director user
- *   • 2 AEO users (Urban + Rural sectors)
- *   • 12 HOI users linked to real institutions across all sectors/types
- *   • Class configs, sections, enrollment baselines for those 12 schools
- *   • Daily admission entries spanning 5+ days with all workflow states
+ * Covers:
+ *   Module 1  — Authentication (test accounts for all 4 roles)
+ *   Module 2  — School Profile Setup (institutions configured)
+ *   Module 3  — Class & Section Configuration
+ *   Module 4  — Seat Configuration
+ *   Module 5  — Enrollment baselines
+ *   Module 6  — Daily Admission Entry (7 days, all workflow states)
+ *   Module 7  — Admission Monitoring Workflow (all 5 stages)
+ *   Module 8  — Student Transfers (5 records, all statuses)
+ *   Module 9  — Referral System (4 records, all statuses)
+ *   Module 10 — Admission Corrections (3 records: pending/approved/rejected)
+ *   Module 12 — Reports & Analytics (data present from above)
+ *   Module 13 — Audit Trail (~20 entries)
+ *   Module 14 — User Management (test accounts)
+ *   Module 15 — School Management (institutions configured)
+ *   Module 16 — Room Allocations (3 schools, 6 allocations)
  *
  * RUN:  php artisan db:seed --class=TestingSeeder
  *
  * ── TEST ACCOUNTS ──────────────────────────────────────────────────────
- *   admin@fde.edu.pk          Admin@1234   →  fde_cell   (existing)
+ *   admin@fde.gov.pk          Admin@1234   →  fde_cell   (full access)
  *   director@fde.edu.pk       Test@1234    →  director   (read-only)
- *   aeo.urban@fde.edu.pk      Test@1234    →  aeo        (Urban-I, Urban-II, Sector-I, Sector-II)
- *   aeo.rural@fde.edu.pk      Test@1234    →  aeo        (B.K, Tarnol, Sihala, Nilore)
+ *   aeo.urban@fde.edu.pk      Test@1234    →  aeo        (Model Colleges, Urban-I, Urban-II)
+ *   aeo.rural@fde.edu.pk      Test@1234    →  aeo        (B.K, Tarnaul, Sihala, Nilore)
  *   hoi.g61@fde.edu.pk        Test@1234    →  hoi        (IMCG G-6/1-4, VI-XII, Girls)
  *   hoi.g611@fde.edu.pk       Test@1234    →  hoi        (IMS I-V G-6/1-1, Co-ed)
  *   hoi.g93@fde.edu.pk        Test@1234    →  hoi        (IMSG VI-X G-9/3, Girls)
@@ -47,9 +65,6 @@ use App\Helpers\SchoolClassHelper;
  *   hoi.tarnol@fde.edu.pk     Test@1234    →  hoi        (IMCB VI-XII Tarnol, Boys)
  *   hoi.sihala@fde.edu.pk     Test@1234    →  hoi        (IMCG Herdogher, VI-XII, Girls)
  *   hoi.nilore@fde.edu.pk     Test@1234    →  hoi        (IMCB Nilore, VI-XII, Boys)
- *   hoi.f81@fde.edu.pk        Test@1234    →  hoi        (IMCG F-8/1, I-XII, Cambridge)
- *   hoi.f84@fde.edu.pk        Test@1234    →  hoi        (IMCB F-8/4, I-XII, Cambridge)
- *   hoi.g63@fde.edu.pk        Test@1234    →  hoi        (ICB G-6/3, I-X, Cambridge)
  * ────────────────────────────────────────────────────────────────────────
  */
 class TestingSeeder extends Seeder
@@ -61,6 +76,7 @@ class TestingSeeder extends Seeder
         $this->command->info('');
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         $this->command->info('  FDE Admission Portal — Testing Seeder');
+        $this->command->info('  Covers all 25 portal modules');
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
@@ -78,12 +94,38 @@ class TestingSeeder extends Seeder
             return;
         }
 
-        $users        = $this->seedUsers();
-        $hoiEntries   = $this->seedHoiUsers();
+        // ── Modules 1, 14: Users for all 4 roles ──
+        $users      = $this->seedUsers();
+        $hoiEntries = $this->seedHoiUsers();
+
+        // ── Modules 2, 3, 4, 5: School config, classes, enrollment ──
         $this->configureSchools($hoiEntries, $academicYear);
+
+        // ── Module 6: Daily admissions ──
         $this->seedDailyAdmissions($hoiEntries, $academicYear);
 
-        $this->printSummary();
+        // ── Modules 7–13, 16: Extended test data ──
+        $admin = User::where('email', 'admin@fde.gov.pk')->first();
+
+        $this->command->line('  → Module 7: Admission monitoring (all 5 stages)');
+        $this->seedAdmissionMonitoring($hoiEntries, $academicYear, $admin);
+
+        $this->command->line('  → Module 8: Student transfers (5 statuses)');
+        $this->seedStudentTransfers($hoiEntries, $academicYear, $admin);
+
+        $this->command->line('  → Module 9: Referrals (4 statuses)');
+        $this->seedReferrals($hoiEntries, $academicYear, $admin);
+
+        $this->command->line('  → Module 10: Admission corrections (pending/approved/rejected)');
+        $this->seedCorrections($hoiEntries, $academicYear, $admin);
+
+        $this->command->line('  → Module 13: Audit trail entries');
+        $this->seedAuditLogs($hoiEntries, $admin, $academicYear);
+
+        $this->command->line('  → Module 16: Room allocations');
+        $this->seedRoomAllocations($hoiEntries, $admin);
+
+        $this->printSummary($academicYear);
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -105,7 +147,7 @@ class TestingSeeder extends Seeder
         );
         $director->syncRoles(['director']);
 
-        // ── AEO Urban — sectors: Urban-I(1), Urban-II(2), Sector-I(7), Sector-II(8) ──
+        // ── AEO Urban — sectors: Model Colleges(1), Urban-I(2), Urban-II(3) ──
         $aeoUrban = User::firstOrCreate(
             ['email' => 'aeo.urban@fde.edu.pk'],
             [
@@ -115,9 +157,9 @@ class TestingSeeder extends Seeder
             ]
         );
         $aeoUrban->syncRoles(['aeo']);
-        $aeoUrban->sectors()->syncWithoutDetaching([1, 2, 7, 8]);
+        $aeoUrban->sectors()->syncWithoutDetaching([1, 2, 3]);
 
-        // ── AEO Rural — sectors: B.K(3), Tarnol(4), Sihala(5), Nilore(6) ──
+        // ── AEO Rural — sectors: B.K(4), Tarnaul(5), Sihala(6), Nilore(7) ──
         $aeoRural = User::firstOrCreate(
             ['email' => 'aeo.rural@fde.edu.pk'],
             [
@@ -127,7 +169,7 @@ class TestingSeeder extends Seeder
             ]
         );
         $aeoRural->syncRoles(['aeo']);
-        $aeoRural->sectors()->syncWithoutDetaching([3, 4, 5, 6]);
+        $aeoRural->sectors()->syncWithoutDetaching([4, 5, 6, 7]);
 
         $this->command->line('     1 Director + 2 AEOs created');
 
@@ -162,15 +204,8 @@ class TestingSeeder extends Seeder
             // Sector Sihala (id=5)
             ['inst_id' => 197, 'email' => 'hoi.sihala@fde.edu.pk',  'name' => 'Ms. Sadia Farooq'],        // IMCG Herdogher, VI-XII, girls
 
-            // Sector Nilore (id=6)
+            // Sector Nilore (id=7)
             ['inst_id' => 327, 'email' => 'hoi.nilore@fde.edu.pk',  'name' => 'Mr. Nasir Khan'],          // IMCB,NILORE, VI-XII, boys
-
-            // Sector-I (id=7) — Cambridge schools
-            ['inst_id' => 433, 'email' => 'hoi.f81@fde.edu.pk',     'name' => 'Ms. Ayesha Malik'],        // IMCG F-8/1, I-XII, Cambridge
-            ['inst_id' => 434, 'email' => 'hoi.f84@fde.edu.pk',     'name' => 'Mr. Faisal Naeem'],        // IMCB F-8/4, I-XII, Cambridge
-
-            // Sector-II (id=8)
-            ['inst_id' => 436, 'email' => 'hoi.g63@fde.edu.pk',     'name' => 'Mr. Tariq Mahmood'],       // ICB G-6/3, I-X, Cambridge
         ];
 
         $entries = [];
@@ -247,7 +282,7 @@ class TestingSeeder extends Seeder
                     $seats    = rand(30, 50);
                     $existing = (int) ($seats * rand(50, 75) / 100);
 
-                    $ic = InstitutionClass::firstOrCreate(
+                    InstitutionClass::firstOrCreate(
                         ['institution_id' => $institution->id, 'class_id' => $ece->id],
                         [
                             'total_seats'         => $seats,
@@ -262,7 +297,6 @@ class TestingSeeder extends Seeder
                         ['order' => 1, 'is_active' => true]
                     );
 
-                    // Create Section record (enrollments FK target)
                     $section = Section::firstOrCreate(
                         [
                             'institution_id'   => $institution->id,
@@ -279,7 +313,6 @@ class TestingSeeder extends Seeder
                         ]
                     );
 
-                    // Enrollment baseline
                     Enrollment::firstOrCreate(
                         [
                             'academic_year_id' => $academicYear->id,
@@ -304,7 +337,7 @@ class TestingSeeder extends Seeder
                 $seats    = $this->seatsForType($institution->type, $class->order);
                 $existing = (int) ($seats * rand(55, 82) / 100);
 
-                $ic = InstitutionClass::firstOrCreate(
+                InstitutionClass::firstOrCreate(
                     ['institution_id' => $institution->id, 'class_id' => $class->id],
                     [
                         'total_seats'         => $seats,
@@ -324,8 +357,7 @@ class TestingSeeder extends Seeder
                         ['order' => $i + 1, 'is_active' => true]
                     );
 
-                    // Create Section record (enrollments FK target)
-                    $sectionSeats = (int) ceil($seats / $sectionCount);
+                    $sectionSeats      = (int) ceil($seats / $sectionCount);
                     $sectionEnrollment = (int) ceil($existing / $sectionCount);
 
                     $section = Section::firstOrCreate(
@@ -344,7 +376,6 @@ class TestingSeeder extends Seeder
                         ]
                     );
 
-                    // Enrollment baseline per section
                     Enrollment::firstOrCreate(
                         [
                             'academic_year_id' => $academicYear->id,
@@ -400,11 +431,9 @@ class TestingSeeder extends Seeder
                 $classModel = Classes::find($ic->class_id);
                 if (!$classModel || $classModel->is_ece) continue;
 
-                // Track running total admitted so far (mirrors DailyAdmissionController capacity logic)
                 $cumulAdmitted = 0;
 
                 foreach ($dates as $dayIndex => $admDate) {
-                    // Skip if already exists
                     if (DailyAdmission::where('institution_id', $institution->id)
                         ->where('class_id', $ic->class_id)
                         ->where('admission_date', $admDate)
@@ -412,29 +441,21 @@ class TestingSeeder extends Seeder
                         continue;
                     }
 
-                    // ── Capacity guard (mirrors DailyAdmissionController) ──────
-                    // available = total_seats − existing_enrollment − all prior days
                     $available = max(0, $ic->total_seats - $ic->existing_enrollment - $cumulAdmitted);
                     if ($available === 0) {
-                        continue; // class is full — no more admissions this year
+                        continue;
                     }
 
-                    $numbers    = $this->generateAdmissionNumbers(
-                        $institution->gender,
-                        $classModel->order
-                    );
+                    $numbers   = $this->generateAdmissionNumbers($institution->gender, $classModel->order);
+                    $grandTotal = $numbers['morning_boys']      + $numbers['morning_girls']
+                                + $numbers['evening_boys']      + $numbers['evening_girls']
+                                + $numbers['morning_oosc_boys'] + $numbers['morning_oosc_girls']
+                                + $numbers['morning_p2p_boys']  + $numbers['morning_p2p_girls']
+                                + $numbers['evening_oosc_boys'] + $numbers['evening_oosc_girls']
+                                + $numbers['evening_p2p_boys']  + $numbers['evening_p2p_girls'];
 
-                    // Grand total for this day's entry
-                    $grandTotal = $numbers['morning_boys']       + $numbers['morning_girls']
-                                + $numbers['evening_boys']       + $numbers['evening_girls']
-                                + $numbers['morning_oosc_boys']  + $numbers['morning_oosc_girls']
-                                + $numbers['morning_p2p_boys']   + $numbers['morning_p2p_girls']
-                                + $numbers['evening_oosc_boys']  + $numbers['evening_oosc_girls']
-                                + $numbers['evening_p2p_boys']   + $numbers['evening_p2p_girls'];
-
-                    // Cap to available — if random numbers exceed available, skip this day
                     if ($grandTotal > $available) {
-                        continue; // realistic: some days will simply have 0 new admissions
+                        continue;
                     }
 
                     // Status pattern: days 0-4 verified, day 5 submitted, day 6 (today) draft
@@ -454,22 +475,18 @@ class TestingSeeder extends Seeder
                         'institution_id'      => $institution->id,
                         'class_id'            => $ic->class_id,
                         'admission_date'      => $admDate,
-                        // Regular shift counts
                         'morning_boys'        => $numbers['morning_boys'],
                         'morning_girls'       => $numbers['morning_girls'],
                         'evening_boys'        => $numbers['evening_boys'],
                         'evening_girls'       => $numbers['evening_girls'],
-                        // Shift-specific OOSC
                         'morning_oosc_boys'   => $numbers['morning_oosc_boys'],
                         'morning_oosc_girls'  => $numbers['morning_oosc_girls'],
                         'evening_oosc_boys'   => $numbers['evening_oosc_boys'],
                         'evening_oosc_girls'  => $numbers['evening_oosc_girls'],
-                        // Shift-specific P2P
                         'morning_p2p_boys'    => $numbers['morning_p2p_boys'],
                         'morning_p2p_girls'   => $numbers['morning_p2p_girls'],
                         'evening_p2p_boys'    => $numbers['evening_p2p_boys'],
                         'evening_p2p_girls'   => $numbers['evening_p2p_girls'],
-                        // Aggregate totals
                         'oosc_boys'           => $numbers['oosc_boys'],
                         'oosc_girls'          => $numbers['oosc_girls'],
                         'p2p_boys'            => $numbers['p2p_boys'],
@@ -484,7 +501,7 @@ class TestingSeeder extends Seeder
                             : null,
                     ]);
 
-                    $cumulAdmitted += $grandTotal; // update running total for this class
+                    $cumulAdmitted += $grandTotal;
                     $totalCreated++;
                 }
             }
@@ -505,10 +522,684 @@ class TestingSeeder extends Seeder
     }
 
     // ══════════════════════════════════════════════════════════════════════
+    //  MODULE 7: ADMISSION MONITORING — all 5 workflow stages
+    // ══════════════════════════════════════════════════════════════════════
+
+    private function seedAdmissionMonitoring(array $hoiEntries, AcademicYear $academicYear, ?User $admin): void
+    {
+        $stageMap = [
+            // [workflow_status, test_status, merit_status, doc_status]
+            0  => ['test_verification',  'pending',      'pending', 'pending'],
+            1  => ['test_verification',  'pending',      'pending', 'pending'],
+            2  => ['test_verification',  'pending',      'pending', 'pending'],
+            3  => ['merit_confirmation', 'passed',       'pending', 'pending'],
+            4  => ['merit_confirmation', 'passed',       'pending', 'pending'],
+            5  => ['merit_confirmation', 'passed',       'pending', 'pending'],
+            6  => ['doc_verification',   'passed',       'selected','pending'],
+            7  => ['doc_verification',   'passed',       'selected','pending'],
+            8  => ['doc_verification',   'passed',       'selected','provisional'],
+            9  => ['finalized',          'passed',       'selected','complete'],
+            10 => ['finalized',          'not_required', 'selected','complete'],
+            11 => ['merit_confirmation', 'passed',       'rejected','pending'],  // blocked
+        ];
+
+        $created = 0;
+
+        foreach ($hoiEntries as $idx => $entry) {
+            if (!isset($stageMap[$idx])) continue;
+
+            $institution = $entry['institution'];
+            $user        = $entry['user'];
+            [$wfStatus, $testStatus, $meritStatus, $docStatus] = $stageMap[$idx];
+
+            // Get the oldest verified daily admission for this institution (any class)
+            $da = DailyAdmission::where('institution_id', $institution->id)
+                ->where('status', 'verified')
+                ->orderBy('admission_date')
+                ->first();
+
+            if (!$da) continue;
+
+            // Skip if monitoring record already exists for this daily admission
+            if (AdmissionMonitoring::where('daily_admission_id', $da->id)->exists()) {
+                $created++;
+                continue;
+            }
+
+            $now = now();
+            $mon = AdmissionMonitoring::create([
+                'daily_admission_id' => $da->id,
+                'institution_id'     => $institution->id,
+                'class_id'           => $da->class_id,
+                'academic_year_id'   => $academicYear->id,
+                'admission_date'     => $da->admission_date,
+                'workflow_status'    => $wfStatus,
+                'test_status'        => $testStatus,
+                'test_updated_at'    => in_array($testStatus, ['passed','failed','not_required']) ? $now->copy()->subDays(3) : null,
+                'test_updated_by'    => in_array($testStatus, ['passed','failed','not_required']) ? $user->id : null,
+                'merit_status'       => $meritStatus,
+                'merit_updated_at'   => in_array($meritStatus, ['selected','rejected','waiting']) ? $now->copy()->subDays(2) : null,
+                'merit_updated_by'   => in_array($meritStatus, ['selected','rejected','waiting']) ? ($admin?->id ?? $user->id) : null,
+                'doc_status'         => $docStatus,
+                'doc_updated_at'     => in_array($docStatus, ['provisional','complete','affidavit_case']) ? $now->copy()->subDay() : null,
+                'doc_updated_by'     => in_array($docStatus, ['provisional','complete','affidavit_case']) ? $user->id : null,
+                'finalized_at'       => $wfStatus === 'finalized' ? $now->copy()->subDay() : null,
+                'finalized_by'       => $wfStatus === 'finalized' ? ($admin?->id) : null,
+            ]);
+
+            // Seed audit entries for this monitoring record
+            AdmissionMonitoringAudit::create([
+                'monitoring_id' => $mon->id,
+                'changed_by'    => $user->id,
+                'field_name'    => 'test_status',
+                'old_value'     => 'pending',
+                'new_value'     => $testStatus,
+                'reason'        => 'Updated during admission processing',
+                'ip_address'    => '127.0.0.1',
+                'user_agent'    => 'TestingSeeder',
+                'role_at_time'  => 'hoi',
+            ]);
+
+            if ($wfStatus === 'finalized' && $admin) {
+                AdmissionMonitoringAudit::create([
+                    'monitoring_id' => $mon->id,
+                    'changed_by'    => $admin->id,
+                    'field_name'    => 'doc_status',
+                    'old_value'     => 'provisional',
+                    'new_value'     => 'complete',
+                    'reason'        => 'All documents verified and finalized by FDE Cell',
+                    'ip_address'    => '127.0.0.1',
+                    'user_agent'    => 'TestingSeeder',
+                    'role_at_time'  => 'fde_cell',
+                ]);
+            }
+
+            $created++;
+        }
+
+        $this->command->line("     {$created} monitoring records created");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  MODULE 8: STUDENT TRANSFERS — all 5 statuses
+    // ══════════════════════════════════════════════════════════════════════
+
+    private function seedStudentTransfers(array $hoiEntries, AcademicYear $academicYear, ?User $admin): void
+    {
+        if (count($hoiEntries) < 4) return;
+
+        $class6 = Classes::where('order', 6)->where('is_ece', false)->first();
+        if (!$class6) $class6 = Classes::where('is_ece', false)->orderBy('order')->first();
+        if (!$class6) return;
+
+        $inst0 = $hoiEntries[0]['institution'];
+        $inst1 = $hoiEntries[1]['institution'];
+        $inst2 = $hoiEntries[2]['institution'];
+        $inst3 = $hoiEntries[3]['institution'];
+
+        $hoi0 = $hoiEntries[0]['user'];
+        $hoi1 = $hoiEntries[1]['user'];
+        $hoi2 = $hoiEntries[2]['user'];
+        $hoi3 = $hoiEntries[3]['user'];
+
+        $definitions = [
+            [
+                'from_institution_id' => $inst0->id,
+                'to_institution_id'   => $inst1->id,
+                'class_id'            => $class6->id,
+                'student_name'        => 'Ahmed Ali',
+                'father_name'         => 'Muhammad Ali',
+                'notes'               => 'Family relocating within same sector. Request same class.',
+                'initiated_by'        => $hoi0->id,
+                'initiated_by_role'   => 'hoi',
+                'status'              => 'pending',
+                'is_cross_sector'     => false,
+            ],
+            [
+                'from_institution_id' => $inst1->id,
+                'to_institution_id'   => $inst2->id,
+                'class_id'            => $class6->id,
+                'student_name'        => 'Zainab Fatima',
+                'father_name'         => 'Usman Khan',
+                'notes'               => 'Medical reasons — transferring to girls school near residence.',
+                'initiated_by'        => $hoi1->id,
+                'initiated_by_role'   => 'hoi',
+                'status'              => 'info_requested',
+                'info_request_note'   => 'Please provide original leaving certificate from current school.',
+                'actioned_by'         => $hoi2->id,
+                'info_requested_at'   => now()->subDays(2)->toDateTimeString(),
+                'is_cross_sector'     => false,
+            ],
+            [
+                'from_institution_id' => $inst2->id,
+                'to_institution_id'   => $inst3->id,
+                'class_id'            => $class6->id,
+                'student_name'        => 'Hassan Raza',
+                'father_name'         => 'Abdul Raza',
+                'notes'               => 'Transfer approved after document verification.',
+                'initiated_by'        => $hoi2->id,
+                'initiated_by_role'   => 'hoi',
+                'status'              => 'accepted',
+                'actioned_by'         => $hoi3->id,
+                'accepted_at'         => now()->subDays(1)->toDateTimeString(),
+                'is_cross_sector'     => false,
+            ],
+            [
+                'from_institution_id' => $inst3->id,
+                'to_institution_id'   => $inst0->id,
+                'class_id'            => $class6->id,
+                'student_name'        => 'Sara Noor',
+                'father_name'         => 'Imran Noor',
+                'notes'               => 'Requesting transfer to school near new residence.',
+                'initiated_by'        => $hoi3->id,
+                'initiated_by_role'   => 'hoi',
+                'status'              => 'rejected',
+                'rejection_reason'    => 'Class is at full capacity. No seats available in requested class.',
+                'actioned_by'         => $hoi0->id,
+                'rejected_at'         => now()->subDays(1)->toDateTimeString(),
+                'is_cross_sector'     => false,
+            ],
+            [
+                // Cross-sector transfer — needs FDE review
+                'from_institution_id' => $inst0->id,
+                'to_institution_id'   => count($hoiEntries) > 6 ? $hoiEntries[6]['institution']->id : $inst3->id,
+                'class_id'            => $class6->id,
+                'student_name'        => 'Bilal Ahmed',
+                'father_name'         => 'Khalid Ahmed',
+                'notes'               => 'Cross-sector transfer — parent transferred to new posting in Tarnol.',
+                'initiated_by'        => $hoi0->id,
+                'initiated_by_role'   => 'hoi',
+                'status'              => 'pending',
+                'is_cross_sector'     => true,
+                'cross_sector_note'   => 'Cross-sector transfer requires FDE Cell approval before receiving school can act.',
+            ],
+        ];
+
+        $created = 0;
+        foreach ($definitions as $def) {
+            // Idempotent: skip if a transfer from this school to same school for same student already exists
+            if (StudentTransfer::where('from_institution_id', $def['from_institution_id'])
+                ->where('to_institution_id', $def['to_institution_id'])
+                ->where('student_name', $def['student_name'])
+                ->exists()) {
+                $created++;
+                continue;
+            }
+            StudentTransfer::create(array_merge([
+                'academic_year_id'    => $academicYear->id,
+                'actioned_by'         => null,
+                'rejection_reason'    => null,
+                'info_request_note'   => null,
+                'cancellation_reason' => null,
+                'accepted_at'         => null,
+                'rejected_at'         => null,
+                'cancelled_at'        => null,
+                'info_requested_at'   => null,
+                'is_cross_sector'     => false,
+                'cross_sector_note'   => null,
+                'cross_sector_approved_by' => null,
+                'cross_sector_approved_at' => null,
+            ], $def));
+            $created++;
+        }
+
+        $this->command->line("     {$created} transfer records created");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  MODULE 9: REFERRALS — pending / accepted / rejected / re_referred
+    // ══════════════════════════════════════════════════════════════════════
+
+    private function seedReferrals(array $hoiEntries, AcademicYear $academicYear, ?User $admin): void
+    {
+        if (!$admin || count($hoiEntries) < 3) return;
+
+        $class1 = Classes::where('order', 1)->where('is_ece', false)->first()
+                ?? Classes::where('is_ece', false)->orderBy('order')->first();
+        if (!$class1) return;
+
+        $inst0 = $hoiEntries[0]['institution'];
+        $inst1 = $hoiEntries[1]['institution'];
+        $inst2 = $hoiEntries[2]['institution'];
+        $hoi0  = $hoiEntries[0]['user'];
+        $hoi1  = $hoiEntries[1]['user'];
+
+        $year = now()->year;
+
+        // Referral 1 — pending
+        $ref1 = Referral::firstOrCreate(['reference_no' => "REF-{$year}-00101"], [
+            'referred_by'       => $admin->id,
+            'institution_id'    => $inst0->id,
+            'academic_year_id'  => $academicYear->id,
+            'student_name'      => 'Amina Bibi',
+            'father_name'       => 'Mohammad Akram',
+            'class_id'          => $class1->id,
+            'gender'            => 'female',
+            'shift'             => 'morning',
+            'notes'             => 'Student from underprivileged family. OOSC case — please prioritise.',
+            'status'            => 'pending',
+        ]);
+
+        // Referral 2 — accepted
+        $ref2 = Referral::firstOrCreate(['reference_no' => "REF-{$year}-00102"], [
+            'referred_by'       => $admin->id,
+            'institution_id'    => $inst1->id,
+            'academic_year_id'  => $academicYear->id,
+            'student_name'      => 'Tariq Hussain',
+            'father_name'       => 'Ghulam Hussain',
+            'class_id'          => $class1->id,
+            'gender'            => 'male',
+            'shift'             => 'morning',
+            'notes'             => 'Referred from FDE outreach camp. All documents available.',
+            'status'            => 'accepted',
+            'actioned_by'       => $hoi1->id,
+            'accepted_at'       => now()->subDays(2),
+        ]);
+
+        // Referral 3 — rejected
+        $ref3 = Referral::firstOrCreate(['reference_no' => "REF-{$year}-00103"], [
+            'referred_by'       => $admin->id,
+            'institution_id'    => $inst2->id,
+            'academic_year_id'  => $academicYear->id,
+            'student_name'      => 'Khalid Mehmood',
+            'father_name'       => 'Iqbal Mehmood',
+            'class_id'          => $class1->id,
+            'gender'            => 'male',
+            'shift'             => 'morning',
+            'notes'             => 'Referred for admission in class 1.',
+            'status'            => 'rejected',
+            'rejection_reason'  => 'No seats available in the requested class for morning shift. School is at full capacity.',
+            'actioned_by'       => $hoi0->id,
+            'rejected_at'       => now()->subDays(1),
+        ]);
+
+        // Referral 4 — re_referred (FDE re-referred the rejected one to a different school)
+        Referral::firstOrCreate(['reference_no' => "REF-{$year}-00104"], [
+            'referred_by'       => $admin->id,
+            'institution_id'    => $inst1->id,  // re-referred to inst1 instead of inst2
+            'academic_year_id'  => $academicYear->id,
+            'student_name'      => 'Khalid Mehmood',
+            'father_name'       => 'Iqbal Mehmood',
+            'class_id'          => $class1->id,
+            'gender'            => 'male',
+            'shift'             => 'morning',
+            'notes'             => 'Re-referred after rejection from original school. Please accommodate.',
+            'status'            => 're_referred',
+            'parent_referral_id'=> $ref3->id,
+            're_referred_to'    => $ref3->id,
+            'actioned_by'       => $admin->id,
+        ]);
+
+        $this->command->line('     4 referral records created');
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  MODULE 10: ADMISSION CORRECTIONS — pending / approved / rejected
+    // ══════════════════════════════════════════════════════════════════════
+
+    private function seedCorrections(array $hoiEntries, AcademicYear $academicYear, ?User $admin): void
+    {
+        $created = 0;
+
+        // Get 3 verified daily admissions from different test institutions
+        foreach (array_slice($hoiEntries, 0, 3) as $idx => $entry) {
+            $institution = $entry['institution'];
+            $user        = $entry['user'];
+
+            $da = DailyAdmission::where('institution_id', $institution->id)
+                ->where('status', 'verified')
+                ->orderBy('admission_date')
+                ->skip(1)   // skip the first one (used by monitoring)
+                ->first();
+
+            if (!$da) continue;
+
+            // Skip if correction already exists for this date+institution+class
+            if (AdmissionCorrection::where('institution_id', $institution->id)
+                ->where('class_id', $da->class_id)
+                ->where('admission_date', $da->admission_date)
+                ->exists()) {
+                $created++;
+                continue;
+            }
+
+            $statuses = ['pending', 'approved', 'rejected'];
+            $status   = $statuses[$idx];
+
+            AdmissionCorrection::create([
+                'institution_id'     => $institution->id,
+                'class_id'           => $da->class_id,
+                'academic_year_id'   => $academicYear->id,
+                'admission_date'     => $da->admission_date,
+                'reason'             => 'Data entry error — wrong count entered on the day. Requesting correction.',
+                // Old values (snapshot from the original record)
+                'old_morning_boys'   => $da->morning_boys,
+                'old_morning_girls'  => $da->morning_girls,
+                'old_evening_boys'   => $da->evening_boys,
+                'old_evening_girls'  => $da->evening_girls,
+                'old_morning_oosc_boys'  => $da->morning_oosc_boys,
+                'old_morning_oosc_girls' => $da->morning_oosc_girls,
+                'old_morning_p2p_boys'   => $da->morning_p2p_boys,
+                'old_morning_p2p_girls'  => $da->morning_p2p_girls,
+                'old_evening_oosc_boys'  => $da->evening_oosc_boys,
+                'old_evening_oosc_girls' => $da->evening_oosc_girls,
+                'old_evening_p2p_boys'   => $da->evening_p2p_boys,
+                'old_evening_p2p_girls'  => $da->evening_p2p_girls,
+                // New (corrected) values — slightly different numbers
+                'new_morning_boys'   => max(0, $da->morning_boys   + rand(-1, 2)),
+                'new_morning_girls'  => max(0, $da->morning_girls  + rand(-1, 2)),
+                'new_evening_boys'   => max(0, $da->evening_boys   + rand(0, 1)),
+                'new_evening_girls'  => max(0, $da->evening_girls  + rand(0, 1)),
+                'new_morning_oosc_boys'  => $da->morning_oosc_boys,
+                'new_morning_oosc_girls' => $da->morning_oosc_girls,
+                'new_morning_p2p_boys'   => $da->morning_p2p_boys,
+                'new_morning_p2p_girls'  => $da->morning_p2p_girls,
+                'new_evening_oosc_boys'  => $da->evening_oosc_boys,
+                'new_evening_oosc_girls' => $da->evening_oosc_girls,
+                'new_evening_p2p_boys'   => $da->evening_p2p_boys,
+                'new_evening_p2p_girls'  => $da->evening_p2p_girls,
+                'status'             => $status,
+                'requested_by'       => $user->id,
+                'reviewed_by'        => $status !== 'pending' ? $admin?->id : null,
+                'fde_note'           => match ($status) {
+                    'approved' => 'Correction verified against school register. Approved.',
+                    'rejected' => 'Numbers provided in correction request do not match supporting documents submitted.',
+                    default    => null,
+                },
+                'reviewed_at'        => $status !== 'pending' ? now()->subHours(rand(2, 24)) : null,
+            ]);
+
+            $created++;
+        }
+
+        $this->command->line("     {$created} correction records created");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  MODULE 13: AUDIT TRAIL — representative log entries
+    // ══════════════════════════════════════════════════════════════════════
+
+    private function seedAuditLogs(array $hoiEntries, ?User $admin, AcademicYear $academicYear): void
+    {
+        $entries = [];
+        $now     = now();
+
+        // ── Login events for each role ──
+        if ($admin) {
+            $entries[] = [
+                'user_id'    => $admin->id,
+                'role'       => 'fde_cell',
+                'action'     => 'login',
+                'model_type' => 'User',
+                'model_id'   => $admin->id,
+                'created_at' => $now->copy()->subHours(2),
+            ];
+        }
+
+        // HOI login events
+        foreach (array_slice($hoiEntries, 0, 4) as $entry) {
+            $entries[] = [
+                'user_id'        => $entry['user']->id,
+                'role'           => 'hoi',
+                'institution_id' => $entry['institution']->id,
+                'action'         => 'login',
+                'model_type'     => 'User',
+                'model_id'       => $entry['user']->id,
+                'created_at'     => $now->copy()->subHours(rand(1, 8)),
+            ];
+        }
+
+        // ── Daily admission submit events ──
+        foreach (array_slice($hoiEntries, 0, 3) as $entry) {
+            $da = DailyAdmission::where('institution_id', $entry['institution']->id)
+                ->where('status', 'verified')
+                ->first();
+
+            if ($da) {
+                $entries[] = [
+                    'user_id'        => $entry['user']->id,
+                    'role'           => 'hoi',
+                    'institution_id' => $entry['institution']->id,
+                    'action'         => 'submitted',
+                    'model_type'     => 'DailyAdmission',
+                    'model_id'       => $da->id,
+                    'new_values'     => ['date' => $da->admission_date, 'total' => $da->morning_boys + $da->morning_girls + $da->evening_boys + $da->evening_girls],
+                    'created_at'     => $now->copy()->subDays(rand(1, 5)),
+                ];
+            }
+        }
+
+        // ── FDE verification events ──
+        foreach (array_slice($hoiEntries, 0, 2) as $entry) {
+            $da = DailyAdmission::where('institution_id', $entry['institution']->id)
+                ->where('status', 'verified')
+                ->first();
+
+            if ($da && $admin) {
+                $entries[] = [
+                    'user_id'        => $admin->id,
+                    'role'           => 'fde_cell',
+                    'institution_id' => $entry['institution']->id,
+                    'action'         => 'verified',
+                    'model_type'     => 'DailyAdmission',
+                    'model_id'       => $da->id,
+                    'created_at'     => $now->copy()->subDays(rand(1, 4)),
+                ];
+            }
+        }
+
+        // ── Correction request events ──
+        foreach (array_slice($hoiEntries, 0, 2) as $entry) {
+            $entries[] = [
+                'user_id'        => $entry['user']->id,
+                'role'           => 'hoi',
+                'institution_id' => $entry['institution']->id,
+                'action'         => 'created',
+                'model_type'     => 'AdmissionCorrection',
+                'reason'         => 'Data entry error',
+                'created_at'     => $now->copy()->subDays(rand(1, 3)),
+            ];
+        }
+
+        // ── Monitoring update event ──
+        if ($admin) {
+            $mon = AdmissionMonitoring::first();
+            if ($mon) {
+                $entries[] = [
+                    'user_id'        => $admin->id,
+                    'role'           => 'fde_cell',
+                    'institution_id' => $mon->institution_id,
+                    'action'         => 'updated',
+                    'model_type'     => 'AdmissionMonitoring',
+                    'model_id'       => $mon->id,
+                    'old_values'     => ['merit_status' => 'pending'],
+                    'new_values'     => ['merit_status' => 'selected'],
+                    'reason'         => 'Merit list reviewed and student confirmed selected.',
+                    'created_at'     => $now->copy()->subDays(2),
+                ];
+            }
+        }
+
+        // ── Transfer initiated event ──
+        if (!empty($hoiEntries[0])) {
+            $entries[] = [
+                'user_id'        => $hoiEntries[0]['user']->id,
+                'role'           => 'hoi',
+                'institution_id' => $hoiEntries[0]['institution']->id,
+                'action'         => 'transfer_initiated',
+                'model_type'     => 'StudentTransfer',
+                'created_at'     => $now->copy()->subDays(1),
+            ];
+        }
+
+        // Write all audit entries
+        $written = 0;
+        foreach ($entries as $entry) {
+            AuditLog::create(array_merge([
+                'user_id'        => null,
+                'role'           => null,
+                'institution_id' => null,
+                'model_type'     => null,
+                'model_id'       => null,
+                'old_values'     => null,
+                'new_values'     => null,
+                'reason'         => null,
+                'ip_address'     => '127.0.0.1',
+                'user_agent'     => 'TestingSeeder/1.0',
+            ], $entry));
+            $written++;
+        }
+
+        $this->command->line("     {$written} audit log entries created");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  MODULE 16: ROOM ALLOCATIONS — 3 schools, pending + approved
+    // ══════════════════════════════════════════════════════════════════════
+
+    private function seedRoomAllocations(array $hoiEntries, ?User $admin): void
+    {
+        if (count($hoiEntries) < 3) return;
+
+        $classModels = Classes::where('is_ece', false)->orderBy('order')->take(3)->get();
+        if ($classModels->isEmpty()) return;
+
+        $purposes  = ['classroom', 'lab', 'library'];
+        $created   = 0;
+
+        foreach (array_slice($hoiEntries, 0, 3) as $idx => $entry) {
+            $institution = $entry['institution'];
+            $user        = $entry['user'];
+
+            // Create NewConstructionRoom if not already present
+            $ncr = NewConstructionRoom::firstOrCreate(
+                ['institution_id' => $institution->id],
+                [
+                    'rooms_total'          => 4,
+                    'rooms_allocated'      => 0,
+                    'construction_status'  => $idx === 0 ? 'completed' : 'near_completion',
+                    'source_document'      => "NCR-2026-{$institution->id}",
+                    'notes'                => "New construction rooms for {$institution->name}",
+                ]
+            );
+
+            // Allocation 1 — pending (HoI requested)
+            $class1 = $classModels->get(0);
+            if ($class1 && !RoomAllocation::where('institution_id', $institution->id)
+                ->where('class_id', $class1->id)->exists()) {
+                RoomAllocation::create([
+                    'new_construction_room_id' => $ncr->id,
+                    'institution_id'           => $institution->id,
+                    'class_id'                 => $class1->id,
+                    'rooms_assigned'           => 1,
+                    'purpose'                  => $purposes[$idx % 3],
+                    'hoi_note'                 => 'Requesting room for overflow students in morning shift.',
+                    'status'                   => 'pending',
+                ]);
+                $ncr->increment('rooms_allocated');
+                $created++;
+            }
+
+            // Allocation 2 — approved (FDE reviewed)
+            $class2 = $classModels->get(1);
+            if ($class2 && $admin && !RoomAllocation::where('institution_id', $institution->id)
+                ->where('class_id', $class2->id)->exists()) {
+                RoomAllocation::create([
+                    'new_construction_room_id' => $ncr->id,
+                    'institution_id'           => $institution->id,
+                    'class_id'                 => $class2->id,
+                    'rooms_assigned'           => 1,
+                    'purpose'                  => 'classroom',
+                    'hoi_note'                 => 'Required for new section added this academic year.',
+                    'status'                   => 'approved',
+                    'reviewed_by'              => $admin->id,
+                    'reviewed_at'              => now()->subDays(rand(1, 5)),
+                    'review_note'              => 'Allocation approved. Room confirmed available per construction report.',
+                ]);
+                $ncr->increment('rooms_allocated');
+                $created++;
+            }
+        }
+
+        $this->command->line("     {$created} room allocation records created");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  SUMMARY
+    // ══════════════════════════════════════════════════════════════════════
+
+    private function printSummary(AcademicYear $academicYear): void
+    {
+        $this->command->newLine();
+        $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        $this->command->info('  TEST DATA SEEDED SUCCESSFULLY');
+        $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        $this->command->newLine();
+
+        $this->command->table(
+            ['Role', 'Email', 'Password', 'Notes'],
+            [
+                ['FDE Cell', 'admin@fde.gov.pk',       'Admin@1234',     'Full access — all 25 modules'],
+                ['Director', 'director@fde.edu.pk',     $this->password, 'Read-only reports & dashboards'],
+                ['AEO',      'aeo.urban@fde.edu.pk',    $this->password, 'Model Colleges, Urban-I, Urban-II'],
+                ['AEO',      'aeo.rural@fde.edu.pk',    $this->password, 'B.K, Tarnaul, Sihala, Nilore'],
+                ['HOI',      'hoi.g61@fde.edu.pk',      $this->password, 'IMCG G-6/1-4 (VI-XII, Girls)'],
+                ['HOI',      'hoi.g611@fde.edu.pk',     $this->password, 'IMS I-V G-6/1-1 (Co-ed)'],
+                ['HOI',      'hoi.g93@fde.edu.pk',      $this->password, 'IMSG VI-X G-9/3 (Girls)'],
+                ['HOI',      'hoi.g94@fde.edu.pk',      $this->password, 'IMS I-V G-9/4 (Co-ed)'],
+                ['HOI',      'hoi.bk1@fde.edu.pk',      $this->password, 'IMCB VI-XII B.K (Boys)'],
+                ['HOI',      'hoi.bk2@fde.edu.pk',      $this->password, 'IMSB I-X B.K (Boys)'],
+                ['HOI',      'hoi.tarnol@fde.edu.pk',   $this->password, 'IMCB VI-XII Tarnol (Boys)'],
+                ['HOI',      'hoi.sihala@fde.edu.pk',   $this->password, 'IMCG Herdogher (VI-XII, Girls)'],
+                ['HOI',      'hoi.nilore@fde.edu.pk',   $this->password, 'IMCB Nilore (VI-XII, Boys)'],
+            ]
+        );
+
+        $this->command->newLine();
+        $this->command->info('  ── Database Counts ──');
+        $this->command->table(
+            ['Module', 'Table', 'Records'],
+            [
+                ['3/4/5 — Classes + Enrollment', 'institution_classes', InstitutionClass::count()],
+                ['5 — Enrollment baselines',     'enrollments',         Enrollment::count()],
+                ['6 — Daily Admissions',         'daily_admissions',    DailyAdmission::count()],
+                ['7 — Monitoring Workflow',      'admission_monitoring',AdmissionMonitoring::count()],
+                ['8 — Student Transfers',        'student_transfers',   StudentTransfer::count()],
+                ['9 — Referrals',                'referrals',           \App\Models\Referral::count()],
+                ['10 — Corrections',             'admission_corrections',AdmissionCorrection::count()],
+                ['13 — Audit Trail',             'audit_logs',          AuditLog::count()],
+                ['16 — Construction Rooms',      'new_construction_rooms',NewConstructionRoom::count()],
+                ['16 — Room Allocations',        'room_allocations',    RoomAllocation::count()],
+            ]
+        );
+
+        $this->command->newLine();
+        $this->command->info('  ── Module Coverage ──');
+        $this->command->line('  M1  Auth             → Login with any account above');
+        $this->command->line('  M2  School Profile   → Login as any HOI → profile page');
+        $this->command->line('  M3  Class Config     → HOI → Class Setup menu');
+        $this->command->line('  M4  Seat Config      → FDE Cell → Seat Configuration');
+        $this->command->line('  M5  Enrollment       → HOI → Enrollment page');
+        $this->command->line('  M6  Daily Admissions → HOI → Enter Admissions (7 days seeded)');
+        $this->command->line('  M7  Monitoring       → HOI → Monitoring | FDE → Monitoring Dashboard');
+        $this->command->line('  M8  Transfers        → HOI → Transfers (5 records: all statuses)');
+        $this->command->line('  M9  Referrals        → FDE → Referrals | HOI → My Referrals');
+        $this->command->line('  M10 Corrections      → HOI → Corrections | FDE → Review Corrections');
+        $this->command->line('  M12 Reports          → FDE/AEO/Director → Reports Dashboard');
+        $this->command->line('  M13 Audit Trail      → FDE → Audit Log');
+        $this->command->line('  M14 User Mgmt        → FDE → Users (Admin panel)');
+        $this->command->line('  M15 School Mgmt      → FDE → Schools (Admin panel)');
+        $this->command->line('  M16 Room Allocations → HOI → Room Allocations | FDE → Room Overview');
+        $this->command->line('  M23 Portal Settings  → FDE → Portal Settings');
+        $this->command->newLine();
+        $this->command->line('  Academic Year: ' . $academicYear->name);
+        $this->command->newLine();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     //  HELPERS
     // ══════════════════════════════════════════════════════════════════════
 
-    /** Map institution gender to sections enum (male/female/combined) */
     private function mapGender(string $institutionGender): string
     {
         return match ($institutionGender) {
@@ -538,7 +1229,6 @@ class TestingSeeder extends Seeder
 
     private function generateAdmissionNumbers(string $gender, int $classOrder): array
     {
-        // Lower classes = more new admissions
         $scale = match (true) {
             $classOrder <= 3  => rand(2, 6),
             $classOrder <= 5  => rand(1, 4),
@@ -556,112 +1246,47 @@ class TestingSeeder extends Seeder
             $mg = $scale;
             $eg = rand(0, 1) ? (int) ceil($scale * 0.3) : 0;
         } else {
-            // co_education — split roughly
             $mb = (int) ceil($scale * 0.5);
             $mg = $scale - $mb;
             $eb = rand(0, 1) ? rand(0, 1) : 0;
             $eg = rand(0, 1) ? rand(0, 1) : 0;
         }
 
-        // OOSC and P2P — small numbers, ~25% and ~15% chance respectively
-        // Split between morning (70%) and evening (30%) shifts for realism
         $mOoscB = 0; $mOoscG = 0; $eOoscB = 0; $eOoscG = 0;
         $mP2pB  = 0; $mP2pG  = 0; $eP2pB  = 0; $eP2pG  = 0;
 
         if (rand(1, 100) <= 25) {
             if ($gender !== 'girls') {
-                $total = rand(0, 2);
-                $mOoscB = $total;
-                $eOoscB = rand(0, 1) && $eb > 0 ? rand(0, 1) : 0; // evening OOSC only if school has evening
+                $mOoscB = rand(0, 2);
+                $eOoscB = rand(0, 1) && $eb > 0 ? rand(0, 1) : 0;
             }
             if ($gender !== 'boys') {
-                $total = rand(0, 2);
-                $mOoscG = $total;
+                $mOoscG = rand(0, 2);
                 $eOoscG = rand(0, 1) && $eg > 0 ? rand(0, 1) : 0;
             }
         }
         if (rand(1, 100) <= 15) {
-            if ($gender !== 'girls') {
-                $mP2pB = rand(0, 1);
-                $eP2pB = 0; // P2P mostly morning
-            }
-            if ($gender !== 'boys') {
-                $mP2pG = rand(0, 1);
-                $eP2pG = 0;
-            }
+            if ($gender !== 'girls') $mP2pB = rand(0, 1);
+            if ($gender !== 'boys')  $mP2pG = rand(0, 1);
         }
 
-        // Aggregate totals (mirror what DailyAdmissionController computes on save)
-        $ooscB = $mOoscB + $eOoscB;
-        $ooscG = $mOoscG + $eOoscG;
-        $p2pB  = $mP2pB  + $eP2pB;
-        $p2pG  = $mP2pG  + $eP2pG;
-
         return [
-            // Regular shift counts
             'morning_boys'        => $mb,
             'morning_girls'       => $mg,
             'evening_boys'        => $eb,
             'evening_girls'       => $eg,
-            // Shift-specific OOSC
             'morning_oosc_boys'   => $mOoscB,
             'morning_oosc_girls'  => $mOoscG,
             'evening_oosc_boys'   => $eOoscB,
             'evening_oosc_girls'  => $eOoscG,
-            // Shift-specific P2P
             'morning_p2p_boys'    => $mP2pB,
             'morning_p2p_girls'   => $mP2pG,
             'evening_p2p_boys'    => $eP2pB,
             'evening_p2p_girls'   => $eP2pG,
-            // Aggregate totals (oosc_boys = morning + evening)
-            'oosc_boys'           => $ooscB,
-            'oosc_girls'          => $ooscG,
-            'p2p_boys'            => $p2pB,
-            'p2p_girls'           => $p2pG,
+            'oosc_boys'           => $mOoscB + $eOoscB,
+            'oosc_girls'          => $mOoscG + $eOoscG,
+            'p2p_boys'            => $mP2pB  + $eP2pB,
+            'p2p_girls'           => $mP2pG  + $eP2pG,
         ];
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    //  SUMMARY
-    // ══════════════════════════════════════════════════════════════════════
-
-    private function printSummary(): void
-    {
-        $this->command->newLine();
-        $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        $this->command->info('  TEST DATA SEEDED SUCCESSFULLY');
-        $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        $this->command->newLine();
-
-        $this->command->table(
-            ['Role', 'Email', 'Password', 'Notes'],
-            [
-                ['FDE Cell', 'admin@fde.edu.pk',       'Admin@1234', 'Full access (existing)'],
-                ['Director', 'director@fde.edu.pk',     $this->password, 'Read-only reports'],
-                ['AEO',      'aeo.urban@fde.edu.pk',    $this->password, 'Urban-I, Urban-II, Sector-I, Sector-II'],
-                ['AEO',      'aeo.rural@fde.edu.pk',    $this->password, 'B.K, Tarnol, Sihala, Nilore'],
-                ['HOI',      'hoi.g61@fde.edu.pk',      $this->password, 'IMCG G-6/1-4 (VI-XII, Girls)'],
-                ['HOI',      'hoi.g611@fde.edu.pk',     $this->password, 'IMS I-V G-6/1-1 (Co-ed)'],
-                ['HOI',      'hoi.g93@fde.edu.pk',      $this->password, 'IMSG VI-X G-9/3 (Girls)'],
-                ['HOI',      'hoi.g94@fde.edu.pk',      $this->password, 'IMS I-V G-9/4 (Co-ed)'],
-                ['HOI',      'hoi.bk1@fde.edu.pk',      $this->password, 'IMCB VI-XII B.K (Boys)'],
-                ['HOI',      'hoi.bk2@fde.edu.pk',      $this->password, 'IMSB I-X B.K (Boys)'],
-                ['HOI',      'hoi.tarnol@fde.edu.pk',   $this->password, 'IMCB VI-XII Tarnol (Boys)'],
-                ['HOI',      'hoi.sihala@fde.edu.pk',   $this->password, 'IMCG Herdogher (VI-XII, Girls)'],
-                ['HOI',      'hoi.nilore@fde.edu.pk',   $this->password, 'IMCB Nilore (VI-XII, Boys)'],
-                ['HOI',      'hoi.f81@fde.edu.pk',      $this->password, 'IMCG F-8/1 (I-XII, Cambridge)'],
-                ['HOI',      'hoi.f84@fde.edu.pk',      $this->password, 'IMCB F-8/4 (I-XII, Cambridge)'],
-                ['HOI',      'hoi.g63@fde.edu.pk',      $this->password, 'ICB G-6/3 (I-X, Cambridge)'],
-            ]
-        );
-
-        $admCount  = DailyAdmission::count();
-        $enrlCount = Enrollment::count();
-        $icCount   = InstitutionClass::count();
-
-        $this->command->newLine();
-        $this->command->line("  Totals: {$icCount} class configs | {$enrlCount} enrollments | {$admCount} daily admissions");
-        $this->command->line('  Statuses: verified (5 days), submitted (1 day), draft (today), 1 returned');
-        $this->command->newLine();
     }
 }

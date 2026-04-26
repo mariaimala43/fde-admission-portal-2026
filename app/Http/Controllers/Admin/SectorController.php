@@ -82,4 +82,26 @@ class SectorController extends Controller
         return redirect()->route('admin.sectors.index')
             ->with('success', 'Sector updated successfully.');
     }
+
+    // ── Delete sector ──────────────────────────────────────
+    public function destroy(Sector $sector)
+    {
+        if ($sector->institutions()->exists()) {
+            return back()->with('error', "Cannot delete: Sector \"{$sector->name}\" has {$sector->institutions()->count()} institution(s) assigned to it.");
+        }
+
+        $name = $sector->name;
+
+        AuditLog::record(
+            action: 'deleted',
+            modelType: 'Sector',
+            modelId: $sector->id,
+            oldValues: $sector->toArray()
+        );
+
+        $sector->delete();
+
+        return redirect()->route('admin.sectors.index')
+            ->with('success', "Sector \"{$name}\" has been deleted.");
+    }
 }

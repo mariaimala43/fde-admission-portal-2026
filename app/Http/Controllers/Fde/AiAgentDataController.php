@@ -266,7 +266,7 @@ class AiAgentDataController extends Controller
             ->groupBy('admission_date')
             ->orderBy('admission_date')
             ->get()
-            ->keyBy('admission_date');
+            ->keyBy(fn($r) => $r->admission_date->toDateString());
 
         $daily = [];
         for ($i = 29; $i >= 0; $i--) {
@@ -506,8 +506,7 @@ class AiAgentDataController extends Controller
         $content = $data['choices'][0]['message']['content'] ?? '';
 
         // Strip accidental markdown fences
-        $content = trim(preg_replace(['/^```[a-z]*
-?/m', '/```$/m'], '', $content));
+        $content = trim(preg_replace(['/^```[a-z]*?/m', '/```$/m'], '', $content));
 
         if (empty($content)) {
             $reason = $data['choices'][0]['finish_reason'] ?? 'unknown';
@@ -517,6 +516,37 @@ class AiAgentDataController extends Controller
         }
 
         return response()->json(['content' => $content]);
+    }
+    //insight chatgpt
+    public function insights(Request $request)
+    {
+        $data = $request->input('dataset');
+
+        $prompt = "
+    You are an education analytics expert for FDE.
+
+    Analyze this dataset and return JSON with:
+
+    1. insights (array)
+    2. sector_rankings
+    3. alerts
+    4. recommendations
+
+    Dataset:
+    ".json_encode($data);
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.config('services.openrouter.key'),
+            'Content-Type' => 'application/json'
+        ])->post('https://openrouter.ai/api/v1/chat/completions',[
+            'model' => 'meta-llama/llama-3.3-70b-instruct:free',
+            'messages'=>[
+                ['role'=>'system','content'=>'You are an education data analyst'],
+                ['role'=>'user','content'=>$prompt]
+            ]
+        ]);
+
+        return response()->json($response->json());
     }
 }
 

@@ -8,6 +8,7 @@ use App\Models\Institution;
 use App\Models\InstitutionClass;
 use App\Models\InstitutionSection;
 use App\Models\DailyAdmission;
+use App\Models\NewConstructionRoom;
 use App\Models\AcademicYear;
 use App\Models\Sector;
 
@@ -27,9 +28,6 @@ class DashboardController extends Controller
         $isDirector   = $user->hasRole('director');
 
         // ── Scope ─────────────────────────────────────────────────────
-        // Director → all sectors + all institutions
-        // AEO      → single sector via aeo_sectors pivot
-        // ─────────────────────────────────────────────────────────────
         if ($isDirector) {
             $sectors      = Sector::orderBy('name')->get();
             $institutions = Institution::where('is_active', true)
@@ -38,7 +36,7 @@ class DashboardController extends Controller
                 ->orderBy('name')
                 ->get();
 
-            $currentSector = null; // Director has no single sector
+            $currentSector = null;
         } else {
             $currentSector = $user->sectors()->first();
 
@@ -94,11 +92,31 @@ class DashboardController extends Controller
             ->groupBy('institution_id')
             ->map(fn($rows) => $rows->keyBy('class_id'));
 
+        // ── Matric Tech totals (scoped to visible institutions) ───────
+        $matricTechYear = (int) DailyAdmission::whereIn('institution_id', $institutionIds)
+            ->where('academic_year_id', $academicYear?->id)
+            ->sum('matric_tech_count');
+
+        $matricTechToday = (int) DailyAdmission::whereIn('institution_id', $institutionIds)
+            ->whereDate('admission_date', today())
+            ->sum('matric_tech_count');
+
+        // ── New Construction Rooms (scoped to visible institutions) ───
+        $roomsRow = NewConstructionRoom::whereIn('institution_id', $institutionIds)
+            ->selectRaw('SUM(rooms_total) as total, SUM(rooms_allocated) as allocated')
+            ->first();
+
+        $newRoomsTotal       = (int) ($roomsRow->total     ?? 0);
+        $newRoomsAllocated   = (int) ($roomsRow->allocated ?? 0);
+        $newRoomsRemaining   = max(0, $newRoomsTotal - $newRoomsAllocated);
+        $schoolsWithNewRooms = NewConstructionRoom::whereIn('institution_id', $institutionIds)
+            ->distinct('institution_id')
+            ->count('institution_id');
+
         // ── Sector-level summary ──────────────────────────────────────
-        // Iterates over $sectors (1 for AEO, many for Director).
-        // Attaches computed totals as properties on each Sector model.
-        // ─────────────────────────────────────────────────────────────
-        $sectorSummary = $sectors->map(function ($sector) use ($institutions, $seatData, $admissionData) {
+        $sectorSummary = $sectors->map(function ($sector) use (
+            $institutions, $seatData, $admissionData, $academicYear
+        ) {
             $sectorInsts   = $institutions->where('sector_id', $sector->id);
             $sectorInstIds = $sectorInsts->pluck('id');
 
@@ -115,13 +133,30 @@ class DashboardController extends Controller
                 $totalAdmitted += $admissions->sum('total_admitted');
             }
 
-            // Attach computed props directly on the Sector model
-            $sector->school_count     = $sectorInsts->count();
-            $sector->total_seats      = $totalSeats;
-            $sector->total_existing   = $totalExisting;
-            $sector->total_admitted   = $totalAdmitted;
-            $sector->total_available  = max(0, $totalSeats - $totalExisting - $totalAdmitted);
-            $sector->total_enrollment = $totalExisting + $totalAdmitted;
+            // Matric Tech for this sector
+            $sectorMatricTech = (int) DailyAdmission::whereIn('institution_id', $sectorInstIds)
+                ->where('academic_year_id', $academicYear?->id)
+                ->sum('matric_tech_count');
+
+            // New rooms for this sector
+            $sectorRoomsRow = NewConstructionRoom::whereIn('institution_id', $sectorInstIds)
+                ->selectRaw('SUM(rooms_total) as total, SUM(rooms_allocated) as allocated')
+                ->first();
+
+            $sectorNewRoomsTotal     = (int) ($sectorRoomsRow->total     ?? 0);
+            $sectorNewRoomsAllocated = (int) ($sectorRoomsRow->allocated ?? 0);
+            $sectorNewRoomsRemaining = max(0, $sectorNewRoomsTotal - $sectorNewRoomsAllocated);
+
+            $sector->school_count        = $sectorInsts->count();
+            $sector->total_seats         = $totalSeats;
+            $sector->total_existing      = $totalExisting;
+            $sector->total_admitted      = $totalAdmitted;
+            $sector->total_available     = max(0, $totalSeats - $totalExisting - $totalAdmitted);
+            $sector->total_enrollment    = $totalExisting + $totalAdmitted;
+            $sector->matric_tech         = $sectorMatricTech;
+            $sector->new_rooms_total     = $sectorNewRoomsTotal;
+            $sector->new_rooms_allocated = $sectorNewRoomsAllocated;
+            $sector->new_rooms_remaining = $sectorNewRoomsRemaining;
 
             return $sector;
         });
@@ -137,16 +172,22 @@ class DashboardController extends Controller
         ];
 
         return view('aeo.dashboard', compact(
-            'sectors',          // full collection — used in sector summary table
-            'currentSector',    // single Sector for AEO (null for Director)
-            'isDirector',       // blade uses this for heading/label switching
+            'sectors',
+            'currentSector',
+            'isDirector',
             'institutions',
             'seatData',
             'sectionCounts',
             'admissionData',
-            'sectorSummary',    // collection with computed totals per sector
+            'sectorSummary',
             'grand',
-            'academicYear'
+            'academicYear',
+            'matricTechToday',
+            'matricTechYear',
+            'newRoomsTotal',
+            'newRoomsAllocated',
+            'newRoomsRemaining',
+            'schoolsWithNewRooms'
         ));
     }
 }

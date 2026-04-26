@@ -4,7 +4,7 @@
 
 @section('content')
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Monitoring Record</h2>
             <p class="text-sm text-gray-500 mt-1">
@@ -12,7 +12,7 @@
             </p>
         </div>
         <a href="{{ route('director.monitoring.index') }}"
-            class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition">
+            class="w-full sm:w-auto px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition text-center">
             ← Back to Monitoring
         </a>
     </div>
@@ -26,7 +26,7 @@
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                 <h3 class="text-sm font-bold text-gray-800 mb-5">Admission Process Status</h3>
 
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {{-- Test --}}
                     <div class="text-center p-4 bg-gray-50 rounded-xl">
                         <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Admission Test</p>

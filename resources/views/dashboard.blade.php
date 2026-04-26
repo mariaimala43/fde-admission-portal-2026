@@ -22,104 +22,210 @@
                 </p>
             </div>
             @if ($institution)
+                @php
+                    $dashAcademicYear = \App\Models\AcademicYear::where('is_active', true)->first();
+                    $effectiveStatus = $institution->admission_status;
+                    // Auto-open if institution is not_started but academic year window is active
+                    if (!in_array($effectiveStatus, ['open', 'closed', 'by_approval']) && $dashAcademicYear) {
+                        $today = now()->toDateString();
+                        $start = $dashAcademicYear->admission_start
+                            ? (is_string($dashAcademicYear->admission_start)
+                                ? $dashAcademicYear->admission_start
+                                : $dashAcademicYear->admission_start->toDateString())
+                            : null;
+                        $end = $dashAcademicYear->admission_end
+                            ? (is_string($dashAcademicYear->admission_end)
+                                ? $dashAcademicYear->admission_end
+                                : $dashAcademicYear->admission_end->toDateString())
+                            : null;
+                        if ($start && $end && $today >= $start && $today <= $end) {
+                            $effectiveStatus = 'open';
+                        }
+                    }
+                @endphp
                 <span
                     class="px-3 py-1 rounded-full text-xs font-semibold uppercase
-        {{ $institution->admission_status === 'open'
-            ? 'bg-green-100 text-green-700'
-            : ($institution->admission_status === 'closed'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-yellow-100 text-yellow-700') }}">
-                    Admissions: {{ ucfirst(str_replace('_', ' ', $institution->admission_status)) }}
+                    {{ $effectiveStatus === 'open'
+                        ? 'bg-green-100 text-green-700'
+                        : ($effectiveStatus === 'closed'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-yellow-100 text-yellow-700') }}">
+                    Admissions: {{ ucfirst(str_replace('_', ' ', $effectiveStatus)) }}
                 </span>
             @endif
         </div>
 
         @if ($institution)
 
-            @php
-                $classes = \App\Models\InstitutionClass::where('institution_id', $institution->id)
-                    ->where('is_active', true)
-                    ->with(['classModel'])
-                    ->orderBy('class_id')
-                    ->get();
+       @php
+            $classes = \App\Models\InstitutionClass::where('institution_id', $institution->id)
+                ->where('is_active', true)
+                ->with(['classModel'])
+                ->orderBy('class_id')
+                ->get();
 
-                $sectionsMap = \App\Models\InstitutionSection::where('institution_id', $institution->id)
-                    ->orderBy('order')
-                    ->get()
-                    ->groupBy('class_id');
+            $sectionsMap = \App\Models\InstitutionSection::where('institution_id', $institution->id)
+                ->orderBy('order')
+                ->get()
+                ->groupBy('class_id');
 
-                $academicYear = \App\Models\AcademicYear::where('is_active', true)->first();
-                $newlyAdmitted = \App\Models\DailyAdmission::where('institution_id', $institution->id)
-                    ->where('academic_year_id', $academicYear?->id)
-                    ->selectRaw(
-                        'class_id, SUM(
-                                    morning_boys +
-                                    evening_boys +
-                                    morning_girls +
-                                    evening_girls +
-                                    oosc_boys +
-                                    oosc_girls +
-                                    p2p_boys +
-                                    p2p_girls
-                                ) as total',
-                    )
-                    ->groupBy('class_id')
-                    ->pluck('total', 'class_id');
+            $academicYear = \App\Models\AcademicYear::where('is_active', true)->first();
+            $hasEvening   = (bool) ($institution?->has_evening_classes ?? false);
 
-                $totalSeats = $classes->sum('total_seats');
-                $totalEnrolled = $classes->sum('existing_enrollment');
-                $totalNewAdmit = $newlyAdmitted->sum();
-                $totalAvailable = $classes->sum(
-                    fn($c) => max(0, $c->total_seats - $c->existing_enrollment - ($newlyAdmitted[$c->class_id] ?? 0)),
-                );
+            // ── All morning admissions per class (regular + OOSC + P2P) — ALL consume seats
+            $morningAdmitted = \App\Models\DailyAdmission::where('institution_id', $institution->id)
+                ->where('academic_year_id', $academicYear?->id)
+                ->selectRaw('class_id, SUM(
+                    morning_boys + morning_girls +
+                    morning_oosc_boys + morning_oosc_girls +
+                    morning_p2p_boys + morning_p2p_girls
+                ) as total')
+                ->groupBy('class_id')
+                ->pluck('total', 'class_id');
 
-                $todayTotal =
-                    \App\Models\DailyAdmission::where('institution_id', $institution->id)
-                        ->where('admission_date', now()->toDateString())
-                        ->selectRaw(
-                            'SUM(
-                                morning_boys +
-                                evening_boys +
-                                morning_girls +
-                                evening_girls +
-                                oosc_boys +
-                                oosc_girls +
-                                p2p_boys +
-                                p2p_girls
-                            ) as total',
-                        )
-                        ->value('total') ?? 0;
-            @endphp
+            // ── All evening admissions per class (regular + OOSC + P2P) — ALL consume seats
+            $eveningAdmitted = \App\Models\DailyAdmission::where('institution_id', $institution->id)
+                ->where('academic_year_id', $academicYear?->id)
+                ->selectRaw('class_id, SUM(
+                    evening_boys + evening_girls +
+                    evening_oosc_boys + evening_oosc_girls +
+                    evening_p2p_boys + evening_p2p_girls
+                ) as total')
+                ->groupBy('class_id')
+                ->pluck('total', 'class_id');
 
-            {{-- ── Quick Stats ─────────────────────────────────── --}}
-            <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+            // ── Totals
+            $totalSeats           = $classes->sum('total_seats');
+            $totalEnrolled        = $classes->sum('existing_enrollment');
+            $totalMorningAdmit    = $morningAdmitted->sum();
+            $totalEveningAdmit    = $eveningAdmitted->sum();
+            $totalNewAdmit        = $totalMorningAdmit + $totalEveningAdmit;
+
+            // ── Available seats
+            // Morning-only school: use total_seats / existing_enrollment (morning_seats may not be set)
+            // Evening school:      morning and evening are tracked separately via morning_seats / evening_seats
+            if ($hasEvening) {
+                $totalMorningSeats    = $classes->sum('morning_seats');
+                $totalEveningSeats    = $classes->sum('evening_seats');
+                $totalMorningExisting = $classes->sum('morning_existing');
+                $totalEveningExisting = $classes->sum('evening_existing');
+
+                $totalMorningAvailable = max(0, $totalMorningSeats - $totalMorningExisting - $totalMorningAdmit);
+                $totalEveningAvailable = max(0, $totalEveningSeats - $totalEveningExisting - $totalEveningAdmit);
+                $totalAvailable        = $totalMorningAvailable + $totalEveningAvailable;
+
+                $totalMorningEnrollment = $totalMorningExisting + $totalMorningAdmit;
+                $totalEveningEnrollment = $totalEveningExisting + $totalEveningAdmit;
+            } else {
+                // Morning-only: single pool of seats
+                $totalAvailable = max(0, $totalSeats - $totalEnrolled - $totalMorningAdmit);
+
+                // These won't be displayed for morning-only schools but set them to safe values
+                $totalMorningSeats     = $totalSeats;
+                $totalEveningSeats     = 0;
+                $totalMorningExisting  = $totalEnrolled;
+                $totalEveningExisting  = 0;
+                $totalMorningAvailable = $totalAvailable;
+                $totalEveningAvailable = 0;
+                $totalMorningEnrollment = $totalEnrolled + $totalMorningAdmit;
+                $totalEveningEnrollment = 0;
+            }
+
+            // ── Today's admissions
+            $todayMorning = \App\Models\DailyAdmission::where('institution_id', $institution->id)
+                ->where('admission_date', now()->toDateString())
+                ->selectRaw('SUM(
+                    morning_boys + morning_girls +
+                    morning_oosc_boys + morning_oosc_girls +
+                    morning_p2p_boys + morning_p2p_girls
+                ) as total')
+                ->value('total') ?? 0;
+
+            $todayEvening = \App\Models\DailyAdmission::where('institution_id', $institution->id)
+                ->where('admission_date', now()->toDateString())
+                ->selectRaw('SUM(
+                    evening_boys + evening_girls +
+                    evening_oosc_boys + evening_oosc_girls +
+                    evening_p2p_boys + evening_p2p_girls
+                ) as total')
+                ->value('total') ?? 0;
+
+            $todayTotal = $todayMorning + $todayEvening;
+        @endphp
+
+            {{-- ── Quick Stats Row 1: Capacity overview ───────────── --}}
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
                     <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Intake Capacity</p>
                     <p class="text-2xl font-bold text-blue-900">{{ number_format($totalSeats) }}</p>
+                    @if ($hasEvening)
+                        <p class="text-xs text-gray-400 mt-1">
+                            <span class="text-blue-600 font-semibold">Morning {{ number_format($totalMorningSeats) }}</span>
+                            <span class="text-gray-300">&middot;</span>
+                            <span class="text-indigo-600 font-semibold">Evening {{ number_format($totalEveningSeats) }}</span>
+                        </p>
+                    @endif
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-orange-100 p-5 text-center">
                     <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Existing Enrollment</p>
                     <p class="text-2xl font-bold text-orange-600">{{ number_format($totalEnrolled) }}</p>
+                    @if ($hasEvening)
+                        <p class="text-xs text-gray-400 mt-1">
+                            <span class="text-blue-600 font-semibold">Morning {{ number_format($totalMorningExisting) }}</span>
+                            <span class="text-gray-300">&middot;</span>
+                            <span class="text-indigo-600 font-semibold">Evening {{ number_format($totalEveningExisting) }}</span>
+                        </p>
+                    @endif
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-green-100 p-5 text-center">
                     <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Seats Available</p>
                     <p class="text-2xl font-bold text-green-600">{{ number_format($totalAvailable) }}</p>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-5 text-center">
-                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Newly Admitted</p>
-                    <p class="text-2xl font-bold text-blue-700">{{ number_format($totalNewAdmit) }}</p>
+                    @if ($hasEvening)
+                        <p class="text-xs text-gray-400 mt-1">
+                            <span class="text-blue-600 font-semibold">Morning {{ number_format($totalMorningAvailable) }}</span>
+                            <span class="text-gray-300">&middot;</span>
+                            <span class="text-indigo-600 font-semibold">Evening {{ number_format($totalEveningAvailable) }}</span>
+                        </p>
+                    @endif
                 </div>
                 <div class="bg-blue-900 rounded-xl shadow-sm p-5 text-center">
                     <p class="text-xs text-blue-200 uppercase tracking-wider mb-1">Total Enrollment</p>
                     <p class="text-2xl font-bold text-white">{{ number_format($totalEnrolled + $totalNewAdmit) }}</p>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
-                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Today's Admissions</p>
-                    <p class="text-2xl font-bold text-blue-700">{{ number_format($todayTotal) }}</p>
+                    @if ($hasEvening)
+                        <p class="text-xs text-blue-200 mt-1">
+                            <span class="font-semibold">Morning {{ number_format($totalMorningEnrollment) }}</span>
+                            <span class="text-blue-300">&middot;</span>
+                            <span class="font-semibold">Evening {{ number_format($totalEveningEnrollment) }}</span>
+                        </p>
+                    @endif
                 </div>
             </div>
 
-            {{-- ── Class-wise Table (Document Format) ─────────────── --}}
+            {{-- ── Quick Stats Row 2: Morning / Evening breakdown ──── --}}
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-5 text-center">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">🌅 Morning Admitted</p>
+                    <p class="text-2xl font-bold text-blue-700">{{ number_format($totalMorningAdmit) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">Cumulative</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-indigo-100 p-5 text-center">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">🌆 Evening Admitted</p>
+                    <p class="text-2xl font-bold text-indigo-700">{{ number_format($totalEveningAdmit) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">Cumulative</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-5 text-center">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">🌅 Today Morning</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ number_format($todayMorning) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ now()->format('d M Y') }}</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-indigo-100 p-5 text-center">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">🌆 Today Evening</p>
+                    <p class="text-2xl font-bold text-indigo-600">{{ number_format($todayEvening) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ now()->format('d M Y') }}</p>
+                </div>
+            </div>
+
+            {{-- ── Class-wise Table ─────────────────────────────────── --}}
             @if ($classes->isNotEmpty())
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
                     <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
@@ -132,22 +238,37 @@
                             <thead class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                                 <tr>
                                     <th class="px-4 py-3 text-left">Class</th>
-                                    <th class="px-4 py-3 text-center">No. of Sections</th>
-                                    <th class="px-4 py-3 text-center">Existing Enrollment</th>
-                                    <th class="px-4 py-3 text-center">Intake Capacity</th>
-                                    <th class="px-4 py-3 text-center text-green-600">Seats Available</th>
-                                    <th class="px-4 py-3 text-center text-blue-600">Newly Admitted</th>
-                                    <th class="px-4 py-3 text-center bg-blue-50 text-blue-900">Total Enrollment</th>
+                                    <th class="px-4 py-3 text-center">Sections</th>
+                                    <th class="px-4 py-3 text-center">Existing<br>Enrollment</th>
+                                    <th class="px-4 py-3 text-center">Intake<br>Capacity</th>
+                                    <th class="px-4 py-3 text-center text-green-600">Seats<br>Available</th>
+                                    <th class="px-4 py-3 text-center text-blue-600 bg-blue-50">🌅 Morning<br>Admitted</th>
+                                    <th class="px-4 py-3 text-center text-indigo-600 bg-indigo-50">🌆 Evening<br>Admitted</th>
+                                    <th class="px-4 py-3 text-center text-blue-900 bg-blue-100">Total<br>Enrollment</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 @foreach ($classes as $ic)
                                     @php
-                                        $secs = $sectionsMap[$ic->class_id] ?? collect();
-                                        $secCount = $secs->count();
-                                        $admitted = $newlyAdmitted[$ic->class_id] ?? 0;
-                                        $available = max(0, $ic->total_seats - $ic->existing_enrollment - $admitted);
-                                        $totalEnrl = $ic->existing_enrollment + $admitted;
+                                        $secs             = $sectionsMap[$ic->class_id] ?? collect();
+                                        $secCount         = $secs->count();
+                                        $morningAmt       = $morningAdmitted[$ic->class_id] ?? 0;
+                                        $eveningAmt       = $eveningAdmitted[$ic->class_id] ?? 0;
+
+                                        if ($hasEvening) {
+                                            $available        = max(0, ($ic->morning_seats ?? 0) - ($ic->morning_existing ?? 0) - $morningAmt)
+                                                              + max(0, ($ic->evening_seats ?? 0) - ($ic->evening_existing ?? 0) - $eveningAmt);
+                                            $morningAvailable = max(0, ($ic->morning_seats ?? 0) - ($ic->morning_existing ?? 0) - $morningAmt);
+                                            $eveningAvailable = max(0, ($ic->evening_seats ?? 0) - ($ic->evening_existing ?? 0) - $eveningAmt);
+                                        } else {
+                                            $available        = max(0, $ic->total_seats - $ic->existing_enrollment - $morningAmt);
+                                            $morningAvailable = $available;
+                                            $eveningAvailable = 0;
+                                        }
+
+                                        $totalEnrl        = $ic->existing_enrollment + $morningAmt + $eveningAmt;
+                                        $morningTotalEnrl = ($ic->morning_existing ?? 0) + $morningAmt;
+                                        $eveningTotalEnrl = ($ic->evening_existing ?? 0) + $eveningAmt;
                                     @endphp
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-4 py-3 font-semibold text-gray-800">
@@ -165,16 +286,52 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 text-center text-orange-600 font-medium">
-                                            {{ number_format($ic->existing_enrollment) }}</td>
+                                            {{ number_format($ic->existing_enrollment) }}
+                                            @if ($hasEvening)
+                                                <div class="text-xs text-gray-400 mt-0.5">
+                                                    <span class="text-blue-600 font-semibold">M: {{ number_format($ic->morning_existing ?? 0) }}</span>
+                                                    <span class="text-gray-300">&middot;</span>
+                                                    <span class="text-indigo-600 font-semibold">E: {{ number_format($ic->evening_existing ?? 0) }}</span>
+                                                </div>
+                                            @endif
+                                        </td>
                                         <td class="px-4 py-3 text-center font-medium text-gray-700">
-                                            {{ number_format($ic->total_seats) }}</td>
+                                            {{ number_format($ic->total_seats) }}
+                                            @if ($hasEvening)
+                                                <div class="text-xs text-gray-400 mt-0.5">
+                                                    <span class="text-blue-600 font-semibold">M: {{ number_format($ic->morning_seats ?? 0) }}</span>
+                                                    <span class="text-gray-300">&middot;</span>
+                                                    <span class="text-indigo-600 font-semibold">E: {{ number_format($ic->evening_seats ?? 0) }}</span>
+                                                </div>
+                                            @endif
+                                        </td>
                                         <td
                                             class="px-4 py-3 text-center font-bold {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">
-                                            {{ number_format($available) }}</td>
-                                        <td class="px-4 py-3 text-center font-medium text-blue-700">
-                                            {{ number_format($admitted) }}</td>
-                                        <td class="px-4 py-3 text-center font-bold text-blue-900 bg-blue-50">
-                                            {{ number_format($totalEnrl) }}</td>
+                                            {{ number_format($available) }}
+                                            @if ($hasEvening)
+                                                <div class="text-xs text-gray-400 mt-0.5">
+                                                    <span class="text-blue-600 font-semibold">M: {{ number_format($morningAvailable) }}</span>
+                                                    <span class="text-gray-300">&middot;</span>
+                                                    <span class="text-indigo-600 font-semibold">E: {{ number_format($eveningAvailable) }}</span>
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium text-blue-700 bg-blue-50">
+                                            {{ number_format($morningAmt) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium text-indigo-700 bg-indigo-50">
+                                            {{ number_format($eveningAmt) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-bold text-blue-900 bg-blue-100">
+                                            {{ number_format($totalEnrl) }}
+                                            @if ($hasEvening)
+                                                <div class="text-xs text-blue-300 mt-0.5">
+                                                    <span class="font-semibold">M: {{ number_format($morningTotalEnrl) }}</span>
+                                                    <span class="text-blue-200">&middot;</span>
+                                                    <span class="font-semibold">E: {{ number_format($eveningTotalEnrl) }}</span>
+                                                </div>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -188,10 +345,29 @@
                                     <td class="px-4 py-3 text-center text-blue-900">{{ number_format($totalSeats) }}</td>
                                     <td
                                         class="px-4 py-3 text-center {{ $totalAvailable > 0 ? 'text-green-600' : 'text-red-500' }}">
-                                        {{ number_format($totalAvailable) }}</td>
-                                    <td class="px-4 py-3 text-center text-blue-700">{{ number_format($totalNewAdmit) }}</td>
+                                        {{ number_format($totalAvailable) }}
+                                        @if ($hasEvening)
+                                            <div class="text-xs text-gray-400 mt-0.5">
+                                                <span class="text-blue-600 font-semibold">M: {{ number_format($totalMorningAvailable) }}</span>
+                                                <span class="text-gray-300">&middot;</span>
+                                                <span class="text-indigo-600 font-semibold">E: {{ number_format($totalEveningAvailable) }}</span>
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-center text-blue-700 bg-blue-50">
+                                        {{ number_format($totalMorningAdmit) }}</td>
+                                    <td class="px-4 py-3 text-center text-indigo-700 bg-indigo-50">
+                                        {{ number_format($totalEveningAdmit) }}</td>
                                     <td class="px-4 py-3 text-center text-blue-900 bg-blue-100">
-                                        {{ number_format($totalEnrolled + $totalNewAdmit) }}</td>
+                                        {{ number_format($totalEnrolled + $totalNewAdmit) }}
+                                        @if ($hasEvening)
+                                            <div class="text-xs text-blue-300 mt-0.5">
+                                                <span class="font-semibold">M: {{ number_format($totalMorningEnrollment) }}</span>
+                                                <span class="text-blue-200">&middot;</span>
+                                                <span class="font-semibold">E: {{ number_format($totalEveningEnrollment) }}</span>
+                                            </div>
+                                        @endif
+                                    </td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -218,18 +394,39 @@
                     <a href="{{ route('hoi.admissions.daily') }}"
                         class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
                         <p class="text-sm text-gray-500 mb-1">Today's Admissions</p>
-                        <p class="text-3xl font-bold text-blue-900 mb-1">{{ number_format($todayTotal) }}</p>
-                        <p class="text-xs text-blue-600 font-medium">Enter Admissions</p>
+                        <p class="text-3xl font-bold text-blue-900 mb-2">{{ number_format($todayTotal) }}</p>
+                        <div class="flex items-center gap-3 text-xs">
+                            <span class="text-blue-600 font-semibold">🌅 {{ number_format($todayMorning) }} Morning</span>
+                            <span class="text-gray-300">·</span>
+                            <span class="text-indigo-600 font-semibold">🌆 {{ number_format($todayEvening) }} Evening</span>
+                        </div>
+                        <p class="text-xs text-blue-600 font-medium mt-2">Enter Admissions</p>
                     </a>
 
                     <a href="{{ route('hoi.admissions.report') }}"
                         class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
                         <p class="text-sm text-gray-500 mb-1">Cumulative Admissions</p>
-                        <p class="text-3xl font-bold text-blue-900 mb-1">{{ number_format($totalNewAdmit) }}</p>
-                        <p class="text-xs text-blue-600 font-medium">View Report</p>
+                        <p class="text-3xl font-bold text-blue-900 mb-2">{{ number_format($totalNewAdmit) }}</p>
+                        <div class="flex items-center gap-3 text-xs">
+                            <span class="text-blue-600 font-semibold">🌅 {{ number_format($totalMorningAdmit) }} Morning</span>
+                            <span class="text-gray-300">·</span>
+                            <span class="text-indigo-600 font-semibold">🌆 {{ number_format($totalEveningAdmit) }}
+                                Evening</span>
+                        </div>
+                        <p class="text-xs text-blue-600 font-medium mt-2">View Report</p>
                     </a>
 
                 </div>
+
+                {{--
+                <div class="mt-4">
+                    <a href="{{ route('hoi.quota.index') }}"
+                        class="inline-flex items-center gap-2 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-4 py-2.5 transition font-medium">
+                        🎯 Set Admission Quota per Class
+                        <span class="text-xs text-blue-400 font-normal">(max students you plan to admit this year)</span>
+                    </a>
+                </div>
+                --}}
             @else
                 {{-- No classes configured yet --}}
                 <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
@@ -249,7 +446,6 @@
                     Setup Profile Now
                 </a>
             </div>
-
         @endif
 
     @endrole

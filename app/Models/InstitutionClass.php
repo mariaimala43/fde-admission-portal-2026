@@ -4,33 +4,51 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * SAVE AS: app/Models/InstitutionClass.php
- *
- * FIX: availableSeats() now correctly subtracts cumulative approved admissions.
- *      Old version only did total_seats - existing_enrollment (wrong).
- */
 class InstitutionClass extends Model
 {
     protected $fillable = [
         'institution_id',
         'class_id',
         'total_seats',
+        'morning_seats',
+        'evening_seats',
         'existing_enrollment',
+        'matric_tech_existing',
+        'morning_existing',
+        'evening_existing',
+        'promoted_count',
+        'failed_count',
+        'morning_promoted',
+        'morning_failed',
+        'evening_promoted',
+        'evening_failed',
+        'admission_quota',
         'enrollment_status',
         'overridden_by',
-         'override_reason',
-         'overridden_at',
+        'override_reason',
+        'overridden_at',
         'is_active',
     ];
- 
+
     protected $casts = [
         'is_active'           => 'boolean',
         'total_seats'         => 'integer',
-        'existing_enrollment' => 'integer',
+        'morning_seats'       => 'integer',
+        'evening_seats'       => 'integer',
+        'existing_enrollment'  => 'integer',
+        'matric_tech_existing' => 'integer',
+        'morning_existing'     => 'integer',
+        'evening_existing'    => 'integer',
+        'promoted_count'      => 'integer',
+        'failed_count'        => 'integer',
+        'morning_promoted'    => 'integer',
+        'morning_failed'      => 'integer',
+        'evening_promoted'    => 'integer',
+        'evening_failed'      => 'integer',
+        'admission_quota'     => 'integer',
     ];
 
-    // ── Relationships ─────────────────────────────────────────────────
+    // ── Relationships ─────────────────────────────────────────────────────
 
     public function institution()
     {
@@ -55,17 +73,18 @@ class InstitutionClass extends Model
                     ->where('institution_id', $this->institution_id);
     }
 
-    // ── Seat Calculation ──────────────────────────────────────────────
+    // ── Seat Calculation ──────────────────────────────────────────────────
 
     /**
      * Available seats — computed fresh each call, never stored.
      *
-     * Formula (per spec):
-     *   Available = Authorized Capacity
-     *             − Existing Enrollment
-     *             − Total Approved Regular Admissions (verified/locked only)
+     * Formula:
+     *   Available = total_seats
+     *             − existing_enrollment  (promoted + failed combined)
+     *             − approved regular admissions
      *
-     * OOSC and P2P are analytics-only → NOT subtracted.
+     * existing_enrollment already = promoted_count + failed_count
+     * so no formula change needed anywhere else.
      */
     public function availableSeats(?int $academicYearId = null): int
     {
@@ -79,10 +98,6 @@ class InstitutionClass extends Model
         return max(0, $this->total_seats - $this->existing_enrollment - (int)$approvedAdmissions);
     }
 
-    /**
-     * Total enrollment after admissions (for display in tables).
-     * Includes existing + cumulative approved regular admissions.
-     */
     public function totalEnrollmentAfterAdmissions(?int $academicYearId = null): int
     {
         $approved = DailyAdmission::where('institution_id', $this->institution_id)
@@ -95,7 +110,7 @@ class InstitutionClass extends Model
         return $this->existing_enrollment + (int)$approved;
     }
 
-    // ── Status helpers ────────────────────────────────────────────────
+    // ── Status helpers ────────────────────────────────────────────────────
 
     public function isEnrollmentEditable(): bool
     {
@@ -118,5 +133,4 @@ class InstitutionClass extends Model
             default     => ucfirst($this->enrollment_status ?? 'draft'),
         };
     }
-
 }

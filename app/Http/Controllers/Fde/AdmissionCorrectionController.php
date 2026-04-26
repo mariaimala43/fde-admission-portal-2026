@@ -4,14 +4,18 @@
 namespace App\Http\Controllers\Fde;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdmissionCorrectionDecided;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use App\Models\AdmissionCorrection;
+use App\Models\AuditLog;
 use App\Models\Classes;
 use App\Models\DailyAdmission;
 use App\Models\Institution;
 use App\Models\InstitutionClass;
+use App\Models\Sector;
 
 class AdmissionCorrectionController extends Controller
 {
@@ -22,6 +26,9 @@ class AdmissionCorrectionController extends Controller
             'institution', 'classModel', 'requestedBy', 'reviewedBy'
         ])->latest();
 
+        if ($request->filled('sector_id')) {
+            $query->whereHas('institution', fn($q) => $q->where('sector_id', $request->sector_id));
+        }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -45,13 +52,16 @@ class AdmissionCorrectionController extends Controller
         $corrections  = $query->paginate(25)->withQueryString();
         $pendingCount = AdmissionCorrection::where('status', 'pending')->count();
 
+        $sectors = Sector::orderBy('name')->get(['id', 'name']);
+
         $institutions = Institution::where('is_active', true)
+            ->when($request->sector_id, fn($q) => $q->where('sector_id', $request->sector_id))
             ->orderBy('name')->get(['id', 'name']);
 
         $classes = Classes::where('is_active', true)->orderBy('order')->get(['id', 'name']);
 
         return view('fde.corrections.index', compact(
-            'corrections', 'pendingCount', 'institutions', 'classes'
+            'corrections', 'pendingCount', 'sectors', 'institutions', 'classes'
         ));
     }
 
@@ -123,7 +133,54 @@ class AdmissionCorrectionController extends Controller
                 'fde_note'    => $request->fde_note,
                 'reviewed_at' => now(),
             ]);
+
+            AuditLog::record(
+                'approved',
+                'AdmissionCorrection',
+                $correction->id,
+                [
+                    'morning_boys'       => $correction->old_morning_boys,
+                    'morning_girls'      => $correction->old_morning_girls,
+                    'evening_boys'       => $correction->old_evening_boys,
+                    'evening_girls'      => $correction->old_evening_girls,
+                    'morning_oosc_boys'  => $correction->old_morning_oosc_boys,
+                    'morning_oosc_girls' => $correction->old_morning_oosc_girls,
+                    'morning_p2p_boys'   => $correction->old_morning_p2p_boys,
+                    'morning_p2p_girls'  => $correction->old_morning_p2p_girls,
+                    'evening_oosc_boys'  => $correction->old_evening_oosc_boys,
+                    'evening_oosc_girls' => $correction->old_evening_oosc_girls,
+                    'evening_p2p_boys'   => $correction->old_evening_p2p_boys,
+                    'evening_p2p_girls'  => $correction->old_evening_p2p_girls,
+                ],
+                [
+                    'morning_boys'       => $correction->new_morning_boys,
+                    'morning_girls'      => $correction->new_morning_girls,
+                    'evening_boys'       => $correction->new_evening_boys,
+                    'evening_girls'      => $correction->new_evening_girls,
+                    'morning_oosc_boys'  => $correction->new_morning_oosc_boys,
+                    'morning_oosc_girls' => $correction->new_morning_oosc_girls,
+                    'morning_p2p_boys'   => $correction->new_morning_p2p_boys,
+                    'morning_p2p_girls'  => $correction->new_morning_p2p_girls,
+                    'evening_oosc_boys'  => $correction->new_evening_oosc_boys,
+                    'evening_oosc_girls' => $correction->new_evening_oosc_girls,
+                    'evening_p2p_boys'   => $correction->new_evening_p2p_boys,
+                    'evening_p2p_girls'  => $correction->new_evening_p2p_girls,
+                ],
+                'Correction approved. FDE note: ' . ($request->fde_note ?? 'none'),
+                $correction->institution_id
+            );
         });
+
+        // ── Notify HOI via email ──────────────────────────────────────────
+        $correction->loadMissing(['institution', 'classModel', 'requestedBy']);
+        if ($correction->requestedBy?->email) {
+            try {
+                Mail::to($correction->requestedBy->email)
+                    ->send(new AdmissionCorrectionDecided($correction, 'approved'));
+            } catch (\Throwable) {
+                // Email failure must not break the approval action
+            }
+        }
 
         return redirect()->route('fde.corrections.index')
             ->with('success', "Correction approved. Enrollment updated (net change: {$correction->netDiff()}).");
@@ -142,6 +199,27 @@ class AdmissionCorrectionController extends Controller
             'fde_note'    => $request->fde_note,
             'reviewed_at' => now(),
         ]);
+
+        AuditLog::record(
+            'rejected',
+            'AdmissionCorrection',
+            $correction->id,
+            null,
+            null,
+            'Correction rejected. FDE note: ' . $request->fde_note,
+            $correction->institution_id
+        );
+
+        // ── Notify HOI via email ──────────────────────────────────────────
+        $correction->loadMissing(['institution', 'classModel', 'requestedBy']);
+        if ($correction->requestedBy?->email) {
+            try {
+                Mail::to($correction->requestedBy->email)
+                    ->send(new AdmissionCorrectionDecided($correction, 'rejected'));
+            } catch (\Throwable) {
+                // Email failure must not break the rejection action
+            }
+        }
 
         return redirect()->route('fde.corrections.index')
             ->with('success', 'Correction request rejected.');

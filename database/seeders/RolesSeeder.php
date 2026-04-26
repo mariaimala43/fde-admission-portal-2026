@@ -103,6 +103,12 @@ class RolesSeeder extends Seeder
             //-------
             // In RolesSeeder.php, under FDE permissions:
             'reports.ai-studio',
+
+            // ── Staff Strength Register ───────────────────────────────
+            'staff.view',           // view staff registers (all roles)
+            'staff.create',         // HOI fills and submits own register
+            'staff.edit',           // FDE edits any register
+            'staff.export',         // FDE, AEO, Director export PDF/Excel
         ];
 
         foreach ($allPermissions as $p) {
@@ -151,6 +157,10 @@ class RolesSeeder extends Seeder
             'dashboard.view',
             'reports.view',
             'reports.vacancy',          // see own school vacancy position
+
+            // Staff Strength Register
+            'staff.view',
+            'staff.create',
         ];
 
         // ══════════════════════════════════════════════════════════════
@@ -169,6 +179,10 @@ class RolesSeeder extends Seeder
             'reports.oosc',
             'reports.gender',
             'reports.dashboard',
+
+            // Staff Strength Register
+            'staff.view',
+            'staff.export',
         ];
 
         // ══════════════════════════════════════════════════════════════
@@ -253,6 +267,12 @@ class RolesSeeder extends Seeder
             'portal.settings',
             // In RolesSeeder.php, under FDE permissions:
             'reports.ai-studio',
+
+            // Staff Strength Register
+            'staff.view',
+            'staff.create',
+            'staff.edit',
+            'staff.export',
         ];
 
         // ══════════════════════════════════════════════════════════════
@@ -271,6 +291,10 @@ class RolesSeeder extends Seeder
             'reports.oosc',
             'reports.gender',
             'reports.dashboard',
+
+            // Staff Strength Register
+            'staff.view',
+            'staff.export',
         ];
 
         // ── Sync ──────────────────────────────────────────────────────

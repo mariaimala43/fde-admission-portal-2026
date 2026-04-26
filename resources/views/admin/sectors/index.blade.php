@@ -13,6 +13,17 @@
         </a>
     </div>
 
+    @if (session('success'))
+        <div class="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 mb-5 text-sm">
+            ✅ {{ session('success') }}
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 mb-5 text-sm">
+            ❌ {{ session('error') }}
+        </div>
+    @endif
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
@@ -47,8 +58,19 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <a href="{{ route('admin.sectors.edit', $sector) }}"
-                                class="text-blue-600 hover:underline text-sm">Edit</a>
+                            <div class="flex items-center gap-3">
+                                <a href="{{ route('admin.sectors.edit', $sector) }}"
+                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</a>
+                                <span class="text-gray-200">|</span>
+                                <form method="POST" action="{{ route('admin.sectors.destroy', $sector) }}"
+                                    onsubmit="return confirm('Delete sector \'{{ addslashes($sector->name) }}\'? This cannot be undone.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-400 hover:text-red-700 text-sm font-medium">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

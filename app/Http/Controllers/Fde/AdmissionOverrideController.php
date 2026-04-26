@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Fde;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Classes;
 use App\Models\DailyAdmission;
 use App\Models\Institution;
 use App\Models\Sector;
@@ -47,8 +48,32 @@ class AdmissionOverrideController extends Controller
             $query->where('institution_id', $request->institution_id);
         }
 
+        if ($request->filled('emis')) {
+            $query->whereHas('institution', fn($q) =>
+                $q->where('code', 'like', '%' . $request->emis . '%')
+            );
+        }
+
+        if ($request->filled('school_name')) {
+            $query->whereHas('institution', fn($q) =>
+                $q->where('name', 'like', '%' . $request->school_name . '%')
+            );
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->filled('class_id')) {
+            $query->where('class_id', $request->class_id);
+        }
+
+        if ($request->filled('shift')) {
+            if ($request->shift === 'morning') {
+                $query->where(fn($q) => $q->where('morning_boys', '>', 0)->orWhere('morning_girls', '>', 0));
+            } elseif ($request->shift === 'evening') {
+                $query->where(fn($q) => $q->where('evening_boys', '>', 0)->orWhere('evening_girls', '>', 0));
+            }
         }
 
         if ($request->filled('date')) {
@@ -66,6 +91,8 @@ class AdmissionOverrideController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $classes = Classes::where('is_active', true)->orderBy('order')->get(['id', 'name']);
+
         // Summary counts for the stat bar
         $baseQuery = DailyAdmission::when($academicYear, fn($q) => $q->where('academic_year_id', $academicYear->id));
         $stats = [
@@ -77,7 +104,7 @@ class AdmissionOverrideController extends Controller
         ];
 
         return view('fde.admissions.index', compact(
-            'admissions', 'sectors', 'institutions', 'stats', 'academicYear'
+            'admissions', 'sectors', 'institutions', 'classes', 'stats', 'academicYear'
         ));
     }
 

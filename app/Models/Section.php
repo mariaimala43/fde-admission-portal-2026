@@ -70,7 +70,7 @@ class Section extends Model
             ->value('total') ?? 0;
     }
 
-    // Existing enrollment baseline
+    // Promoted enrollment baseline
     public function existingEnrollment(): int
     {
         return $this->enrollment?->existing_enrollment ?? 0;

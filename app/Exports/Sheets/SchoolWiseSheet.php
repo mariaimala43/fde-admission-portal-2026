@@ -29,7 +29,7 @@ class SchoolWiseSheet implements FromArray, WithTitle, WithStyles, WithColumnWid
 
     public function array(): array
     {
-        $rows   = [['School', 'Sector', 'Class', 'Seats', 'Existing', 'Regular', 'OOSC', 'P2P', 'Admitted', 'Remaining']];
+        $rows   = [['School', 'Sector', 'Class', 'Seats', 'Existing', 'Regular', 'OOSC', 'P2G', 'Admitted', 'Remaining']];
         $rowNum = 2;
 
         foreach ($this->data['institutions'] as $inst) {

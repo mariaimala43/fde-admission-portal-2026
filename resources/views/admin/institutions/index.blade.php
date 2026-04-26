@@ -13,6 +13,17 @@
         </a>
     </div>
 
+    @if (session('success'))
+        <div class="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 mb-5 text-sm">
+            ✅ {{ session('success') }}
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 mb-5 text-sm">
+            ❌ {{ session('error') }}
+        </div>
+    @endif
+
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
         <form method="GET" class="flex flex-wrap gap-4">
@@ -22,7 +33,7 @@
             <select name="type"
                 class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">All Types</option>
-                @foreach (['I-V', 'I-VIII', 'I-X', 'I-XII', 'VI-VIII', 'VI-X', 'VI-XII', 'Model College'] as $type)
+                @foreach (['I-V', 'I-VIII', 'I-X', 'I-XII', 'VI-VIII', 'VI-X', 'VI-XII', 'XI-XII', 'XI-XIV', 'Model College'] as $type)
                     <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>
                         {{ $type }}
                     </option>
@@ -41,6 +52,10 @@
             <select name="sector"
                 class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">All Sectors</option>
+                <option value="model_colleges" {{ request('sector') === 'model_colleges' ? 'selected' : '' }}>
+                    🎓 All Model Colleges
+                </option>
+                <option disabled>──────────────</option>
                 @foreach ($sectors as $sector)
                     <option value="{{ $sector->id }}" {{ request('sector') == $sector->id ? 'selected' : '' }}>
                         {{ $sector->name }}
@@ -117,11 +132,23 @@
                                 {{ $institution->is_active ? 'Active' : 'Inactive' }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 flex gap-3">
-                            <a href="{{ route('admin.institutions.show', $institution) }}"
-                                class="text-gray-600 hover:underline text-sm">View</a>
-                            <a href="{{ route('admin.institutions.edit', $institution) }}"
-                                class="text-blue-600 hover:underline text-sm">Edit</a>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <a href="{{ route('admin.institutions.show', $institution) }}"
+                                    class="text-gray-600 hover:text-gray-800 text-sm font-medium">View</a>
+                                <span class="text-gray-200">|</span>
+                                <a href="{{ route('admin.institutions.edit', $institution) }}"
+                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</a>
+                                <span class="text-gray-200">|</span>
+                                <form method="POST" action="{{ route('admin.institutions.destroy', $institution) }}"
+                                    onsubmit="return confirm('Delete \'{{ addslashes($institution->name) }}\'? This cannot be undone.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-400 hover:text-red-700 text-sm font-medium">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

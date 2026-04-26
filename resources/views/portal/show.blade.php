@@ -4,7 +4,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ $institution->name }} — FDE Admission Portal</title>
+    <title>{{ $institution->name }} — {{ $settings['portal_title'] ?? 'FDE Admission Portal' }}</title>
+    @if (!empty($settings['portal_favicon']))
+        <link rel="icon" type="image/png" href="{{ Storage::url($settings['portal_favicon']) }}">
+    @elseif(!empty($settings['app_favicon']))
+        <link rel="icon" type="image/png" href="{{ Storage::url($settings['app_favicon']) }}">
+    @endif
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link
@@ -301,7 +306,38 @@
     </style>
 </head>
 
-<body class="page-bg" x-data="{ lang: 'en' }" :dir="lang === 'ur' ? 'rtl' : 'ltr'">
+@php
+    $bannerEnabled  = !empty($settings['banner_enabled']);
+    $bannerMsg      = $settings['banner_text'] ?? null;
+    $defaultBanner  = 'Admissions are open for Academic Year ' .
+        ($academicYear?->name ?? '2026–27') .
+        '. Visit the school directly to complete enrollment.';
+    $bannerDisplay  = $bannerMsg ?: $defaultBanner;
+    $bannerColour   = $settings['banner_colour'] ?? 'amber';
+    $bannerImageUrl = !empty($settings['banner_image'])
+        ? asset('storage/' . $settings['banner_image']) : null;
+    $bannerBg       = $bannerImageUrl
+        ? "background:url('{$bannerImageUrl}') center/cover no-repeat;background-color:#000;"
+        : match($bannerColour) {
+            'blue'  => 'background:#2563EB;',
+            'green' => 'background:#16a34a;',
+            'red'   => 'background:#dc2626;',
+            'navy'  => 'background:#1B3A6B;',
+            default => 'background:#f59e0b;',
+          };
+@endphp
+
+<body class="page-bg" x-data="{
+    lang: 'en',
+    bannerOpen: false,
+    init() {
+        this.bannerOpen = {{ $bannerEnabled ? 'true' : 'false' }} && !sessionStorage.getItem('fde_banner_dismissed');
+    },
+    dismissBanner() {
+        this.bannerOpen = false;
+        sessionStorage.setItem('fde_banner_dismissed', '1');
+    }
+}" :dir="lang === 'ur' ? 'rtl' : 'ltr'">
 
     {{-- Portal notice --}}
     @if (!empty($settings['portal_notice']))
@@ -311,17 +347,101 @@
         </div>
     @endif
 
+    {{-- ── Full-page Banner Overlay ── --}}
+    <div x-show="bannerOpen" x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         @click.self="dismissBanner()"
+         style="position:fixed;inset:0;z-index:50;{{ $bannerBg }};
+                display:flex;flex-direction:column;align-items:center;justify-content:center;">
+
+        @if($bannerImageUrl)
+            {{-- Image banner: full-screen image with dismiss bar at bottom --}}
+            <div style="position:absolute;inset:0;overflow:hidden;">
+                <img src="{{ $bannerImageUrl }}" alt="Banner"
+                     style="width:100%;height:100%;object-fit:contain;background:#000;">
+            </div>
+            <div style="position:absolute;bottom:0;left:0;right:0;
+                        background:linear-gradient(transparent,rgba(0,0,0,0.75));
+                        padding:1.5rem 2rem;display:flex;flex-direction:column;align-items:center;gap:0.75rem;">
+                @if(!empty($settings['banner_link_text']) && !empty($settings['banner_link_url']))
+                <a href="{{ $settings['banner_link_url'] }}" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full text-sm font-semibold"
+                   style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.35);">
+                    {{ $settings['banner_link_text'] }}
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+                @endif
+                <button @click="dismissBanner()"
+                        class="px-8 py-2.5 rounded-full font-bold text-sm transition"
+                        style="background:#fff;color:#1f2937;"
+                        onmouseover="this.style.background='#f3f4f6'"
+                        onmouseout="this.style.background='#fff'">
+                    Continue to Portal →
+                </button>
+                <p style="font-size:0.65rem;color:rgba(255,255,255,0.4);">Tap anywhere on image to dismiss</p>
+            </div>
+        @else
+            {{-- Text/colour banner: centred card --}}
+            <div style="max-width:560px;width:100%;margin:1.5rem;background:rgba(0,0,0,0.2);
+                        border:1px solid rgba(255,255,255,0.2);border-radius:1.5rem;
+                        padding:2.5rem;text-align:center;">
+                <div style="font-size:2.5rem;margin-bottom:1rem;">📢</div>
+                <p class="text-white font-bold text-xl leading-snug" style="margin-bottom:1.25rem;">
+                    {{ $bannerDisplay }}
+                </p>
+                @if(!empty($settings['banner_link_text']) && !empty($settings['banner_link_url']))
+                <div style="margin-bottom:1rem;">
+                    <a href="{{ $settings['banner_link_url'] }}" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold"
+                       style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);">
+                        {{ $settings['banner_link_text'] }}
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+                @endif
+                <button @click="dismissBanner()"
+                        class="px-8 py-3 rounded-full font-bold text-sm transition"
+                        style="background:#fff;color:#1f2937;"
+                        onmouseover="this.style.background='#f3f4f6'"
+                        onmouseout="this.style.background='#fff'">
+                    Continue to Portal →
+                </button>
+                <p style="font-size:0.7rem;margin-top:0.75rem;color:rgba(255,255,255,0.45);">
+                    Click anywhere outside to dismiss
+                </p>
+            </div>
+        @endif
+    </div>
+
     {{-- ── Navbar ── --}}
     <nav class="navbar">
         <div class="max-w-5xl mx-auto px-5 py-3.5 flex items-center justify-between gap-6">
             <a href="{{ route('portal.index') }}" class="flex items-center gap-3 no-underline shrink-0">
-                <div class="w-9 h-9 rounded-full flex items-center justify-center"
-                    style="background:rgba(74,160,110,0.18);border:1px solid rgba(74,160,110,0.35);">
-                    <span style="font-size:18px;">🏛️</span>
-                </div>
+                @if (!empty($settings['portal_logo']))
+                    <img src="{{ Storage::url($settings['portal_logo']) }}"
+                        alt="{{ $settings['portal_title'] ?? 'FDE' }}"
+                        style="height:36px;width:auto;object-fit:contain;">
+                @elseif(!empty($settings['app_logo']))
+                    <img src="{{ Storage::url($settings['app_logo']) }}" alt="{{ $settings['app_name'] ?? 'FDE' }}"
+                        style="height:36px;width:auto;object-fit:contain;">
+                @else
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center"
+                        style="background:rgba(74,160,110,0.18);border:1px solid rgba(74,160,110,0.35);">
+                        <span style="font-size:18px;">🏛️</span>
+                    </div>
+                @endif
                 <div class="hidden sm:block">
-                    <p class="text-sm font-bold text-white leading-tight">FDE Admission Portal</p>
-                    <p class="text-xs" style="color:var(--muted);">Government of Pakistan</p>
+                    <p class="text-sm font-bold text-white leading-tight">
+                        {{ $settings['portal_title'] ?? 'FDE Admission Portal' }}</p>
+                    <p class="text-xs" style="color:var(--muted);">
+                        {{ $settings['portal_tagline'] ?? 'Government of Pakistan' }}</p>
                 </div>
             </a>
             <div class="flex items-center gap-2.5">
@@ -411,7 +531,8 @@
                         style="font-size:3.6rem;color:{{ $totalAvail > 0 ? 'var(--green-text)' : '#fca5a5' }};">
                         {{ number_format($totalAvail) }}
                     </p>
-                    <p class="text-xs mb-4" style="color:var(--muted);">of {{ number_format($totalSeats) }} total seats
+                    <p class="text-xs mb-4" style="color:var(--muted);">of {{ number_format($totalSeats) }} total
+                        seats
                     </p>
                     {{-- Progress --}}
                     <div class="prog">
@@ -433,6 +554,63 @@
             </div>
         </div>
     </section>
+
+    {{-- ── Per-school Merit List Files ─────────────────────────────────────── --}}
+    @if($meritLists->isNotEmpty())
+    <div class="max-w-5xl mx-auto px-5 pt-6">
+        <div class="rounded-xl overflow-hidden"
+             style="background:linear-gradient(90deg,#1e3a8a 0%,#2563eb 100%);
+                    box-shadow:0 4px 16px rgba(37,99,235,0.35);">
+            <div class="px-5 py-4">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-lg">📋</span>
+                    <p class="font-bold text-white text-sm">Merit List</p>
+                </div>
+                @foreach($meritLists as $ml)
+                <div class="flex items-center justify-between gap-3 py-2.5
+                            border-b border-white/10 last:border-0">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="flex-shrink-0 text-base">{{ $ml->fileIcon() }}</span>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <p class="text-sm text-white font-medium leading-snug">
+                                    {{ $ml->title ?: $ml->original_name }}
+                                </p>
+                                @if($ml->isNew())
+                                    <span class="text-xs font-semibold px-1.5 rounded"
+                                          style="background:rgba(74,222,128,0.2);color:#86efac;
+                                                 border:1px solid rgba(74,222,128,0.3);line-height:1.6;">
+                                        New
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-xs mt-0.5" style="color:#bfdbfe;">
+                                {{ $ml->fileType() }}
+                                @if($ml->file_size) &middot; {{ $ml->formattedSize() }} @endif
+                                &middot; {{ $ml->created_at->format('d M Y') }}
+                                @if($ml->title) &middot; {{ $ml->original_name }} @endif
+                            </p>
+                        </div>
+                    </div>
+                    <a href="{{ $ml->downloadUrl() }}"
+                       target="_blank" rel="noopener"
+                       class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5
+                              rounded-lg text-xs font-semibold transition"
+                       style="background:#fff;color:#1d4ed8;"
+                       onmouseover="this.style.background='#eff6ff'"
+                       onmouseout="this.style.background='#fff'">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download
+                    </a>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- ── Main Content ── --}}
     <div class="max-w-5xl mx-auto px-5 py-10 space-y-5">
@@ -546,7 +724,36 @@
 
         </div>
 
+        {{-- HOI section (only shown when hoi_name or hoi_contact is set) --}}
+        @if ($institution->hoi_name || $institution->hoi_contact)
+        <div class="glass p-6 au au1">
+            <div class="flex items-center gap-2 mb-5">
+                <div class="icon-box" style="width:36px;height:36px;border-radius:10px;font-size:16px;">👤</div>
+                <p class="text-sm font-semibold text-white">Head of Institution</p>
+            </div>
+            <div class="grid grid-cols-2 gap-5">
+                @if ($institution->hoi_name)
+                <div>
+                    <p class="info-lbl">Name</p>
+                    <p class="info-val">{{ $institution->hoi_name }}</p>
+                </div>
+                @endif
+                @if ($institution->hoi_contact)
+                <div>
+                    <p class="info-lbl">Contact</p>
+                    <p class="info-val">
+                        <a href="tel:{{ $institution->hoi_contact }}" style="color:var(--green-text);">
+                            {{ $institution->hoi_contact }}
+                        </a>
+                    </p>
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
+
         {{-- Class table --}}
+        @if ($seatData->isNotEmpty())
         <div class="glass overflow-hidden au au1">
             <div class="px-6 py-4 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
                 <div class="icon-box" style="width:36px;height:36px;border-radius:10px;font-size:16px;">📋</div>
@@ -624,6 +831,14 @@
                 </table>
             </div>
         </div>
+        @else
+        {{-- Model Colleges without configured seats yet --}}
+        <div class="glass p-8 text-center au au1">
+            <div class="text-4xl mb-3">📋</div>
+            <p class="text-sm font-semibold text-white mb-1">Seat details coming soon</p>
+            <p class="text-xs" style="color:var(--muted);">Admission seat configuration will be published when available.</p>
+        </div>
+        @endif
 
         {{-- Back button --}}
         <div class="text-center pt-2 pb-6">
@@ -645,11 +860,18 @@
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center"
                     style="background:rgba(74,160,110,0.15);border:1px solid rgba(74,160,110,0.28);">
-                    <span style="font-size:15px;">🏛️</span>
+                    @if (!empty($settings['portal_logo']) || !empty($settings['app_logo']))
+                        <img src="{{ Storage::url($settings['portal_logo'] ?? $settings['app_logo']) }}"
+                            alt="" style="height:28px;width:auto;object-fit:contain;filter:brightness(0.7);">
+                    @else
+                        <span style="font-size:15px;">🏛️</span>
+                    @endif
                 </div>
                 <div>
-                    <p class="text-sm font-semibold text-white">Federal Directorate of Education</p>
-                    <p class="text-xs" style="color:var(--muted);">© {{ now()->year }} FDE Admissions Portal ·
+                    <p class="text-sm font-semibold text-white">
+                        {{ $settings['app_name'] ?? 'Federal Directorate of Education' }}</p>
+                    <p class="text-xs" style="color:var(--muted);">© {{ now()->year }}
+                        {{ $settings['portal_title'] ?? 'FDE Admissions Portal' }} ·
                         Islamabad Capital Territory</p>
                 </div>
             </div>

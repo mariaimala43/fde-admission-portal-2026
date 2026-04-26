@@ -8,9 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 sm:p-6">
 
-    <div class="bg-white rounded-2xl shadow-lg p-10 w-full max-w-xl">
+    <div class="bg-white rounded-2xl shadow-lg p-5 sm:p-10 w-full max-w-xl">
 
         {{-- Header --}}
         <div class="text-center mb-8">

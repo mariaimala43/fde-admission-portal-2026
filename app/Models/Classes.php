@@ -12,11 +12,13 @@ class Classes extends Model
         'name',
         'order',
         'level',
+        'is_ece',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_ece'    => 'boolean',
         'order'     => 'integer',
     ];
 

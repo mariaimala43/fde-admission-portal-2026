@@ -21,14 +21,14 @@ class DatabaseSeeder extends Seeder
             ClassesSeeder::class,
             AcademicYearSeeder::class,
             AdminUserSeeder::class,
-            UnionCouncilSeeder::class,
+            HoiUsersSeeder::class,
             SectorSeeder::class,
+            UnionCouncilSeeder::class,
             InstitutionSeeder::class,
+            StaffPostTypeSeeder::class,
+            NewConstructionRoomsSeeder::class,
+            UcControlRoomSeeder::class,
+            ModelCollegeSeeder::class,
         ]);
-
-        // Local / testing only: realistic workflow data for full-system testing
-        if (! app()->environment('production')) {
-            $this->call(TestingSeeder::class);
-        }
     }
 }

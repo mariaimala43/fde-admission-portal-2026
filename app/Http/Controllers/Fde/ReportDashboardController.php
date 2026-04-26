@@ -15,6 +15,7 @@ use App\Models\Sector;
 use App\Models\UnionCouncil;
 use App\Models\AcademicYear;
 use Carbon\Carbon;
+use App\Models\NewConstructionRoom;
 
 /**
  * DUAL-ROLE REPORT CONTROLLER
@@ -50,6 +51,18 @@ class ReportDashboardController extends Controller
     }
 
     /**
+     * Returns the route prefix for export links based on the current user's role.
+     * Ensures Directors and AEOs are not sent to FDE-only export routes.
+     */
+    private function exportRoutePrefix(): string
+    {
+        $user = Auth::user();
+        if ($user->hasRole('director')) return 'director';
+        if ($user->hasRole('aeo'))      return 'aeo';
+        return 'fde';
+    }
+
+    /**
      * Translates sector IDs into institution IDs for DailyAdmission scoping.
      * Returns null when there is no restriction (FDE/Director).
      */
@@ -68,6 +81,9 @@ class ReportDashboardController extends Controller
     // ─────────────────────────────────────────────────────────────────
     public function index(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $this->authorize('reports.dashboard');
 
         $sectorIds   = $this->sectorIds();
@@ -136,7 +152,7 @@ class ReportDashboardController extends Controller
             ->groupBy('admission_date')
             ->orderBy('admission_date')
             ->get()
-            ->keyBy('admission_date');
+            ->keyBy(fn($r) => $r->admission_date->toDateString());
 
         // Fill missing dates with 0
         $trendLabels = [];
@@ -267,6 +283,58 @@ class ReportDashboardController extends Controller
             ->distinct('institution_id')->count('institution_id');
         $notSubmittedToday = $totalConfigured - $submittedToday;
 
+        // IDs of institutions that HAVE submitted today
+        $submittedTodayIds = DailyAdmission::where('admission_date', $today)
+            ->when($instIds, fn($q) => $q->whereIn('institution_id', $instIds))
+            ->distinct()->pluck('institution_id');
+
+        // Institutions that have NOT submitted today
+        $notSubmittedSchools = Institution::where('is_active', true)
+            ->where('classes_configured', true)
+            ->when($sectorIds, fn($q) => $q->whereIn('sector_id', $sectorIds))
+            ->whereNotIn('id', $submittedTodayIds)
+            ->with('sector')
+            ->orderBy('sector_id')
+            ->orderBy('name')
+            ->get();
+
+        // ── College stats (Model + Ex-FG) for report cards ────────────
+        $modelCollegeIds = Institution::where('type', 'Model College')->pluck('id');
+        $exFgCollegeIds  = Institution::where('type', 'Ex-FG College')->pluck('id');
+
+        $modelCollegeStats = DailyAdmission::where('academic_year_id', $academicYear?->id)
+            ->whereIn('institution_id', $modelCollegeIds)
+            ->selectRaw('
+                SUM(morning_boys + evening_boys + oosc_boys + p2p_boys)     as total_boys,
+                SUM(morning_girls + evening_girls + oosc_girls + p2p_girls) as total_girls,
+                SUM(morning_boys + evening_boys + morning_girls + evening_girls
+                    + oosc_boys + oosc_girls + p2p_boys + p2p_girls)        as total_admitted
+            ')
+            ->first();
+
+        $exFgCollegeStats = DailyAdmission::where('academic_year_id', $academicYear?->id)
+            ->whereIn('institution_id', $exFgCollegeIds)
+            ->selectRaw('
+                SUM(morning_boys + evening_boys + oosc_boys + p2p_boys)     as total_boys,
+                SUM(morning_girls + evening_girls + oosc_girls + p2p_girls) as total_girls,
+                SUM(morning_boys + evening_boys + morning_girls + evening_girls
+                    + oosc_boys + oosc_girls + p2p_boys + p2p_girls)        as total_admitted
+            ')
+            ->first();
+
+        $modelCollegeCount = $modelCollegeIds->count();
+        $exFgCollegeCount  = $exFgCollegeIds->count();
+            // ── New Construction Rooms summary ────────────────────────────────
+        $newRooms = (object) [
+            'total_schools'   => NewConstructionRoom::count(),
+            'total_rooms'     => NewConstructionRoom::sum('rooms_total'),
+            'rooms_allocated' => NewConstructionRoom::sum('rooms_allocated'),
+            'rooms_remaining' => NewConstructionRoom::sum('rooms_total') - NewConstructionRoom::sum('rooms_allocated'),
+            'completed'       => NewConstructionRoom::where('construction_status', 'completed')->count(),
+            'near_completion' => NewConstructionRoom::where('construction_status', 'near_completion')->count(),
+            'total_seats'     => NewConstructionRoom::sum('rooms_total') * 40,
+        ];
+
         return view('fde.reports.dashboard', compact(
             'academicYear', 'grandTotals', 'todayTotals',
             'totalSeats', 'totalExisting', 'totalFilled', 'totalRemaining', 'totalAdmitted',
@@ -275,7 +343,11 @@ class ReportDashboardController extends Controller
             'sectorStats', 'genderData', 'categoryData',
             'schoolFillRates', 'ooscBySector',
             'totalConfigured', 'submittedToday', 'notSubmittedToday',
-            'today'
+            'notSubmittedSchools',
+            'today',
+            'modelCollegeStats', 'exFgCollegeStats',
+            'modelCollegeCount', 'exFgCollegeCount',
+             'newRooms'
         ));
     }
 
@@ -373,8 +445,9 @@ class ReportDashboardController extends Controller
             ];
         });
 
+        $exportPrefix = $this->exportRoutePrefix();
         return view('fde.reports.sector', compact(
-            'sectorReport', 'from', 'to', 'academicYear'
+            'sectorReport', 'from', 'to', 'academicYear', 'exportPrefix'
         ));
     }
 
@@ -432,9 +505,10 @@ class ReportDashboardController extends Controller
             ->groupBy('institution_id')
             ->map(fn($rows) => $rows->keyBy('class_id'));
 
+        $exportPrefix = $this->exportRoutePrefix();
         return view('fde.reports.vacancy', compact(
             'institutions', 'seatData', 'admData',
-            'sectors', 'sectorId', 'type', 'gender', 'academicYear'
+            'sectors', 'sectorId', 'type', 'gender', 'academicYear', 'exportPrefix'
         ));
     }
 
@@ -604,10 +678,11 @@ class ReportDashboardController extends Controller
             ];
         });
 
+        $exportPrefix = $this->exportRoutePrefix();
         return view('fde.reports.oosc', compact(
             'institutions', 'ooscData', 'sectorOosc',
             'grandOosc', 'grandP2p',
-            'sectors', 'sectorId', 'from', 'to', 'academicYear'
+            'sectors', 'sectorId', 'from', 'to', 'academicYear', 'exportPrefix'
         ));
     }
 

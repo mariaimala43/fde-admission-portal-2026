@@ -124,6 +124,10 @@ class EnrollmentOverrideController extends Controller
                     ->where('is_active', true)
                     ->update([
                         'existing_enrollment' => (int) $item['existing'],
+                        // Null out HOI breakdown — FDE set the total directly,
+                        // so promoted_count + failed_count would no longer sum correctly.
+                        'promoted_count'      => null,
+                        'failed_count'        => null,
                         'enrollment_status'   => 'verified',   // FDE edit = auto-verified
                         'overridden_by'       => $userId,
                         'override_reason'     => $request->override_reason,

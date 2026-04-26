@@ -5,9 +5,13 @@
 namespace App\Http\Controllers\Hoi;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreStudentTransferRequest;
+use App\Mail\StudentTransferActioned;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Classes;
 use App\Models\StudentTransfer;
 use App\Models\Institution;
 use App\Models\InstitutionClass;
@@ -16,22 +20,31 @@ use App\Models\AcademicYear;
 class StudentTransferController extends Controller
 {
     // ── List all transfers involving this HOI's school ────────────────
-    public function index()
+    public function index(Request $request)
     {
         $institution = Auth::user()->institution;
         abort_if(!$institution, 403);
 
+        $status  = $request->input('status');
+        $classId = $request->input('class_id');
+
         $outgoing = StudentTransfer::where('from_institution_id', $institution->id)
             ->with(['toInstitution', 'classModel', 'initiatedBy'])
+            ->when($status,  fn($q) => $q->where('status', $status))
+            ->when($classId, fn($q) => $q->where('class_id', $classId))
             ->latest()
             ->get();
 
         $incoming = StudentTransfer::where('to_institution_id', $institution->id)
             ->with(['fromInstitution', 'classModel', 'initiatedBy'])
+            ->when($status,  fn($q) => $q->where('status', $status))
+            ->when($classId, fn($q) => $q->where('class_id', $classId))
             ->latest()
             ->get();
 
-        return view('hoi.transfers.index', compact('outgoing', 'incoming', 'institution'));
+        $classes = Classes::orderBy('order')->get(['id', 'name']);
+
+        return view('hoi.transfers.index', compact('outgoing', 'incoming', 'institution', 'classes'));
     }
 
     // ── Show create form ──────────────────────────────────────────────
@@ -55,19 +68,10 @@ class StudentTransferController extends Controller
     }
 
     // ── Store — batch: one request per student row ────────────────────
-    public function store(Request $request)
+    public function store(StoreStudentTransferRequest $request)
     {
         $institution = Auth::user()->institution;
         abort_if(!$institution, 403);
-
-        $request->validate([
-            'to_institution_id'          => 'required|exists:institutions,id',
-            'students'                   => 'required|array|min:1',
-            'students.*.class_id'        => 'required|exists:classes,id',
-            'students.*.student_name'    => 'nullable|string|max:100',
-            'students.*.father_name'     => 'nullable|string|max:100',
-            'students.*.notes'           => 'nullable|string|max:500',
-        ]);
 
         $toId         = $request->to_institution_id;
         $academicYear = AcademicYear::where('is_active', true)->first();
@@ -165,6 +169,17 @@ class StudentTransferController extends Controller
             ]);
         });
 
+        // ── Notify initiating HOI ─────────────────────────────────────────
+        $transfer->loadMissing(['fromInstitution', 'toInstitution', 'classModel', 'initiatedBy']);
+        if ($transfer->initiatedBy?->email) {
+            try {
+                Mail::to($transfer->initiatedBy->email)
+                    ->send(new StudentTransferActioned($transfer, 'accepted'));
+            } catch (\Throwable) {
+                // Email failure must not block the accept action
+            }
+        }
+
         return redirect()->route('hoi.transfers.show', $transfer)
             ->with('success', 'Transfer accepted. Enrollment counts have been updated.');
     }
@@ -185,6 +200,17 @@ class StudentTransferController extends Controller
             'rejection_reason' => $request->rejection_reason,
             'rejected_at'      => now(),
         ]);
+
+        // ── Notify initiating HOI ─────────────────────────────────────────
+        $transfer->loadMissing(['fromInstitution', 'toInstitution', 'classModel', 'initiatedBy']);
+        if ($transfer->initiatedBy?->email) {
+            try {
+                Mail::to($transfer->initiatedBy->email)
+                    ->send(new StudentTransferActioned($transfer, 'rejected'));
+            } catch (\Throwable) {
+                // Email failure must not block the reject action
+            }
+        }
 
         return redirect()->route('hoi.transfers.show', $transfer)
             ->with('success', 'Transfer request rejected.');

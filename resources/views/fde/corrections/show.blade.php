@@ -4,9 +4,9 @@
 
 @section('content')
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Review Correction Request</h2>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Review Correction Request</h2>
             <p class="text-sm text-gray-500 mt-1">
                 {{ $correction->institution->name }} —
                 {{ $correction->classModel?->name }} —
@@ -14,7 +14,7 @@
             </p>
         </div>
         <a href="{{ route('fde.corrections.index') }}"
-            class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition">
+            class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-4 py-2 transition">
             ← Back
         </a>
     </div>
@@ -31,7 +31,7 @@
 
             {{-- Meta info --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <p class="text-xs text-gray-400 uppercase font-semibold mb-0.5">School</p>
                         <p class="font-semibold text-gray-800">{{ $correction->institution->name }}</p>
@@ -49,7 +49,7 @@
                         <p class="font-semibold text-gray-800">{{ $correction->requestedBy?->name }}</p>
                         <p class="text-xs text-gray-400">{{ $correction->created_at->format('d M Y, g:i A') }}</p>
                     </div>
-                    <div class="col-span-2">
+                    <div class="col-span-1 sm:col-span-2">
                         <p class="text-xs text-gray-400 uppercase font-semibold mb-0.5">Reason</p>
                         <p class="text-gray-700 bg-yellow-50 border border-yellow-100 rounded-lg px-3 py-2">
                             {{ $correction->reason }}
@@ -63,7 +63,8 @@
                 <div class="px-5 py-3 bg-gray-50 border-b border-gray-100">
                     <h3 class="font-bold text-gray-700 text-sm">Old vs New Values</h3>
                 </div>
-                <div class="overflow-x-auto">
+                <p class="text-xs text-gray-400 px-5 pt-2 sm:hidden">Scroll horizontally to see all columns</p>
+                <div class="overflow-x-auto -mx-4 sm:mx-0">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-gray-100 text-xs font-semibold uppercase">
@@ -80,8 +81,8 @@
                                     '🌅 Morning Regular — Girls' => ['morning_girls', 'text-pink-700'],
                                     '🌅 Morning OOSC — Boys' => ['morning_oosc_boys', 'text-purple-700'],
                                     '🌅 Morning OOSC — Girls' => ['morning_oosc_girls', 'text-purple-600'],
-                                    '🌅 Morning P2P — Boys' => ['morning_p2p_boys', 'text-orange-700'],
-                                    '🌅 Morning P2P — Girls' => ['morning_p2p_girls', 'text-orange-600'],
+                                    '🌅 Morning P2G — Boys' => ['morning_p2p_boys', 'text-orange-700'],
+                                    '🌅 Morning P2G — Girls' => ['morning_p2p_girls', 'text-orange-600'],
                                 ];
                                 if ($hasEvening) {
                                     $fields += [
@@ -89,8 +90,8 @@
                                         '🌆 Evening Regular — Girls' => ['evening_girls', 'text-pink-700'],
                                         '🌆 Evening OOSC — Boys' => ['evening_oosc_boys', 'text-purple-700'],
                                         '🌆 Evening OOSC — Girls' => ['evening_oosc_girls', 'text-purple-600'],
-                                        '🌆 Evening P2P — Boys' => ['evening_p2p_boys', 'text-orange-700'],
-                                        '🌆 Evening P2P — Girls' => ['evening_p2p_girls', 'text-orange-600'],
+                                        '🌆 Evening P2G — Boys' => ['evening_p2p_boys', 'text-orange-700'],
+                                        '🌆 Evening P2G — Girls' => ['evening_p2p_girls', 'text-orange-600'],
                                     ];
                                 }
                             @endphp

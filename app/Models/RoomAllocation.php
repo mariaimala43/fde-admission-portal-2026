@@ -1,5 +1,7 @@
 <?php
 
+// SAVE AS: app/Models/RoomAllocation.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -14,40 +16,34 @@ class RoomAllocation extends Model
         'purpose',
         'hoi_note',
         'status',
+        'review_note',
         'reviewed_by',
         'reviewed_at',
-        'review_note',
     ];
 
     protected $casts = [
         'rooms_assigned' => 'integer',
-        'reviewed_at'    => 'datetime',
+        'class_id'       => 'integer',
     ];
 
-    // ── Relationships ──────────────────────────────────────────────────
+    // ── Relationships ──────────────────────────────────────────────────────
 
     public function newConstructionRoom()
     {
-        return $this->belongsTo(NewConstructionRoom::class, 'new_construction_room_id');
+        return $this->belongsTo(NewConstructionRoom::class);
     }
 
-    public function institution()
-    {
-        return $this->belongsTo(Institution::class);
-    }
-
-    /** Referenced as $alloc->classModel in blade views */
     public function classModel()
     {
         return $this->belongsTo(Classes::class, 'class_id');
     }
 
-    public function reviewer()
-    {
-        return $this->belongsTo(User::class, 'reviewed_by');
-    }
+    // ── Helpers ────────────────────────────────────────────────────────────
 
-    // ── Helpers ────────────────────────────────────────────────────────
+    public function seatCapacity(): int
+    {
+        return $this->rooms_assigned * 40;
+    }
 
     public function isPending(): bool
     {
@@ -64,21 +60,12 @@ class RoomAllocation extends Model
         return $this->status === 'rejected';
     }
 
-    public function statusLabel(): string
+    public function statusBadge(): string
     {
         return match ($this->status) {
-            'approved' => 'Approved',
-            'rejected' => 'Rejected',
-            default    => 'Pending',
-        };
-    }
-
-    public function statusColor(): string
-    {
-        return match ($this->status) {
-            'approved' => 'green',
-            'rejected' => 'red',
-            default    => 'yellow',
+            'approved' => 'bg-green-100 text-green-700',
+            'rejected' => 'bg-red-100 text-red-700',
+            default    => 'bg-yellow-100 text-yellow-700',  // pending
         };
     }
 }

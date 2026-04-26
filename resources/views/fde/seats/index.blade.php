@@ -43,33 +43,57 @@
     </div>
 
     {{-- ── Filters ─────────────────────────────────────────────────────── --}}
-    <form method="GET" class="flex gap-3 mb-5">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search school name…"
-            class="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <select name="locked"
-            class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <option value="">All Schools</option>
-            <option value="no" {{ request('locked') === 'no' ? 'selected' : '' }}>🟡 Unlocked</option>
-            <option value="yes" {{ request('locked') === 'yes' ? 'selected' : '' }}>🟢 Locked</option>
-        </select>
-        <button type="submit" class="px-5 py-2.5 bg-blue-900 text-white text-sm rounded-lg hover:bg-blue-800 transition">
-            Filter
-        </button>
-        @if (request()->hasAny(['search', 'locked']))
-            <a href="{{ route('fde.seats.index') }}"
-                class="px-4 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">
-                Clear
-            </a>
-        @endif
-    </form>
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-5">
+        <form method="GET" class="flex flex-col sm:flex-row gap-3 items-end">
+            {{-- School name search --}}
+            <div class="flex-1">
+                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Search School</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        </svg>
+                    </span>
+                    <input type="text" name="search" value="{{ request('search') }}"
+                        placeholder="Type school name or code…"
+                        class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">
+                </div>
+            </div>
+
+            {{-- Lock status --}}
+            <div class="sm:w-48">
+                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Lock Status</label>
+                <select name="locked"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                    <option value="">All Schools</option>
+                    <option value="no"  {{ request('locked') === 'no'  ? 'selected' : '' }}>🟡 Unlocked</option>
+                    <option value="yes" {{ request('locked') === 'yes' ? 'selected' : '' }}>🔒 Locked</option>
+                </select>
+            </div>
+
+            {{-- Buttons --}}
+            <div class="flex gap-2">
+                <button type="submit"
+                    class="px-5 py-2.5 bg-blue-900 text-white text-sm font-medium rounded-lg hover:bg-blue-800 transition">
+                    🔍 Search
+                </button>
+                @if (request()->hasAny(['search', 'locked']))
+                    <a href="{{ route('fde.seats.index') }}"
+                        class="px-4 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        ✕ Clear
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
 
     {{-- ── Table ───────────────────────────────────────────────────────── --}}
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="min-w-full text-sm">
                 <thead>
                     <tr class="border-b-2 border-gray-100 bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">School</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase max-w-[160px] min-w-[120px]">School</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Classes</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Total Seats</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Lock Status</th>
@@ -84,8 +108,8 @@
                         @endphp
                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
 
-                            <td class="px-4 py-3">
-                                <p class="font-medium text-gray-800">{{ $inst->name }}</p>
+                            <td class="px-4 py-3 max-w-[160px]">
+                                <p class="font-medium text-gray-800 truncate max-w-[160px]" title="{{ $inst->name }}">{{ $inst->name }}</p>
                                 <p class="text-xs text-gray-400">{{ $inst->code }} · {{ ucfirst($inst->type) }}</p>
                             </td>
 

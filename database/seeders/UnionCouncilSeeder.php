@@ -10,15 +10,7 @@ class UnionCouncilSeeder extends Seeder
 {
     public function run(): void
     {
-        // UC → Sector mapping
-        // Urban-I:  UC-25 to UC-33
-        // Urban-II: UC-34 to UC-44
-        // B.K:      UC-01 to UC-11, UC-22, UC-23, UC-24
-        // Tarnol:   UC-19, UC-20, UC-45 to UC-50
-        // Sihala:   UC-14, UC-15, UC-16, UC-21
-        // Nilore:   UC-12, UC-13, UC-17, UC-18
-
-
+        // UC → Sector mapping (same as before, but extended with the new Nilore UCs)
         $ucSectorMap = [
             'UC-01' => 'B.K',    'UC-02' => 'B.K',    'UC-03' => 'B.K',
             'UC-04' => 'B.K',    'UC-05' => 'B.K',    'UC-06' => 'B.K',
@@ -39,14 +31,15 @@ class UnionCouncilSeeder extends Seeder
             'UC-43' => 'Urban-II','UC-44' => 'Urban-II',
             'UC-45' => 'Tarnol', 'UC-46' => 'Tarnol', 'UC-47' => 'Tarnol',
             'UC-48' => 'Tarnol', 'UC-49' => 'Tarnol', 'UC-50' => 'Tarnol',
-            // New UCs from Nilore schools
-            'UC-51' => 'Nilore', 'UC-52' => 'Nilore', 'UC-53' => 'Nilore',
-            'UC-54' => 'Nilore', 'UC-55' => 'Nilore', 'UC-56' => 'Nilore',
-            'UC-57' => 'Nilore', 'UC-58' => 'Nilore', 'UC-59' => 'Nilore',
-            'UC-60' => 'Nilore', 'UC-61' => 'Nilore',
+            // The four Nilore UCs required by the 432 schools
+            'UC-52' => 'Nilore',
+            'UC-53' => 'Nilore',
+            'UC-54' => 'Nilore',
+            'UC-55' => 'Nilore',
         ];
 
         $ucs = [
+            // Original 50 UCs (UC-01 to UC-50) – unchanged
             ['name' => 'UC-01 Saidpur', 'code' => 'UC-01'],
             ['name' => 'UC-02 Noorpur Shahan (Barriamam)', 'code' => 'UC-02'],
             ['name' => 'UC-03 Malpur', 'code' => 'UC-03'],
@@ -93,32 +86,28 @@ class UnionCouncilSeeder extends Seeder
             ['name' => 'UC-44 Bokra (I-12. H-11 & H-13)', 'code' => 'UC-44'],
             ['name' => 'UC-45 Jhangi Saidan', 'code' => 'UC-45'],
             ['name' => 'UC-46 Badhana Kalan', 'code' => 'UC-46'],
-            ['name' => 'UC-47 Tarnol', 'code' => 'UC-47'],
+            ['name' => 'UC-47 Tarnaul', 'code' => 'UC-47'],
             ['name' => 'UC-48 Sarai Kharbuza', 'code' => 'UC-48'],
             ['name' => 'UC-49 Shah Allah Ditta', 'code' => 'UC-49'],
             ['name' => 'UC-50 Golra Sharif', 'code' => 'UC-50'],
-            // New UCs from Nilore schools (custom mappings)
-            ['name' => 'UC-11 Thanda Pani', 'code' => 'UC-51'],
-            ['name' => 'UC-20 Pind Begwal', 'code' => 'UC-52'],
-            ['name' => 'UC-21 New Shakrial', 'code' => 'UC-53'],
-            ['name' => 'UC-21 Tumair', 'code' => 'UC-54'],
-            ['name' => 'UC-22 Thanda Pani', 'code' => 'UC-55'],
-            ['name' => 'UC-23 Alipur', 'code' => 'UC-56'],
-            ['name' => 'UC-24 Chirrah', 'code' => 'UC-57'],
-            ['name' => 'UC-25 Kirpa', 'code' => 'UC-58'],
-            ['name' => 'UC-47 Tarlai', 'code' => 'UC-59'],
-            ['name' => 'UC-Dhoke Kala Khan RWP', 'code' => 'UC-60'],
-            ['name' => 'UC-Khana Dak II RWP', 'code' => 'UC-61'],
+
+            // Nilore UCs required by the 432 schools (UC‑52 to UC‑55)
+            ['name' => 'UC-52 Thanda Pani', 'code' => 'UC-52'],
+            ['name' => 'UC-53 New Shakrial', 'code' => 'UC-53'],
+            ['name' => 'UC-54 Dhoke Kala Khan RWP', 'code' => 'UC-54'],
+            ['name' => 'UC-55 Khana Dak II RWP', 'code' => 'UC-55'],
         ];
 
-        // Cache sectors
+        // Cache sectors by NAME (not code) — map values in $ucSectorMap are sector names
         $sectorCache = Sector::pluck('id', 'name')->toArray();
 
+        $fixed = 0;
         foreach ($ucs as $uc) {
             $sectorName = $ucSectorMap[$uc['code']] ?? null;
             $sectorId   = $sectorName ? ($sectorCache[$sectorName] ?? null) : null;
 
-            UnionCouncil::firstOrCreate(
+            // updateOrCreate so re-running the seeder also fixes existing rows
+            UnionCouncil::updateOrCreate(
                 ['code' => $uc['code']],
                 [
                     'name'      => $uc['name'],
@@ -126,8 +115,9 @@ class UnionCouncilSeeder extends Seeder
                     'is_active' => true,
                 ]
             );
+            if ($sectorId) $fixed++;
         }
 
-        $this->command->info('50 Union Councils seeded successfully.');
+        $this->command->info("Union Councils seeded. {$fixed}/" . count($ucs) . " have sector assigned.");
     }
 }

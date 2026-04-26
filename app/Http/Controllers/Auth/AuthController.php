@@ -18,37 +18,7 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        // Dev sidebar — all active accounts grouped by role
-        $testUsers = User::with(['roles', 'institution', 'sectors'])
-            ->where('is_active', true)
-            ->get()
-            ->map(function ($user) {
-                $role = $user->getRoleNames()->first();
-                return [
-                    'name'        => $user->name,
-                    'email'       => $user->email,
-                    'role'        => $role,
-                    'password'    => $user->email === 'admin@fde.edu.pk' ? 'Admin@1234' : 'Test@1234',
-                    'description' => match ($role) {
-                        'hoi'      => $user->institution?->name ?? '—',
-                        'aeo'      => $user->sectors->pluck('name')->join(', ') ?: '—',
-                        'fde_cell' => 'Full system · All institutions',
-                        'director' => 'Read-only · All institutions',
-                        default    => '—',
-                    },
-                ];
-            })
-            ->sortBy(fn($u) => match ($u['role']) {
-                'fde_cell' => 0,
-                'director' => 1,
-                'aeo'      => 2,
-                'hoi'      => 3,
-                default    => 4,
-            })
-            ->values()
-            ->groupBy('role');
-
-        return view('auth.login', compact('testUsers'));
+        return view('auth.login');
     }
 
     // ── Handle Login ───────────────────────────────────────
@@ -116,7 +86,46 @@ class AuthController extends Controller
             return redirect()->route('aeo.dashboard');
         }
 
-        return view('dashboard', compact('user'));
+        // Director → dedicated director dashboard
+        if ($user->hasRole('director')) {
+            return redirect()->route('director.dashboard');
+        }
+
+        // ── Daily admission reminder for HOI ──────────────────────────
+        $showReminder    = false;
+        $reminderMessage = null;
+        $activeYear      = null;
+
+        if (
+            $user->hasRole('hoi') &&
+            $user->institution_id &&
+            $user->institution?->classes_configured
+        ) {
+            $activeYear = \App\Models\AcademicYear::where('is_active', true)->first();
+            $sessionKey = 'admission_reminder_shown_' . today()->toDateString();
+
+            if (
+                $activeYear &&
+                $activeYear->isAdmissionOpen() &&
+                ! $activeYear->isCutoffPassed() &&
+                ! session()->has($sessionKey)
+            ) {
+                $todayDoneCount = \App\Models\DailyAdmission::where('institution_id', $user->institution_id)
+                    ->whereDate('admission_date', today())
+                    ->whereIn('status', ['submitted', 'verified'])
+                    ->count();
+
+                if ($todayDoneCount === 0) {
+                    $showReminder    = true;
+                    $cutoffTime      = \Carbon\Carbon::createFromTimeString($activeYear->daily_cutoff_time)
+                        ->format('h:i A');
+                    $reminderMessage = "Please update today's admission data before {$cutoffTime}.";
+                    session([$sessionKey => true]);
+                }
+            }
+        }
+
+        return view('dashboard', compact('user', 'showReminder', 'reminderMessage', 'activeYear'));
     }
 
     // ── Me ─────────────────────────────────────────────────

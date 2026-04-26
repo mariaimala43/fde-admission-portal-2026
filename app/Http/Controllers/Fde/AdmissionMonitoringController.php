@@ -125,6 +125,9 @@ class AdmissionMonitoringController extends Controller
         $workflow      = $request->input('workflow');
         $docStatus     = $request->input('doc_status');
         $testStatus    = $request->input('test_status');
+        $meritStatus   = $request->input('merit_status');
+        $dateFrom      = $request->input('date_from');
+        $dateTo        = $request->input('date_to');
         $search        = $request->input('search');
 
         $records = AdmissionMonitoring::with(['institution.sector', 'classModel'])
@@ -134,6 +137,9 @@ class AdmissionMonitoringController extends Controller
             ->when($workflow,      fn($q) => $q->where('workflow_status', $workflow))
             ->when($docStatus,     fn($q) => $q->where('doc_status', $docStatus))
             ->when($testStatus,    fn($q) => $q->where('test_status', $testStatus))
+            ->when($meritStatus,   fn($q) => $q->where('merit_status', $meritStatus))
+            ->when($dateFrom,      fn($q) => $q->whereDate('admission_date', '>=', $dateFrom))
+            ->when($dateTo,        fn($q) => $q->whereDate('admission_date', '<=', $dateTo))
             ->when($search,        fn($q) => $q->whereHas('institution', fn($q2) =>
                 $q2->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%")
             ))
@@ -147,7 +153,8 @@ class AdmissionMonitoringController extends Controller
 
         return view('fde.monitoring.index', compact(
             'records', 'sectors', 'institutions', 'academicYear',
-            'sectorId', 'institutionId', 'workflow', 'docStatus', 'testStatus', 'search'
+            'sectorId', 'institutionId', 'workflow', 'docStatus', 'testStatus',
+            'meritStatus', 'dateFrom', 'dateTo', 'search'
         ));
     }
 
@@ -300,8 +307,15 @@ class AdmissionMonitoringController extends Controller
     {
         $academicYear = AcademicYear::where('is_active', true)->firstOrFail();
 
+        // Use withTrashed() so soft-deleted monitoring records also block re-creation.
+        // Without withTrashed(), a deleted monitoring record's daily_admission_id would
+        // fall back into the NOT IN list, creating a duplicate on the next sync.
+        $existingIds = AdmissionMonitoring::withTrashed()
+            ->whereNotNull('daily_admission_id')
+            ->pluck('daily_admission_id');
+
         $admissions = DailyAdmission::where('academic_year_id', $academicYear->id)
-            ->whereNotIn('id', AdmissionMonitoring::pluck('daily_admission_id'))
+            ->whereNotIn('id', $existingIds)
             ->get();
 
         $created = 0;
