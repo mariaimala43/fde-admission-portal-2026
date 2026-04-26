@@ -38,7 +38,6 @@ class MasterReportController extends Controller
         // ── Filtered institutions ─────────────────────────
         $institutions = Institution::with('sector')
             ->where('is_active', true)
-            ->where('classes_configured', true)
             ->when($sectorId, fn($q) => $q->where('sector_id', $sectorId))
             ->when($type,     fn($q) => $q->where('type', $type))
             ->when($gender,   fn($q) => $q->where('gender', $gender))
