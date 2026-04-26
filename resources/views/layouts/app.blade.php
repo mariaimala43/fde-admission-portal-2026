@@ -314,6 +314,10 @@
                             class="sb-link {{ request()->routeIs('admin.sectors.*') ? 'active' : '' }}">
                             <span class="ico">🗺️</span> Sectors
                         </a>
+                        <a href="{{ route('admin.ucs.index') }}"
+                            class="sb-link {{ request()->routeIs('admin.ucs.*') ? 'active' : '' }}">
+                            <span class="ico">🏘️</span> Union Councils
+                        </a>
                         <a href="{{ route('admin.import.index') }}"
                             class="sb-link {{ request()->routeIs('admin.import.*') ? 'active' : '' }}">
                             <span class="ico">📥</span> Import Data
