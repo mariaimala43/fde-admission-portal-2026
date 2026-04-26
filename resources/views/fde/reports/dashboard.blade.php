@@ -16,7 +16,7 @@
     </div>
 
     {{-- ── Grand Summary ─────────────────────────────────────────────────────── --}}
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div
             class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center">
             <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Total Seats</p>
@@ -31,6 +31,12 @@
             class="bg-white dark:bg-gray-800 rounded-xl border border-green-100 dark:border-gray-700 shadow-sm p-5 text-center">
             <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Newly Admitted</p>
             <p class="text-2xl font-bold text-green-600">{{ number_format($totalAdmitted) }}</p>
+        </div>
+        <div
+            class="bg-white dark:bg-gray-800 rounded-xl border border-teal-100 dark:border-gray-700 shadow-sm p-5 text-center">
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">⚙️ Matric Tech (Year)</p>
+            <p class="text-2xl font-bold text-teal-700 dark:text-teal-300">{{ number_format($matricTechYear) }}</p>
+            <p class="text-xs text-teal-500 mt-0.5">Today: {{ number_format($matricTechToday) }}</p>
         </div>
         <div
             class="bg-white dark:bg-gray-800 rounded-xl border border-blue-100 dark:border-gray-700 shadow-sm p-5 text-center">

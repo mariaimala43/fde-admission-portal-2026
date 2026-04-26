@@ -42,6 +42,16 @@
             <p class="text-blue-300 text-xs uppercase tracking-wide">Finalized Today</p>
             <p class="text-3xl font-bold text-green-400">{{ $todayStats->finalized ?? 0 }}</p>
         </div>
+        <div class="w-px bg-blue-700 h-10 hidden md:block"></div>
+        <div>
+            <p class="text-blue-300 text-xs uppercase tracking-wide">⚙️ Matric Tech (Year)</p>
+            <p class="text-3xl font-bold text-teal-300">{{ number_format($matricTechYear ?? 0) }}</p>
+        </div>
+        <div class="w-px bg-blue-700 h-10 hidden md:block"></div>
+        <div>
+            <p class="text-blue-300 text-xs uppercase tracking-wide">⚙️ Matric Tech Today</p>
+            <p class="text-3xl font-bold text-teal-200">{{ number_format($matricTechToday ?? 0) }}</p>
+        </div>
         <div class="ml-auto text-right">
             <p class="text-blue-300 text-xs">{{ now()->format('l, d M Y') }}</p>
             <p class="text-blue-400 text-xs">{{ $academicYear?->name }}</p>

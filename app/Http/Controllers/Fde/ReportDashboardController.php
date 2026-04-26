@@ -111,7 +111,8 @@ class ReportDashboardController extends Controller
                 SUM(p2p_boys+p2p_girls)                           as total_p2p,
                 SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as grand_total,
                 SUM(morning_boys+evening_boys+oosc_boys+p2p_boys) as all_boys,
-                SUM(morning_girls+evening_girls+oosc_girls+p2p_girls) as all_girls
+                SUM(morning_girls+evening_girls+oosc_girls+p2p_girls) as all_girls,
+                SUM(matric_tech_count)                            as total_matric_tech
             ')
             ->first();
 
@@ -121,9 +122,13 @@ class ReportDashboardController extends Controller
             ->selectRaw('
                 SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total,
                 SUM(morning_boys+evening_boys+oosc_boys+p2p_boys)    as boys,
-                SUM(morning_girls+evening_girls+oosc_girls+p2p_girls) as girls
+                SUM(morning_girls+evening_girls+oosc_girls+p2p_girls) as girls,
+                SUM(matric_tech_count)                               as matric_tech
             ')
             ->first();
+
+        $matricTechYear  = (int) ($grandTotals->total_matric_tech ?? 0);
+        $matricTechToday = (int) ($todayTotals->matric_tech       ?? 0);
 
         // ── Seat summary ──────────────────────────────────────────────
         $seatSummary = InstitutionClass::when($instIds, fn($q) => $q->whereIn('institution_id', $instIds))
@@ -338,6 +343,7 @@ class ReportDashboardController extends Controller
         return view('fde.reports.dashboard', compact(
             'academicYear', 'grandTotals', 'todayTotals',
             'totalSeats', 'totalExisting', 'totalFilled', 'totalRemaining', 'totalAdmitted',
+            'matricTechYear', 'matricTechToday',
             'trendLabels', 'trendTotal', 'trendBoys', 'trendGirls',
             'weekLabels', 'weekTotals',
             'sectorStats', 'genderData', 'categoryData',

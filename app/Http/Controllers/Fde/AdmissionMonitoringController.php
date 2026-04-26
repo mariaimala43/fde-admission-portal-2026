@@ -108,9 +108,16 @@ class AdmissionMonitoringController extends Controller
 
         $allSectors = Sector::orderBy('name')->get(['id', 'name']);
 
+        // ── Matric Tech totals ────────────────────────────────────────
+        $matricTechYear  = (int) DailyAdmission::where('academic_year_id', $academicYear?->id)
+            ->sum('matric_tech_count');
+        $matricTechToday = (int) DailyAdmission::whereDate('admission_date', now()->toDateString())
+            ->sum('matric_tech_count');
+
         return view('fde.monitoring.dashboard', compact(
             'stats', 'todayStats', 'sectors', 'recentAudits',
-            'academicYear', 'sectorId', 'allSectors'
+            'academicYear', 'sectorId', 'allSectors',
+            'matricTechYear', 'matricTechToday'
         ));
     }
 

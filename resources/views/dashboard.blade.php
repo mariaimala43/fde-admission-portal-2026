@@ -151,6 +151,18 @@
                 ->value('total') ?? 0;
 
             $todayTotal = $todayMorning + $todayEvening;
+
+            // ── Matric Tech (only for schools that have it enabled)
+            $matricTechYear  = 0;
+            $matricTechToday = 0;
+            if ($institution->has_matric_tech) {
+                $matricTechYear  = (int) \App\Models\DailyAdmission::where('institution_id', $institution->id)
+                    ->where('academic_year_id', $academicYear?->id)
+                    ->sum('matric_tech_count');
+                $matricTechToday = (int) \App\Models\DailyAdmission::where('institution_id', $institution->id)
+                    ->where('admission_date', now()->toDateString())
+                    ->sum('matric_tech_count');
+            }
         @endphp
 
             {{-- ── Quick Stats Row 1: Capacity overview ───────────── --}}
@@ -224,6 +236,22 @@
                     <p class="text-xs text-gray-400 mt-1">{{ now()->format('d M Y') }}</p>
                 </div>
             </div>
+
+            {{-- ── Matric Tech Row (only for schools with matric tech) ─ --}}
+            @if ($institution->has_matric_tech)
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-teal-700 rounded-xl shadow-sm p-5 text-center text-white">
+                        <p class="text-xs text-teal-100 uppercase tracking-wider mb-1">⚙️ Matric Tech Today</p>
+                        <p class="text-2xl font-bold">{{ number_format($matricTechToday) }}</p>
+                        <p class="text-xs text-teal-200 mt-1">{{ now()->format('d M Y') }}</p>
+                    </div>
+                    <div class="bg-teal-900 rounded-xl shadow-sm p-5 text-center text-white">
+                        <p class="text-xs text-teal-200 uppercase tracking-wider mb-1">⚙️ Matric Tech (Year)</p>
+                        <p class="text-2xl font-bold">{{ number_format($matricTechYear) }}</p>
+                        <p class="text-xs text-teal-300 mt-1">Cumulative</p>
+                    </div>
+                </div>
+            @endif
 
             {{-- ── Class-wise Table ─────────────────────────────────── --}}
             @if ($classes->isNotEmpty())
