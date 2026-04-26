@@ -62,20 +62,27 @@
             // Pre-compute UC count here so we never put {{ }} inside an Alpine x-text string.
             // Mixing Blade interpolation inside Alpine attribute strings causes a PHP parse error
             // because Blade processes the file first and the \' escapes break PHP string parsing.
-$ucCount = $item['uc_breakdown']->count();
+$ucCount   = $item['uc_breakdown']->count();
+            $instCount = $item['inst_breakdown']->count();
+            $expandLabel = $ucCount
+                ? "▼ Show {$ucCount} UCs"
+                : ($instCount ? "▼ Show {$instCount} institutions" : '');
+            $collapseLabel = $ucCount ? '▲ Hide UCs' : '▲ Hide institutions';
         @endphp
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden" x-data="{ open: false }">
 
             {{-- Sector header --}}
-            <div class="bg-blue-900 px-5 py-4 flex flex-wrap justify-between items-center gap-3 cursor-pointer select-none"
-                @click="open = !open">
+            <div class="bg-blue-900 px-5 py-4 flex flex-wrap justify-between items-center gap-3 {{ ($ucCount || $instCount) ? 'cursor-pointer select-none' : '' }}"
+                @if($ucCount || $instCount) @click="open = !open" @endif>
                 <div>
                     <h3 class="text-base font-bold text-white">{{ $item['sector']->name }}</h3>
                     <p class="text-xs text-blue-200 mt-0.5">
                         {{ $item['school_count'] }} schools &nbsp;·&nbsp; Code: {{ $item['sector']->code }}
-                        &nbsp;·&nbsp;
-                        <span x-text="open ? '▲ Hide UCs' : '▼ Show {{ $ucCount }} UCs'"></span>
+                        @if($ucCount || $instCount)
+                            &nbsp;·&nbsp;
+                            <span x-text="open ? '{{ $collapseLabel }}' : '{{ $expandLabel }}'"></span>
+                        @endif
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-5 text-center items-center">
@@ -133,8 +140,8 @@ $ucCount = $item['uc_breakdown']->count();
                 </div>
             </div>
 
-            {{-- UC breakdown table --}}
-            @if ($item['uc_breakdown']->count())
+            {{-- Breakdown table (UC-based for normal sectors; institution-based for sectors with no UCs e.g. Model Colleges) --}}
+            @if ($item['uc_breakdown']->count() || $item['inst_breakdown']->count())
                 <div x-show="open" x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
                     x-transition:leave="transition ease-in duration-150"
@@ -142,10 +149,13 @@ $ucCount = $item['uc_breakdown']->count();
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
-                                <tr
-                                    class="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
-                                    <th class="text-left px-5 py-3 font-medium">Union Council</th>
-                                    <th class="text-center px-3 py-3 font-medium">Schools</th>
+                                <tr class="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
+                                    <th class="text-left px-5 py-3 font-medium">
+                                        {{ $item['uc_breakdown']->count() ? 'Union Council' : 'Institution' }}
+                                    </th>
+                                    @if ($item['uc_breakdown']->count())
+                                        <th class="text-center px-3 py-3 font-medium">Schools</th>
+                                    @endif
                                     <th class="text-center px-3 py-3 font-medium">Seats</th>
                                     <th class="text-center px-3 py-3 font-medium">Existing</th>
                                     <th class="text-center px-3 py-3 font-medium">Boys</th>
@@ -157,65 +167,68 @@ $ucCount = $item['uc_breakdown']->count();
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
-                                @foreach ($item['uc_breakdown'] as $uc)
-                                    <tr class="hover:bg-gray-50 transition">
-                                        <td class="px-5 py-3 font-medium text-gray-700">
-                                            {{ $uc->name }}
-                                            <span class="text-xs text-gray-400 ml-1">({{ $uc->code }})</span>
-                                        </td>
-                                        <td class="px-3 py-3 text-center text-gray-600">{{ $uc->school_count }}</td>
-                                        <td class="px-3 py-3 text-center text-gray-600">
-                                            {{ number_format($uc->total_seats) }}
-                                        </td>
-                                        <td class="px-3 py-3 text-center text-orange-600">
-                                            {{ number_format($uc->total_existing) }}</td>
-                                        <td class="px-3 py-3 text-center text-blue-600">
-                                            {{ number_format($uc->total_boys) }}
-                                        </td>
-                                        <td class="px-3 py-3 text-center text-pink-500">
-                                            {{ number_format($uc->total_girls) }}
-                                        </td>
-                                        <td class="px-3 py-3 text-center text-purple-600">
-                                            {{ number_format($uc->total_oosc) }}
-                                        </td>
-                                        <td class="px-3 py-3 text-center text-orange-500">
-                                            {{ number_format($uc->total_p2p) }}
-                                        </td>
-                                        <td class="px-3 py-3 text-center font-semibold text-gray-800">
-                                            {{ number_format($uc->total_admitted) }}</td>
-                                        <td class="px-3 py-3 text-center">
-                                            <span
-                                                class="text-xs font-bold
-                            {{ $uc->fill_rate >= 90 ? 'text-red-500' : ($uc->fill_rate >= 70 ? 'text-yellow-600' : 'text-green-600') }}">
-                                                {{ $uc->fill_rate }}%
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endforeach
+                                @if ($item['uc_breakdown']->count())
+                                    {{-- Normal sector: UC rows --}}
+                                    @foreach ($item['uc_breakdown'] as $uc)
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <td class="px-5 py-3 font-medium text-gray-700">
+                                                {{ $uc->name }}
+                                                <span class="text-xs text-gray-400 ml-1">({{ $uc->code }})</span>
+                                            </td>
+                                            <td class="px-3 py-3 text-center text-gray-600">{{ $uc->school_count }}</td>
+                                            <td class="px-3 py-3 text-center text-gray-600">{{ number_format($uc->total_seats) }}</td>
+                                            <td class="px-3 py-3 text-center text-orange-600">{{ number_format($uc->total_existing) }}</td>
+                                            <td class="px-3 py-3 text-center text-blue-600">{{ number_format($uc->total_boys) }}</td>
+                                            <td class="px-3 py-3 text-center text-pink-500">{{ number_format($uc->total_girls) }}</td>
+                                            <td class="px-3 py-3 text-center text-purple-600">{{ number_format($uc->total_oosc) }}</td>
+                                            <td class="px-3 py-3 text-center text-orange-500">{{ number_format($uc->total_p2p) }}</td>
+                                            <td class="px-3 py-3 text-center font-semibold text-gray-800">{{ number_format($uc->total_admitted) }}</td>
+                                            <td class="px-3 py-3 text-center">
+                                                <span class="text-xs font-bold {{ $uc->fill_rate >= 90 ? 'text-red-500' : ($uc->fill_rate >= 70 ? 'text-yellow-600' : 'text-green-600') }}">
+                                                    {{ $uc->fill_rate }}%
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    {{-- No-UC sector (Model Colleges): institution rows --}}
+                                    @foreach ($item['inst_breakdown'] as $inst)
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <td class="px-5 py-3 font-medium text-gray-700">
+                                                {{ $inst->name }}
+                                                @if($inst->code)
+                                                    <span class="text-xs text-gray-400 ml-1">({{ $inst->code }})</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-3 text-center text-gray-600">{{ number_format($inst->total_seats) }}</td>
+                                            <td class="px-3 py-3 text-center text-orange-600">{{ number_format($inst->total_existing) }}</td>
+                                            <td class="px-3 py-3 text-center text-blue-600">{{ number_format($inst->total_boys) }}</td>
+                                            <td class="px-3 py-3 text-center text-pink-500">{{ number_format($inst->total_girls) }}</td>
+                                            <td class="px-3 py-3 text-center text-purple-600">{{ number_format($inst->total_oosc) }}</td>
+                                            <td class="px-3 py-3 text-center text-orange-500">{{ number_format($inst->total_p2p) }}</td>
+                                            <td class="px-3 py-3 text-center font-semibold text-gray-800">{{ number_format($inst->total_admitted) }}</td>
+                                            <td class="px-3 py-3 text-center">
+                                                <span class="text-xs font-bold {{ $inst->fill_rate >= 90 ? 'text-red-500' : ($inst->fill_rate >= 70 ? 'text-yellow-600' : 'text-green-600') }}">
+                                                    {{ $inst->fill_rate }}%
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
                             </tbody>
                             <tfoot>
                                 <tr class="bg-blue-50 font-semibold text-sm border-t-2 border-blue-200">
                                     <td class="px-5 py-3 text-blue-900">Sector Total</td>
-                                    <td class="px-3 py-3 text-center text-blue-900">{{ $item['school_count'] }}</td>
-                                    <td class="px-3 py-3 text-center text-blue-900">
-                                        {{ number_format($item['total_seats']) }}
-                                    </td>
-                                    <td class="px-3 py-3 text-center text-blue-900">
-                                        {{ number_format($item['total_existing']) }}</td>
-                                    <td class="px-3 py-3 text-center text-blue-900">
-                                        {{ number_format($item['total_boys']) }}
-                                    </td>
-                                    <td class="px-3 py-3 text-center text-blue-900">
-                                        {{ number_format($item['total_girls']) }}
-                                    </td>
-                                    <td class="px-3 py-3 text-center text-blue-900">
-                                        {{ number_format($item['total_oosc']) }}
-                                    </td>
-                                    <td class="px-3 py-3 text-center text-blue-900">
-                                        {{ number_format($item['total_p2p']) }}
-                                    </td>
-                                    <td class="px-3 py-3 text-center text-blue-900">
-                                        {{ number_format($item['total_admitted']) }}</td>
+                                    @if ($item['uc_breakdown']->count())
+                                        <td class="px-3 py-3 text-center text-blue-900">{{ $item['school_count'] }}</td>
+                                    @endif
+                                    <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_seats']) }}</td>
+                                    <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_existing']) }}</td>
+                                    <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_boys']) }}</td>
+                                    <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_girls']) }}</td>
+                                    <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_oosc']) }}</td>
+                                    <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_p2p']) }}</td>
+                                    <td class="px-3 py-3 text-center text-blue-900">{{ number_format($item['total_admitted']) }}</td>
                                     <td class="px-3 py-3 text-center text-blue-900">{{ $fillRate }}%</td>
                                 </tr>
                             </tfoot>

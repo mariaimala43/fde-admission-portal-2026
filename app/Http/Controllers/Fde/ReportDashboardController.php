@@ -415,6 +415,41 @@ class ReportDashboardController extends Controller
                     return $uc;
                 });
 
+            // For sectors with no UCs (e.g. Model Colleges), build institution-level breakdown
+            $instBreakdown = collect();
+            if ($ucBreakdown->isEmpty()) {
+                $instBreakdown = $sector->institutions->map(function ($inst) use ($academicYear, $from, $to) {
+                    $adm = DailyAdmission::where('institution_id', $inst->id)
+                        ->where('academic_year_id', $academicYear?->id)
+                        ->whereBetween('admission_date', [$from->toDateString(), $to->toDateString()])
+                        ->selectRaw('
+                            SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total,
+                            SUM(morning_boys+evening_boys+oosc_boys+p2p_boys)    as boys,
+                            SUM(morning_girls+evening_girls+oosc_girls+p2p_girls) as girls,
+                            SUM(oosc_boys+oosc_girls)                             as oosc,
+                            SUM(p2p_boys+p2p_girls)                               as p2p
+                        ')
+                        ->first();
+
+                    $seats = InstitutionClass::where('institution_id', $inst->id)
+                        ->selectRaw('SUM(total_seats) as seats, SUM(existing_enrollment) as existing')
+                        ->first();
+
+                    $inst->total_admitted = (int) ($adm?->total   ?? 0);
+                    $inst->total_boys     = (int) ($adm?->boys    ?? 0);
+                    $inst->total_girls    = (int) ($adm?->girls   ?? 0);
+                    $inst->total_oosc     = (int) ($adm?->oosc    ?? 0);
+                    $inst->total_p2p      = (int) ($adm?->p2p     ?? 0);
+                    $inst->total_seats    = (int) ($seats?->seats    ?? 0);
+                    $inst->total_existing = (int) ($seats?->existing ?? 0);
+                    $inst->fill_rate      = $inst->total_seats > 0
+                        ? round((($inst->total_existing + $inst->total_admitted) / $inst->total_seats) * 100)
+                        : 0;
+
+                    return $inst;
+                })->sortBy('name')->values();
+            }
+
             $adm = DailyAdmission::whereIn('institution_id', $instIds)
                 ->where('academic_year_id', $academicYear?->id)
                 ->whereBetween('admission_date', [$from->toDateString(), $to->toDateString()])
@@ -434,6 +469,7 @@ class ReportDashboardController extends Controller
             return [
                 'sector'         => $sector,
                 'uc_breakdown'   => $ucBreakdown,
+                'inst_breakdown' => $instBreakdown,
                 'total_admitted' => (int) ($adm?->total   ?? 0),
                 'total_boys'     => (int) ($adm?->boys    ?? 0),
                 'total_girls'    => (int) ($adm?->girls   ?? 0),
