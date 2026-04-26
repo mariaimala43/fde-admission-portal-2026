@@ -378,8 +378,10 @@ class ReportDashboardController extends Controller
             $instIds = $sector->institutions->pluck('id');
 
             // UC-wise breakdown within sector
+            // Constrain institutions to this sector only — prevents Model Colleges
+            // (which share UCs with other sectors) from bleeding into other sectors.
             $ucBreakdown = UnionCouncil::where('sector_id', $sector->id)
-                ->with('institutions')
+                ->with(['institutions' => fn($q) => $q->where('sector_id', $sector->id)])
                 ->get()
                 ->map(function ($uc) use ($academicYear, $from, $to) {
                     $ucInstIds = $uc->institutions->pluck('id');
