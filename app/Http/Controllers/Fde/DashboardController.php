@@ -49,7 +49,7 @@ class DashboardController extends Controller
             0,
             (int) ($seatTotals?->seats ?? 0)
             - (int) ($seatTotals?->existing ?? 0)
-            - (int) ($cumulativeTotals?->regular ?? 0)
+            - (int) ($cumulativeTotals?->total ?? 0)
         );
 
         // ── Sector-wise breakdown (cumulative) ─────────────
