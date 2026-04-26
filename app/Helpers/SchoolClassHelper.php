@@ -16,8 +16,9 @@ class SchoolClassHelper
             'VI-X'          => [6, 7, 8, 9, 10],
             'VI-XII'        => [6, 7, 8, 9, 10, 11, 12],
             'XI-XII'        => [11, 12],
-            'XI-XIV'        => [11, 12],
-            'Model College' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            'XI-XIV'        => [11, 12, 13, 14],   // undergraduate
+            'Model College' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+            'Ex-FG College' => [11, 12, 13, 14],   // undergraduate
             default         => [1, 2, 3, 4, 5],
         };
     }

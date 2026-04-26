@@ -33,6 +33,10 @@ class ClassesSeeder extends Seeder
             // Higher Secondary — Class 11-12
             ['name' => 'Class 11',   'order' => 11, 'level' => 'higher_secondary', 'is_ece' => false],
             ['name' => 'Class 12',   'order' => 12, 'level' => 'higher_secondary', 'is_ece' => false],
+
+            // Undergraduate — Class 13-14 (Model Colleges / XI-XIV / Ex-FG College)
+            ['name' => 'Class 13',   'order' => 13, 'level' => 'undergraduate',    'is_ece' => false],
+            ['name' => 'Class 14',   'order' => 14, 'level' => 'undergraduate',    'is_ece' => false],
         ];
 
         foreach ($classes as $class) {

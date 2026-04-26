@@ -259,6 +259,7 @@
                     </thead>
                     <tbody class="divide-y divide-gray-50">
 
+                        @php $prevLevel = null; @endphp
                         @foreach ($classes as $class)
                             @php
                                 $conf = $configured[$class->id] ?? null;
@@ -266,7 +267,27 @@
                                     ->pluck('name')
                                     ->join(', ');
                                 $active = $conf !== null && ($conf->is_active ?? true);
+
+                                // Level divider labels
+                                $levelLabels = [
+                                    'primary'          => 'Primary',
+                                    'middle'           => 'Middle',
+                                    'high'             => 'High',
+                                    'higher_secondary' => 'Higher Secondary (Intermediate)',
+                                    'undergraduate'    => 'Undergraduate',
+                                ];
+                                $showDivider = $class->level !== $prevLevel;
+                                $prevLevel   = $class->level;
                             @endphp
+
+                            @if ($showDivider)
+                                <tr class="bg-gray-100 border-t-2 border-gray-200">
+                                    <td colspan="{{ $hasEvening ? 9 : 6 }}"
+                                        class="px-4 py-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        {{ $levelLabels[$class->level] ?? $class->level }}
+                                    </td>
+                                </tr>
+                            @endif
 
                             @if (!$hasEvening)
                                 {{-- ── Morning-only school row ──────────────────────── --}}
@@ -283,6 +304,9 @@
                                     </td>
                                     <td class="px-4 py-3 font-semibold text-gray-800">
                                         {{ $class->name }}
+                                        @if ($class->level === 'undergraduate')
+                                            <span class="ml-1 text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-medium">UG</span>
+                                        @endif
                                         <input type="hidden" name="classes[{{ $class->id }}][class_id]"
                                             value="{{ $class->id }}">
                                         <input type="hidden" name="classes[{{ $class->id }}][active]"
@@ -343,6 +367,9 @@
                                     </td>
                                     <td class="px-4 py-3 font-semibold text-gray-800">
                                         {{ $class->name }}
+                                        @if ($class->level === 'undergraduate')
+                                            <span class="ml-1 text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-medium">UG</span>
+                                        @endif
                                         <input type="hidden" name="classes[{{ $class->id }}][class_id]"
                                             value="{{ $class->id }}">
                                         <input type="hidden" name="classes[{{ $class->id }}][active]"
