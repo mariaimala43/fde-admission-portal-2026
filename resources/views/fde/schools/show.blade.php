@@ -221,19 +221,57 @@
                                 @endif
                             </td>
                             <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center hidden sm:table-cell">
-                                <div class="font-bold text-orange-600 text-base">
-                                    {{ number_format($ic->existing_enrollment) }}
-                                </div>
-                                @if ($ic->promoted_count + $ic->failed_count > 0)
-                                    <div class="text-xs text-gray-400 mt-0.5">
-                                        Promoted: <span
-                                            class="text-green-600 font-semibold">{{ number_format($ic->promoted_count) }}</span>
-                                        @if ($ic->failed_count > 0)
-                                            &nbsp;&middot;&nbsp;
-                                            Repeaters: <span
-                                                class="text-red-500 font-semibold">{{ number_format($ic->failed_count) }}</span>
+                                @if ($hasEvening)
+                                    {{-- Both --}}
+                                    <span x-show="shift === 'both'">
+                                        <div class="font-bold text-orange-600 text-base">{{ number_format($ic->existing_enrollment) }}</div>
+                                        @if ($ic->promoted_count + $ic->failed_count > 0)
+                                            <div class="text-xs text-gray-400 mt-0.5">
+                                                Promoted: <span class="text-green-600 font-semibold">{{ number_format($ic->promoted_count) }}</span>
+                                                @if ($ic->failed_count > 0)
+                                                    &nbsp;&middot;&nbsp;
+                                                    Repeaters: <span class="text-red-500 font-semibold">{{ number_format($ic->failed_count) }}</span>
+                                                @endif
+                                            </div>
                                         @endif
-                                    </div>
+                                    </span>
+                                    {{-- Morning --}}
+                                    <span x-show="shift === 'morning'" x-cloak>
+                                        <div class="font-bold text-orange-600 text-base">{{ number_format($ic->morning_existing ?? 0) }}</div>
+                                        @if (($ic->morning_promoted ?? 0) + ($ic->morning_failed ?? 0) > 0)
+                                            <div class="text-xs text-gray-400 mt-0.5">
+                                                Promoted: <span class="text-green-600 font-semibold">{{ number_format($ic->morning_promoted ?? 0) }}</span>
+                                                @if (($ic->morning_failed ?? 0) > 0)
+                                                    &nbsp;&middot;&nbsp;
+                                                    Repeaters: <span class="text-red-500 font-semibold">{{ number_format($ic->morning_failed ?? 0) }}</span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </span>
+                                    {{-- Evening --}}
+                                    <span x-show="shift === 'evening'" x-cloak>
+                                        <div class="font-bold text-orange-600 text-base">{{ number_format($ic->evening_existing ?? 0) }}</div>
+                                        @if (($ic->evening_promoted ?? 0) + ($ic->evening_failed ?? 0) > 0)
+                                            <div class="text-xs text-gray-400 mt-0.5">
+                                                Promoted: <span class="text-green-600 font-semibold">{{ number_format($ic->evening_promoted ?? 0) }}</span>
+                                                @if (($ic->evening_failed ?? 0) > 0)
+                                                    &nbsp;&middot;&nbsp;
+                                                    Repeaters: <span class="text-red-500 font-semibold">{{ number_format($ic->evening_failed ?? 0) }}</span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </span>
+                                @else
+                                    <div class="font-bold text-orange-600 text-base">{{ number_format($ic->existing_enrollment) }}</div>
+                                    @if ($ic->promoted_count + $ic->failed_count > 0)
+                                        <div class="text-xs text-gray-400 mt-0.5">
+                                            Promoted: <span class="text-green-600 font-semibold">{{ number_format($ic->promoted_count) }}</span>
+                                            @if ($ic->failed_count > 0)
+                                                &nbsp;&middot;&nbsp;
+                                                Repeaters: <span class="text-red-500 font-semibold">{{ number_format($ic->failed_count) }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
                             <td
