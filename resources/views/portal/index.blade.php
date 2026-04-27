@@ -543,6 +543,13 @@
                     class="text-sm font-medium text-white/90 hover:text-white transition">Home</a>
                 <a href="#schools-section" class="text-sm font-medium text-white/60 hover:text-white transition">Find
                     Schools</a>
+                <a href="{{ route('portal.index', ['vacancy' => 'has_seats']) }}"
+                    class="text-sm font-medium transition flex items-center gap-1.5"
+                    style="color:var(--green-text);"
+                    onmouseover="this.style.color='#fff'"
+                    onmouseout="this.style.color='var(--green-text)'">
+                    🪑 Seats Available
+                </a>
                 <a href="#staff-section" class="text-sm font-medium text-white/60 hover:text-white transition">Staff
                     Portal</a>
             </div>
@@ -649,16 +656,31 @@
                     {{-- Stats --}}
                     <div class="flex items-stretch gap-0 flex-wrap au au4"
                         style="border-top:1px solid var(--border);padding-top:28px;">
-                        @foreach ([[$totalInstitutions, 'Total Schools', 'کل اسکول'], [$openInstitutions, 'Admissions Open', 'کھلے داخلے'], [$totalSeatsAvailable, 'Seats Available', 'نشستیں دستیاب'], [$totalAdmittedThisYear, 'Admitted This Year', 'اس سال داخلے']] as $i => [$val, $en, $ur])
+                        @foreach ([
+                            [$totalInstitutions,     'Total Schools',      'کل اسکول',        null],
+                            [$openInstitutions,      'Admissions Open',    'کھلے داخلے',      '#schools-section'],
+                            [$totalSeatsAvailable,   'Seats Available',    'نشستیں دستیاب',   route('portal.index', ['vacancy' => 'has_seats'])],
+                            [$totalAdmittedThisYear, 'Admitted This Year', 'اس سال داخلے',    null],
+                        ] as $i => [$val, $en, $ur, $link])
                             @if ($i > 0)
                                 <div class="v-sep mx-5"></div>
                             @endif
-                            <div>
+                            @if ($link)
+                                <a href="{{ $link }}" style="text-decoration:none;color:inherit;">
+                            @else
+                                <div>
+                            @endif
                                 <p class="s-num">{{ number_format($val) }}<span
                                         style="color:var(--green);font-size:1.6rem;font-weight:800;">+</span></p>
-                                <p class="s-label" x-show="lang === 'en'">{{ $en }}</p>
-                                <p class="s-label urdu" x-show="lang === 'ur'" x-cloak>{{ $ur }}</p>
-                            </div>
+                                <p class="s-label" x-show="lang === 'en'"
+                                    @if ($link) style="color:var(--green-text);" @endif>{{ $en }}</p>
+                                <p class="s-label urdu" x-show="lang === 'ur'" x-cloak
+                                    @if ($link) style="color:var(--green-text);" @endif>{{ $ur }}</p>
+                            @if ($link)
+                                </a>
+                            @else
+                                </div>
+                            @endif
                         @endforeach
                     </div>
                 </div>
@@ -723,6 +745,27 @@
                             <p class="text-xs leading-relaxed" style="color:var(--muted);">Merit lists will appear
                                 here when published by schools</p>
                         @endif
+                    </a>
+
+                    {{-- Card 5: Available Seats CTA --}}
+                    <a href="{{ route('portal.index', ['vacancy' => 'has_seats']) }}"
+                        class="glass col-span-2 p-5 block transition"
+                        style="text-decoration:none;cursor:pointer;border-color:rgba(74,160,110,0.25);"
+                        onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--border-g)';this.style.background='rgba(74,160,110,0.08)'"
+                        onmouseout="this.style.transform='';this.style.borderColor='rgba(74,160,110,0.25)';this.style.background=''">
+                        <div class="flex items-center gap-4">
+                            <div class="icon-box shrink-0">🪑</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold text-white">
+                                    <span style="color:var(--green-text);">{{ number_format($totalSeatsAvailable) }}+</span>
+                                    Seats Available Now
+                                </p>
+                                <p class="text-xs mt-0.5" style="color:var(--muted);">
+                                    Browse schools with open seats — filter by class, sector &amp; gender
+                                </p>
+                            </div>
+                            <span class="text-xs font-semibold shrink-0" style="color:var(--green-text);">View →</span>
+                        </div>
                     </a>
 
                     {{-- Banner text if set --}}
