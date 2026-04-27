@@ -353,21 +353,22 @@ class PortalController extends Controller
             ')
             ->first();
 
-        $mt = (int)($totals->ms ?? 0);
+        // Evening shift — directly from evening_seats data (accurate for dual-shift schools)
         $et = (int)($totals->es ?? 0);
-        $me = (int)($totals->me ?? 0);
         $ee = (int)($totals->ee ?? 0);
-        $ma = (int)($admitted->ma ?? 0);
         $ea = (int)($admitted->ea ?? 0);
-
-        $morningAvail = max(0, $mt - $me - $ma);
         $eveningAvail = max(0, $et - $ee - $ea);
 
-        // Grand available uses total_seats - existing_enrollment - ALL admitted (incl OOSC/P2P)
-        $totalAll     = (int)($totals->ts ?? 0);
-        $existingAll  = (int)($totals->xe ?? 0);
-        $admittedAll  = (int)($admitted->total ?? 0);
-        $totalAvail   = max(0, $totalAll - $existingAll - $admittedAll);
+        // Grand total — uses total_seats (all schools) so the big number is always correct
+        $totalAll    = (int)($totals->ts ?? 0);
+        $existingAll = (int)($totals->xe ?? 0);
+        $admittedAll = (int)($admitted->total ?? 0);
+        $totalAvail  = max(0, $totalAll - $existingAll - $admittedAll);
+
+        // Morning = total minus evening — ensures morning + evening always equals the total
+        $morningAvail = max(0, $totalAvail - $eveningAvail);
+        $mt = $totalAll - $et;   // morning total seats = all seats minus evening seats
+        $me = $existingAll - $ee; // morning existing  = all existing minus evening existing
 
         return (object)[
             'morning_total'     => $mt,
