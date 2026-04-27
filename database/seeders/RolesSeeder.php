@@ -92,6 +92,8 @@ class RolesSeeder extends Seeder
             'reports.oosc',             // OOSC & P2P tracking
             'reports.gender',           // gender analytics
             'reports.dashboard',        // graphical analytics dashboard
+            'reports.master',           // master admission report (FDE + Director)
+            'reports.ai-studio',        // AI analytics studio (FDE only)
 
             // ── Admin ─────────────────────────────────────────────────
             'audit.view',
@@ -99,10 +101,6 @@ class RolesSeeder extends Seeder
             'users.manage',
             'academic_year.manage',
             'portal.settings',
-
-            //-------
-            // In RolesSeeder.php, under FDE permissions:
-            'reports.ai-studio',
 
             // ── Staff Strength Register ───────────────────────────────
             'staff.view',           // view staff registers (all roles)
@@ -152,6 +150,9 @@ class RolesSeeder extends Seeder
             'monitoring.view',
             'monitoring.update_test',
             'monitoring.update_doc',
+
+            // Facilities
+            'institution.facilities.edit',  // edit own school facilities
 
             // Dashboard + own school reports
             'dashboard.view',
@@ -258,15 +259,15 @@ class RolesSeeder extends Seeder
             'reports.oosc',
             'reports.gender',
             'reports.dashboard',
+            'reports.master',           // master admission report
+            'reports.ai-studio',        // AI analytics studio
 
             // Admin
             'audit.view',
-            'audit.export',             // ← export audit trail
+            'audit.export',
             'users.manage',
             'academic_year.manage',
             'portal.settings',
-            // In RolesSeeder.php, under FDE permissions:
-            'reports.ai-studio',
 
             // Staff Strength Register
             'staff.view',
@@ -283,7 +284,7 @@ class RolesSeeder extends Seeder
         // ══════════════════════════════════════════════════════════════
         $directorPermissions = [
             'dashboard.view',
-            'monitoring.view',          // ← real-time monitoring per Key Areas doc
+            'monitoring.view',          // real-time monitoring, system-wide read-only
             'reports.view',
             'reports.export',
             'reports.sector',
@@ -291,6 +292,7 @@ class RolesSeeder extends Seeder
             'reports.oosc',
             'reports.gender',
             'reports.dashboard',
+            'reports.master',           // master admission report
 
             // Staff Strength Register
             'staff.view',
