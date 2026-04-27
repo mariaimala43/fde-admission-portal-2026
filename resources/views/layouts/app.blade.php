@@ -111,6 +111,11 @@
                     <span class="ico">📋</span> Merit Lists
                 </a>
 
+                <a href="{{ route('hoi.staff-strength.index') }}"
+                    class="sb-link {{ request()->routeIs('hoi.staff-strength.*') ? 'active' : '' }}">
+                    <span class="ico">👨‍🏫</span> Staff Strength
+                </a>
+
                 <a href="{{ route('hoi.facilities.index') }}"
                     class="sb-link {{ request()->routeIs('hoi.facilities.*') ? 'active' : '' }}">
                     <span class="ico">🏫</span> Facilities
