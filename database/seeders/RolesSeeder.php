@@ -95,6 +95,9 @@ class RolesSeeder extends Seeder
             'reports.master',           // master admission report (FDE + Director)
             'reports.ai-studio',        // AI analytics studio (FDE only)
 
+            // ── Schools / Institutions ────────────────────────────────
+            'schools.view',             // view all schools list + detail (FDE + Director)
+
             // ── Admin ─────────────────────────────────────────────────
             'audit.view',
             'audit.export',             // FDE exports audit trail as PDF/Excel
@@ -262,6 +265,9 @@ class RolesSeeder extends Seeder
             'reports.master',           // master admission report
             'reports.ai-studio',        // AI analytics studio
 
+            // Schools
+            'schools.view',
+
             // Admin
             'audit.view',
             'audit.export',
@@ -285,6 +291,7 @@ class RolesSeeder extends Seeder
         $directorPermissions = [
             'dashboard.view',
             'monitoring.view',          // real-time monitoring, system-wide read-only
+            'schools.view',             // view all schools list + per-school detail (read-only)
             'reports.view',
             'reports.export',
             'reports.sector',
