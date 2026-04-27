@@ -543,7 +543,7 @@
                     class="text-sm font-medium text-white/90 hover:text-white transition">Home</a>
                 <a href="#schools-section" class="text-sm font-medium text-white/60 hover:text-white transition">Find
                     Schools</a>
-                <a href="{{ route('portal.index', ['vacancy' => 'has_seats']) }}"
+                <a href="{{ route('portal.seats') }}"
                     class="text-sm font-medium transition flex items-center gap-1.5"
                     style="color:var(--green-text);"
                     onmouseover="this.style.color='#fff'"
@@ -659,7 +659,7 @@
                         @foreach ([
                             [$totalInstitutions,     'Total Schools',      'کل اسکول',        null],
                             [$openInstitutions,      'Admissions Open',    'کھلے داخلے',      '#schools-section'],
-                            [$totalSeatsAvailable,   'Seats Available',    'نشستیں دستیاب',   route('portal.index', ['vacancy' => 'has_seats'])],
+                            [$totalSeatsAvailable,   'Seats Available',    'نشستیں دستیاب',   route('portal.seats')],
                             [$totalAdmittedThisYear, 'Admitted This Year', 'اس سال داخلے',    null],
                         ] as $i => [$val, $en, $ur, $link])
                             @if ($i > 0)
@@ -748,7 +748,7 @@
                     </a>
 
                     {{-- Card 5: Available Seats CTA --}}
-                    <a href="{{ route('portal.index', ['vacancy' => 'has_seats']) }}"
+                    <a href="{{ route('portal.seats') }}"
                         class="glass col-span-2 p-5 block transition"
                         style="text-decoration:none;cursor:pointer;border-color:rgba(74,160,110,0.25);"
                         onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--border-g)';this.style.background='rgba(74,160,110,0.08)'"

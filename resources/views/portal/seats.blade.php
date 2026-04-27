@@ -328,7 +328,25 @@
                     <p class="seat-count {{ $urbanTotal === 0 ? 'seat-count-zero' : '' }}">
                         {{ number_format($urbanTotal) }}
                     </p>
-                    <p class="text-xs mt-1 mb-5 font-semibold" style="color:var(--green-text);">total seats available</p>
+                    <p class="text-xs mt-1 mb-4 font-semibold" style="color:var(--green-text);">total seats available</p>
+
+                    {{-- Morning / Evening split --}}
+                    <div class="grid grid-cols-2 gap-2 mb-5">
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+                            <p class="text-xs mb-1" style="color:var(--muted);">🌅 Morning</p>
+                            <p class="text-sm font-bold" style="color:{{ $urbanBreakdown->morning_available > 0 ? 'var(--green-text)' : '#3a4a55' }};">
+                                {{ number_format($urbanBreakdown->morning_available) }} <span class="text-xs font-normal" style="color:var(--muted);">avail</span>
+                            </p>
+                            <p class="text-xs" style="color:var(--muted);">{{ number_format($urbanBreakdown->morning_total) }} total · {{ number_format($urbanBreakdown->morning_existing) }} exist</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+                            <p class="text-xs mb-1" style="color:var(--muted);">🌙 Evening</p>
+                            <p class="text-sm font-bold" style="color:{{ $urbanBreakdown->evening_available > 0 ? 'var(--green-text)' : '#3a4a55' }};">
+                                {{ number_format($urbanBreakdown->evening_available) }} <span class="text-xs font-normal" style="color:var(--muted);">avail</span>
+                            </p>
+                            <p class="text-xs" style="color:var(--muted);">{{ number_format($urbanBreakdown->evening_total) }} total · {{ number_format($urbanBreakdown->evening_existing) }} exist</p>
+                        </div>
+                    </div>
 
                     {{-- Per-sector breakdown --}}
                     <div style="border-top:1px solid var(--border);padding-top:14px;" class="flex flex-col gap-2.5">
@@ -367,7 +385,25 @@
                        style="{{ $ruralTotal > 0 ? 'color:#93c5fd;' : '' }}">
                         {{ number_format($ruralTotal) }}
                     </p>
-                    <p class="text-xs mt-1 mb-5 font-semibold" style="color:#74a8e0;">total seats available</p>
+                    <p class="text-xs mt-1 mb-4 font-semibold" style="color:#74a8e0;">total seats available</p>
+
+                    {{-- Morning / Evening split --}}
+                    <div class="grid grid-cols-2 gap-2 mb-5">
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+                            <p class="text-xs mb-1" style="color:var(--muted);">🌅 Morning</p>
+                            <p class="text-sm font-bold" style="color:{{ $ruralBreakdown->morning_available > 0 ? '#93c5fd' : '#3a4a55' }};">
+                                {{ number_format($ruralBreakdown->morning_available) }} <span class="text-xs font-normal" style="color:var(--muted);">avail</span>
+                            </p>
+                            <p class="text-xs" style="color:var(--muted);">{{ number_format($ruralBreakdown->morning_total) }} total · {{ number_format($ruralBreakdown->morning_existing) }} exist</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+                            <p class="text-xs mb-1" style="color:var(--muted);">🌙 Evening</p>
+                            <p class="text-sm font-bold" style="color:{{ $ruralBreakdown->evening_available > 0 ? '#93c5fd' : '#3a4a55' }};">
+                                {{ number_format($ruralBreakdown->evening_available) }} <span class="text-xs font-normal" style="color:var(--muted);">avail</span>
+                            </p>
+                            <p class="text-xs" style="color:var(--muted);">{{ number_format($ruralBreakdown->evening_total) }} total · {{ number_format($ruralBreakdown->evening_existing) }} exist</p>
+                        </div>
+                    </div>
 
                     {{-- Per-sector breakdown --}}
                     <div style="border-top:1px solid var(--border);padding-top:14px;" class="flex flex-col gap-2.5">
@@ -407,7 +443,25 @@
                        style="{{ $modelTotal > 0 ? 'color:#c4b5fd;' : '' }}">
                         {{ number_format($modelTotal) }}
                     </p>
-                    <p class="text-xs mt-1 mb-5 font-semibold" style="color:#a78bfa;">total seats available</p>
+                    <p class="text-xs mt-1 mb-4 font-semibold" style="color:#a78bfa;">total seats available</p>
+
+                    {{-- Morning / Evening split --}}
+                    <div class="grid grid-cols-2 gap-2">
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+                            <p class="text-xs mb-1" style="color:var(--muted);">🌅 Morning</p>
+                            <p class="text-sm font-bold" style="color:{{ $modelBreakdown->morning_available > 0 ? '#c4b5fd' : '#3a4a55' }};">
+                                {{ number_format($modelBreakdown->morning_available) }} <span class="text-xs font-normal" style="color:var(--muted);">avail</span>
+                            </p>
+                            <p class="text-xs" style="color:var(--muted);">{{ number_format($modelBreakdown->morning_total) }} total · {{ number_format($modelBreakdown->morning_existing) }} exist</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+                            <p class="text-xs mb-1" style="color:var(--muted);">🌙 Evening</p>
+                            <p class="text-sm font-bold" style="color:{{ $modelBreakdown->evening_available > 0 ? '#c4b5fd' : '#3a4a55' }};">
+                                {{ number_format($modelBreakdown->evening_available) }} <span class="text-xs font-normal" style="color:var(--muted);">avail</span>
+                            </p>
+                            <p class="text-xs" style="color:var(--muted);">{{ number_format($modelBreakdown->evening_total) }} total · {{ number_format($modelBreakdown->evening_existing) }} exist</p>
+                        </div>
+                    </div>
                 </a>
 
             </div>
@@ -436,20 +490,26 @@
             </div>
 
             {{-- Column headers --}}
-            <div class="grid gap-4 px-4 py-2 mb-2 text-xs font-semibold uppercase tracking-wider"
-                 style="grid-template-columns:1fr 140px 100px 100px 90px;color:var(--muted);">
+            <div class="hidden md:grid gap-3 px-4 py-2 mb-1 text-xs font-semibold uppercase tracking-wider"
+                 style="grid-template-columns:1fr 130px repeat(3,80px) 6px repeat(3,80px);color:var(--muted);">
                 <div>School Name</div>
-                <div>Sector / Area</div>
-                <div class="text-right">Total Seats</div>
-                <div class="text-right">Filled</div>
-                <div class="text-right">Available</div>
+                <div>Sector</div>
+                <div class="text-right" style="color:#86efac;">🌅 Total</div>
+                <div class="text-right" style="color:#86efac;">Existing</div>
+                <div class="text-right" style="color:#86efac;">Avail</div>
+                <div></div>
+                <div class="text-right" style="color:#93c5fd;">🌙 Total</div>
+                <div class="text-right" style="color:#93c5fd;">Existing</div>
+                <div class="text-right" style="color:#93c5fd;">Avail</div>
             </div>
 
             {{-- School rows --}}
             <div class="flex flex-col gap-2">
                 @foreach ($schools as $school)
-                    <div class="school-row px-4 py-4 grid gap-4 items-center"
-                         style="grid-template-columns:1fr 140px 100px 100px 90px;">
+
+                    {{-- Desktop row --}}
+                    <div class="school-row px-4 py-3 hidden md:grid gap-3 items-center"
+                         style="grid-template-columns:1fr 130px repeat(3,80px) 6px repeat(3,80px);">
 
                         {{-- Name --}}
                         <div class="min-w-0">
@@ -459,36 +519,63 @@
                             </a>
                             @if ($school->address)
                                 <p class="text-xs mt-0.5 truncate" style="color:var(--muted);">
-                                    {{ Str::limit($school->address, 45) }}
+                                    {{ Str::limit($school->address, 50) }}
                                 </p>
                             @endif
                         </div>
 
                         {{-- Sector --}}
-                        <div>
-                            <span class="bdg bdg-tag">{{ $school->sector?->name }}</span>
-                        </div>
+                        <div><span class="bdg bdg-tag">{{ $school->sector?->name }}</span></div>
 
-                        {{-- Total seats --}}
+                        {{-- 🌅 Morning --}}
+                        <div class="text-right"><span class="text-sm text-white">{{ number_format($school->morning_total) }}</span></div>
+                        <div class="text-right"><span class="text-sm" style="color:var(--muted);">{{ number_format($school->morning_existing) }}</span></div>
                         <div class="text-right">
-                            <span class="text-sm font-medium text-white">
-                                {{ number_format($school->computed_total_seats) }}
+                            <span class="font-bold text-sm" style="color:{{ $school->morning_available > 0 ? '#86efac' : '#3a4a55' }};">
+                                {{ number_format($school->morning_available) }}
                             </span>
                         </div>
 
-                        {{-- Filled --}}
+                        {{-- Divider --}}
+                        <div style="width:1px;height:32px;background:var(--border);margin:auto;"></div>
+
+                        {{-- 🌙 Evening --}}
+                        <div class="text-right"><span class="text-sm text-white">{{ number_format($school->evening_total) }}</span></div>
+                        <div class="text-right"><span class="text-sm" style="color:var(--muted);">{{ number_format($school->evening_existing) }}</span></div>
                         <div class="text-right">
-                            <span class="text-sm" style="color:var(--muted);">
-                                {{ number_format($school->computed_filled_seats) }}
+                            <span class="font-bold text-sm" style="color:{{ $school->evening_available > 0 ? '#93c5fd' : '#3a4a55' }};">
+                                {{ number_format($school->evening_available) }}
                             </span>
                         </div>
-
-                        {{-- Available --}}
-                        <div class="text-right">
-                            <span class="avail-num">{{ number_format($school->computed_available_seats) }}</span>
-                        </div>
-
                     </div>
+
+                    {{-- Mobile card --}}
+                    <div class="school-row px-4 py-4 md:hidden">
+                        <a href="{{ route('portal.show', $school) }}"
+                           class="font-semibold text-sm text-white leading-snug transition hover:text-green-300 block mb-1">
+                            {{ $school->name }}
+                        </a>
+                        <span class="bdg bdg-tag mb-3 inline-block">{{ $school->sector?->name }}</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div style="background:rgba(134,239,172,0.06);border:1px solid rgba(134,239,172,0.15);border-radius:8px;padding:8px 10px;">
+                                <p class="text-xs font-semibold mb-1" style="color:#86efac;">🌅 Morning</p>
+                                <p class="text-xs" style="color:var(--muted);">Total: <span class="text-white font-medium">{{ number_format($school->morning_total) }}</span></p>
+                                <p class="text-xs" style="color:var(--muted);">Existing: <span class="text-white font-medium">{{ number_format($school->morning_existing) }}</span></p>
+                                <p class="text-xs font-bold mt-1" style="color:{{ $school->morning_available > 0 ? '#86efac' : '#3a4a55' }};">
+                                    Available: {{ number_format($school->morning_available) }}
+                                </p>
+                            </div>
+                            <div style="background:rgba(147,197,253,0.06);border:1px solid rgba(147,197,253,0.15);border-radius:8px;padding:8px 10px;">
+                                <p class="text-xs font-semibold mb-1" style="color:#93c5fd;">🌙 Evening</p>
+                                <p class="text-xs" style="color:var(--muted);">Total: <span class="text-white font-medium">{{ number_format($school->evening_total) }}</span></p>
+                                <p class="text-xs" style="color:var(--muted);">Existing: <span class="text-white font-medium">{{ number_format($school->evening_existing) }}</span></p>
+                                <p class="text-xs font-bold mt-1" style="color:{{ $school->evening_available > 0 ? '#93c5fd' : '#3a4a55' }};">
+                                    Available: {{ number_format($school->evening_available) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                 @endforeach
             </div>
 

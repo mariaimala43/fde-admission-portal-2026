@@ -206,10 +206,13 @@ class PortalController extends Controller
         $ruralCodes = ['B-K', 'TARNOL', 'SIHALA', 'NILORE'];
         $modelCodes = ['MODEL'];
 
-        // Card totals — single aggregated query per group (matches Director dashboard formula)
-        $urbanTotal = $this->groupAvailableSeats($urbanCodes, $academicYear?->id);
-        $ruralTotal = $this->groupAvailableSeats($ruralCodes, $academicYear?->id);
-        $modelTotal = $this->groupAvailableSeats($modelCodes, $academicYear?->id);
+        // Card totals — with morning/evening breakdown
+        $urbanBreakdown = $this->groupSeatBreakdown($urbanCodes, $academicYear?->id);
+        $ruralBreakdown = $this->groupSeatBreakdown($ruralCodes, $academicYear?->id);
+        $modelBreakdown = $this->groupSeatBreakdown($modelCodes, $academicYear?->id);
+        $urbanTotal = $urbanBreakdown->total_available;
+        $ruralTotal = $ruralBreakdown->total_available;
+        $modelTotal = $modelBreakdown->total_available;
 
         // Per-sector breakdown for display inside each card
         $sectorSeats    = $this->availableSeatsBySector($academicYear?->id);
@@ -237,31 +240,57 @@ class PortalController extends Controller
 
             $seatTotals = InstitutionClass::whereIn('institution_id', $institutionIds)
                 ->where('is_active', true)
-                ->selectRaw('institution_id, SUM(total_seats) as total_seats, SUM(existing_enrollment) as existing_enrollment')
+                ->selectRaw('
+                    institution_id,
+                    SUM(morning_seats)    as morning_seats,
+                    SUM(evening_seats)    as evening_seats,
+                    SUM(morning_existing) as morning_existing,
+                    SUM(evening_existing) as evening_existing,
+                    SUM(total_seats)         as total_seats,
+                    SUM(existing_enrollment) as existing_enrollment
+                ')
                 ->groupBy('institution_id')
                 ->get()
                 ->keyBy('institution_id');
 
             $admissionTotals = DailyAdmission::where('academic_year_id', $academicYear?->id)
                 ->whereIn('institution_id', $institutionIds)
-                ->selectRaw('institution_id, SUM(morning_boys + morning_girls + evening_boys + evening_girls) as filled')
+                ->selectRaw('
+                    institution_id,
+                    SUM(morning_boys + morning_girls) as morning_filled,
+                    SUM(evening_boys + evening_girls) as evening_filled
+                ')
                 ->groupBy('institution_id')
                 ->get()
                 ->keyBy('institution_id');
 
             $schools = $rawInstitutions->map(function ($inst) use ($seatTotals, $admissionTotals) {
-                $seats      = $seatTotals[$inst->id]     ?? null;
-                $admissions = $admissionTotals[$inst->id] ?? null;
+                $seats = $seatTotals[$inst->id]      ?? null;
+                $adm   = $admissionTotals[$inst->id] ?? null;
 
-                $totalSeats         = (int) ($seats?->total_seats ?? 0);
-                $existingEnrollment = (int) ($seats?->existing_enrollment ?? 0);
-                $filledByAdmissions = (int) ($admissions?->filled ?? 0);
-                $filledSeats        = $existingEnrollment + $filledByAdmissions;
-                $availableSeats     = max(0, $totalSeats - $filledSeats);
+                // Morning shift
+                $morningTotal    = (int)($seats?->morning_seats    ?? 0);
+                $morningExisting = (int)($seats?->morning_existing ?? 0);
+                $morningAdmitted = (int)($adm?->morning_filled     ?? 0);
+                $morningFilled   = $morningExisting + $morningAdmitted;
+                $morningAvail    = max(0, $morningTotal - $morningFilled);
 
-                $inst->computed_total_seats     = $totalSeats;
-                $inst->computed_filled_seats    = $filledSeats;
-                $inst->computed_available_seats = $availableSeats;
+                // Evening shift
+                $eveningTotal    = (int)($seats?->evening_seats    ?? 0);
+                $eveningExisting = (int)($seats?->evening_existing ?? 0);
+                $eveningAdmitted = (int)($adm?->evening_filled     ?? 0);
+                $eveningFilled   = $eveningExisting + $eveningAdmitted;
+                $eveningAvail    = max(0, $eveningTotal - $eveningFilled);
+
+                $inst->morning_total     = $morningTotal;
+                $inst->morning_existing  = $morningExisting;
+                $inst->morning_filled    = $morningFilled;
+                $inst->morning_available = $morningAvail;
+                $inst->evening_total     = $eveningTotal;
+                $inst->evening_existing  = $eveningExisting;
+                $inst->evening_filled    = $eveningFilled;
+                $inst->evening_available = $eveningAvail;
+                $inst->computed_available_seats = $morningAvail + $eveningAvail;
 
                 return $inst;
             })->filter(fn($inst) => $inst->computed_available_seats > 0)->values();
@@ -270,6 +299,7 @@ class PortalController extends Controller
         return view('portal.seats', compact(
             'settings', 'academicYear',
             'urbanTotal', 'ruralTotal', 'modelTotal',
+            'urbanBreakdown', 'ruralBreakdown', 'modelBreakdown',
             'urbanSectors', 'ruralSectors',
             'area', 'schools'
         ));
@@ -277,27 +307,77 @@ class PortalController extends Controller
 
     private function groupAvailableSeats(array $codes, ?int $academicYearId): int
     {
+        return $this->groupSeatBreakdown($codes, $academicYearId)->total_available;
+    }
+
+    /**
+     * Returns morning + evening seat breakdown for a group of sector codes.
+     */
+    private function groupSeatBreakdown(array $codes, ?int $academicYearId): object
+    {
+        $zero = (object)[
+            'morning_total'     => 0, 'evening_total'     => 0,
+            'morning_existing'  => 0, 'evening_existing'  => 0,
+            'morning_available' => 0, 'evening_available' => 0,
+            'total_available'   => 0,
+        ];
+
         $sectorIds      = Sector::whereIn('code', $codes)->pluck('id');
         $institutionIds = Institution::where('is_active', true)
             ->whereIn('sector_id', $sectorIds)
             ->pluck('id');
 
         if ($institutionIds->isEmpty()) {
-            return 0;
+            return $zero;
         }
 
         $totals = InstitutionClass::whereIn('institution_id', $institutionIds)
             ->where('is_active', true)
-            ->selectRaw('SUM(total_seats) as ts, SUM(existing_enrollment) as ee')
+            ->selectRaw('
+                SUM(morning_seats)   as ms,
+                SUM(evening_seats)   as es,
+                SUM(morning_existing) as me,
+                SUM(evening_existing) as ee,
+                SUM(total_seats)      as ts,
+                SUM(existing_enrollment) as xe
+            ')
             ->first();
 
-        // Match Director dashboard: subtract ALL admitted (regular + OOSC + P2P)
+        // Morning/evening admitted (shift-specific only — OOSC/P2P not shift-attributed)
         $admitted = DailyAdmission::whereIn('institution_id', $institutionIds)
             ->when($academicYearId, fn($q) => $q->where('academic_year_id', $academicYearId))
-            ->selectRaw('SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total')
-            ->value('total') ?? 0;
+            ->selectRaw('
+                SUM(morning_boys + morning_girls) as ma,
+                SUM(evening_boys + evening_girls) as ea,
+                SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total
+            ')
+            ->first();
 
-        return max(0, (int) ($totals?->ts ?? 0) - (int) ($totals?->ee ?? 0) - (int) $admitted);
+        $mt = (int)($totals->ms ?? 0);
+        $et = (int)($totals->es ?? 0);
+        $me = (int)($totals->me ?? 0);
+        $ee = (int)($totals->ee ?? 0);
+        $ma = (int)($admitted->ma ?? 0);
+        $ea = (int)($admitted->ea ?? 0);
+
+        $morningAvail = max(0, $mt - $me - $ma);
+        $eveningAvail = max(0, $et - $ee - $ea);
+
+        // Grand available uses total_seats - existing_enrollment - ALL admitted (incl OOSC/P2P)
+        $totalAll     = (int)($totals->ts ?? 0);
+        $existingAll  = (int)($totals->xe ?? 0);
+        $admittedAll  = (int)($admitted->total ?? 0);
+        $totalAvail   = max(0, $totalAll - $existingAll - $admittedAll);
+
+        return (object)[
+            'morning_total'     => $mt,
+            'evening_total'     => $et,
+            'morning_existing'  => $me,
+            'evening_existing'  => $ee,
+            'morning_available' => $morningAvail,
+            'evening_available' => $eveningAvail,
+            'total_available'   => $totalAvail,
+        ];
     }
 
     private function availableSeatsBySector(?int $academicYearId): \Illuminate\Support\Collection
