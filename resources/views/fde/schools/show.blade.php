@@ -13,19 +13,24 @@
             </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-            <a href="{{ route('fde.schools.index') }}" class="text-sm text-blue-600 hover:underline">All Schools</a>
-            <a href="{{ route('fde.enrollment.show', $institution) }}"
-                class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600">
-                🔓 Enrollment Override
-            </a>
-            <button type="button" onclick="document.getElementById('resetModal').classList.remove('hidden')"
-                class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition">
-                🗑️ Reset Admission Data
-            </button>
+            @role('director')
+                <a href="{{ route('director.schools.index') }}" class="text-sm text-blue-600 hover:underline">← All Schools</a>
+            @else
+                <a href="{{ route('fde.schools.index') }}" class="text-sm text-blue-600 hover:underline">← All Schools</a>
+                <a href="{{ route('fde.enrollment.show', $institution) }}"
+                    class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600">
+                    🔓 Enrollment Override
+                </a>
+                <button type="button" onclick="document.getElementById('resetModal').classList.remove('hidden')"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition">
+                    🗑️ Reset Admission Data
+                </button>
+            @endrole
         </div>
     </div>
 
-    {{-- ── Reset Confirmation Modal ──────────────────────────────────── --}}
+    {{-- ── Reset Confirmation Modal (FDE only) ────────────────────────── --}}
+    @role('fde_cell')
     <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <div class="flex items-start gap-3 mb-4">
@@ -77,6 +82,7 @@
             </form>
         </div>
     </div>
+    @endrole
 
     {{-- Flash Messages --}}
     @if (session('success'))
@@ -608,10 +614,12 @@
 @endsection
 
 @push('scripts')
-    @if ($errors->has('confirmation'))
-        {{-- Re-open the modal automatically if validation failed --}}
-        <script>
-            document.getElementById('resetModal').classList.remove('hidden');
-        </script>
-    @endif
+    @role('fde_cell')
+        @if ($errors->has('confirmation'))
+            {{-- Re-open the modal automatically if validation failed --}}
+            <script>
+                document.getElementById('resetModal').classList.remove('hidden');
+            </script>
+        @endif
+    @endrole
 @endpush

@@ -426,6 +426,11 @@
                     <span class="ico">🏠</span> System Dashboard
                 </a>
 
+                <a href="{{ route('director.schools.index') }}"
+                    class="sb-link {{ request()->routeIs('director.schools.*') ? 'active' : '' }}">
+                    <span class="ico">🏫</span> All Schools
+                </a>
+
                 {{-- Monitoring — read-only, all schools (monitoring.view) --}}
                 <a href="{{ route('director.monitoring.index') }}"
                     class="sb-link {{ request()->routeIs('director.monitoring.*') ? 'active' : '' }}">

@@ -430,6 +430,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('export/oosc',    [ExportController::class, 'ooscReport']   )->name('export.oosc');
         Route::get('export/master',  [ExportController::class, 'masterReport'] )->name('export.master');
 
+        // All Schools — read-only view (reuses FDE controller, no write actions exposed in blade)
+        Route::get('schools',               [SchoolsReportController::class, 'index'])->name('schools.index');
+        Route::get('schools/{institution}', [SchoolsReportController::class, 'show'] )->name('schools.show');
+
         // Monitoring — read-only, all schools
         Route::prefix('monitoring')->name('monitoring.')->group(function () {
             Route::get('/',             [DirectorMonitoringController::class, 'index'])->name('index');
