@@ -2,6 +2,7 @@
 // SAVE AS: routes/web.php — FULL REPLACEMENT
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -65,6 +66,12 @@ use App\Http\Controllers\Director\StaffStrengthController as DirectorStaffStreng
 // ══════════════════════════════════════════════════════════════════════════
 
 Route::get('/', fn() => redirect()->route('login'));
+
+// ── Temporary cache-clear route (remove after use) ──────────────────────────
+Route::get('/clear-cache', function () {
+    Artisan::call('optimize:clear');
+    return '<pre>' . Artisan::output() . '</pre><p>✅ Cache cleared. <a href="/">Go to site</a></p>';
+})->middleware('web');
 
 Route::get( '/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']    )->name('login.post')->middleware('throttle:5,1');
