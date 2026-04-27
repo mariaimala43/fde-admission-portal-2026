@@ -2,6 +2,12 @@
 @section('title', 'All Schools Report')
 @section('content')
 
+@php
+    $isDirector   = auth()->user()->hasRole('director');
+    $indexRoute   = $isDirector ? route('director.schools.index') : route('fde.schools.index');
+    $showRouteFn  = fn($inst) => $isDirector ? route('director.schools.show', $inst) : route('fde.schools.show', $inst);
+@endphp
+
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">All Schools</h2>
@@ -18,7 +24,7 @@
     </div>
 
     {{-- Filters --}}
-    <form method="GET" action="{{ route('fde.schools.index') }}"
+    <form method="GET" action="{{ $indexRoute }}"
         class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
 
         {{-- Search by name --}}
@@ -96,7 +102,7 @@
                            font-medium hover:bg-blue-800 transition">
                     Filter
                 </button>
-                <a href="{{ route('fde.schools.index') }}"
+                <a href="{{ $indexRoute }}"
                     class="px-4 py-2 rounded-lg text-sm border border-gray-300
                       text-gray-600 hover:bg-gray-50 transition">
                     Reset
@@ -169,7 +175,7 @@
                             <td class="px-3 py-3 max-w-[128px] sm:max-w-none">
                                 <div class="truncate font-medium text-gray-900 max-w-[120px] sm:max-w-none"
                                     title="{{ $inst->name }}">
-                                    <a href="{{ route('fde.schools.show', $inst) }}"
+                                    <a href="{{ $showRouteFn($inst) }}"
                                        class="hover:text-blue-600 hover:underline">{{ $inst->name }}</a>
                                 </div>
                                 @if ($inst->is_cambridge)
@@ -242,12 +248,7 @@
                                 </span>
                             </td>
                             <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
-                                @role('director')
-                                    @php $showRoute = route('director.schools.show', $inst); @endphp
-                                @else
-                                    @php $showRoute = route('fde.schools.show', $inst); @endphp
-                                @endrole
-                                <a href="{{ $showRoute }}" title="View"
+                                <a href="{{ $showRouteFn($inst) }}" title="View"
                                     class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-3 text-xs sm:text-sm rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
                                     <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
