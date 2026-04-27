@@ -2,6 +2,12 @@
 @section('title', $institution->name . ' - Report')
 @section('content')
 
+@php
+    $isDirector  = auth()->user()->hasRole('director');
+    $indexRoute  = $isDirector ? route('director.schools.index') : route('fde.schools.index');
+    $showRoute   = $isDirector ? route('director.schools.show', $institution) : route('fde.schools.show', $institution);
+@endphp
+
     <div class="flex flex-wrap justify-between items-start gap-3 mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">{{ $institution->name }}</h2>
@@ -14,9 +20,9 @@
         </div>
         <div class="flex items-center gap-2 flex-wrap">
             @role('director')
-                <a href="{{ route('director.schools.index') }}" class="text-sm text-blue-600 hover:underline">← All Schools</a>
+                <a href="{{ $indexRoute }}" class="text-sm text-blue-600 hover:underline">← All Schools</a>
             @else
-                <a href="{{ route('fde.schools.index') }}" class="text-sm text-blue-600 hover:underline">← All Schools</a>
+                <a href="{{ $indexRoute }}" class="text-sm text-blue-600 hover:underline">← All Schools</a>
                 <a href="{{ route('fde.enrollment.show', $institution) }}"
                     class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600">
                     🔓 Enrollment Override
@@ -97,7 +103,7 @@
     @endif
 
     {{-- Date Range Filter --}}
-    <form method="GET" action="{{ route('fde.schools.show', $institution) }}"
+    <form method="GET" action="{{ $showRoute }}"
         class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
         <div class="flex flex-wrap items-end gap-4">
             <div>
