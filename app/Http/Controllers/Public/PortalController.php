@@ -425,9 +425,24 @@ class PortalController extends Controller
             ->orderBy('class_id')
             ->get();
 
+        // Does any class row have evening seats configured?
+        $hasEveningShift = $seatData->sum('evening_seats') > 0;
+
+        // Combined totals (all admitted including OOSC/P2P)
         $admissionTotal = DailyAdmission::where('institution_id', $institution->id)
             ->where('academic_year_id', $academicYear?->id)
-            ->selectRaw('class_id, SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total_admitted')
+            ->selectRaw('class_id,
+                SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total_admitted')
+            ->groupBy('class_id')
+            ->get()
+            ->keyBy('class_id');
+
+        // Per-shift admitted (morning/evening only — no OOSC/P2P shift attribution)
+        $admissionByShift = DailyAdmission::where('institution_id', $institution->id)
+            ->where('academic_year_id', $academicYear?->id)
+            ->selectRaw('class_id,
+                SUM(morning_boys + morning_girls) as morning_admitted,
+                SUM(evening_boys + evening_girls) as evening_admitted')
             ->groupBy('class_id')
             ->get()
             ->keyBy('class_id');
@@ -436,6 +451,8 @@ class PortalController extends Controller
             'institution',
             'seatData',
             'admissionTotal',
+            'admissionByShift',
+            'hasEveningShift',
             'academicYear',
             'settings',
             'meritLists'

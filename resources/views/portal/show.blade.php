@@ -464,11 +464,22 @@
 
     {{-- ── Hero ── --}}
     @php
+        // Combined totals
         $totalSeats = $seatData->sum('total_seats');
         $totalExist = $seatData->sum('existing_enrollment');
         $totalAdmit = $admissionTotal->sum('total_admitted');
         $totalAvail = max(0, $totalSeats - $totalExist - $totalAdmit);
-        $fillPct = $totalSeats > 0 ? min(100, round((($totalExist + $totalAdmit) / $totalSeats) * 100)) : 0;
+        $fillPct    = $totalSeats > 0 ? min(100, round((($totalExist + $totalAdmit) / $totalSeats) * 100)) : 0;
+
+        // Morning / Evening totals (only used when $hasEveningShift)
+        $mornSeats = $seatData->sum('morning_seats');
+        $evenSeats = $seatData->sum('evening_seats');
+        $mornExist = $seatData->sum('morning_existing');
+        $evenExist = $seatData->sum('evening_existing');
+        $mornAdmit = $admissionByShift->sum('morning_admitted');
+        $evenAdmit = $admissionByShift->sum('evening_admitted');
+        $mornAvail = max(0, $mornSeats - $mornExist - $mornAdmit);
+        $evenAvail = max(0, $evenSeats - $evenExist - $evenAdmit);
     @endphp
 
     <section class="hero">
@@ -531,9 +542,24 @@
                         style="font-size:3.6rem;color:{{ $totalAvail > 0 ? 'var(--green-text)' : '#fca5a5' }};">
                         {{ number_format($totalAvail) }}
                     </p>
-                    <p class="text-xs mb-4" style="color:var(--muted);">of {{ number_format($totalSeats) }} total
-                        seats
-                    </p>
+                    <p class="text-xs mb-4" style="color:var(--muted);">of {{ number_format($totalSeats) }} total seats</p>
+
+                    @if ($hasEveningShift)
+                        {{-- Morning / Evening split --}}
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <div style="background:rgba(134,239,172,0.07);border:1px solid rgba(134,239,172,0.18);border-radius:8px;padding:7px 8px;">
+                                <p class="text-xs mb-0.5" style="color:var(--muted);">🌅 Morning</p>
+                                <p class="text-base font-bold" style="color:{{ $mornAvail > 0 ? '#86efac' : '#fca5a5' }};">{{ number_format($mornAvail) }}</p>
+                                <p class="text-xs" style="color:var(--muted);">/ {{ number_format($mornSeats) }}</p>
+                            </div>
+                            <div style="background:rgba(147,197,253,0.07);border:1px solid rgba(147,197,253,0.18);border-radius:8px;padding:7px 8px;">
+                                <p class="text-xs mb-0.5" style="color:var(--muted);">🌙 Evening</p>
+                                <p class="text-base font-bold" style="color:{{ $evenAvail > 0 ? '#93c5fd' : '#fca5a5' }};">{{ number_format($evenAvail) }}</p>
+                                <p class="text-xs" style="color:var(--muted);">/ {{ number_format($evenSeats) }}</p>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Progress --}}
                     <div class="prog">
                         <div class="prog-fill"
@@ -697,18 +723,45 @@
             </div>
 
             {{-- Quick stats --}}
-            <div class="glass p-6 flex flex-col gap-5">
+            <div class="glass p-6 flex flex-col gap-4">
                 <div class="flex items-center gap-2 mb-1">
                     <div class="icon-box" style="width:36px;height:36px;border-radius:10px;font-size:16px;">📊</div>
                     <p class="text-sm font-semibold text-white">Quick Stats</p>
                 </div>
-                @foreach ([['Total Capacity', number_format($totalSeats), 'var(--text)'], ['Existing Students', number_format($totalExist), '#fb923c'], ['Newly Admitted', number_format($totalAdmit), '#60a5fa'], ['Seats Available', number_format($totalAvail), $totalAvail > 0 ? 'var(--green-text)' : '#fca5a5']] as [$label, $val, $color])
-                    <div class="flex justify-between items-center py-2.5"
-                        style="border-bottom:1px solid var(--border);">
-                        <p class="text-xs" style="color:var(--muted);">{{ $label }}</p>
-                        <p class="text-sm font-bold" style="color:{{ $color }};">{{ $val }}</p>
+
+                @if ($hasEveningShift)
+                    {{-- Morning block --}}
+                    <div style="background:rgba(134,239,172,0.05);border:1px solid rgba(134,239,172,0.15);border-radius:10px;padding:10px 12px;">
+                        <p class="text-xs font-semibold mb-2" style="color:#86efac;">🌅 Morning Shift</p>
+                        @foreach ([['Capacity', number_format($mornSeats), 'var(--text)'], ['Existing', number_format($mornExist), '#fb923c'], ['Admitted', number_format($mornAdmit), '#60a5fa'], ['Available', number_format($mornAvail), $mornAvail > 0 ? '#86efac' : '#fca5a5']] as [$lbl, $v, $c])
+                            <div class="flex justify-between items-center py-1.5" style="border-bottom:1px solid var(--border);">
+                                <p class="text-xs" style="color:var(--muted);">{{ $lbl }}</p>
+                                <p class="text-sm font-bold" style="color:{{ $c }};">{{ $v }}</p>
+                            </div>
+                        @endforeach
                     </div>
-                @endforeach
+
+                    {{-- Evening block --}}
+                    <div style="background:rgba(147,197,253,0.05);border:1px solid rgba(147,197,253,0.15);border-radius:10px;padding:10px 12px;">
+                        <p class="text-xs font-semibold mb-2" style="color:#93c5fd;">🌙 Evening Shift</p>
+                        @foreach ([['Capacity', number_format($evenSeats), 'var(--text)'], ['Existing', number_format($evenExist), '#fb923c'], ['Admitted', number_format($evenAdmit), '#60a5fa'], ['Available', number_format($evenAvail), $evenAvail > 0 ? '#93c5fd' : '#fca5a5']] as [$lbl, $v, $c])
+                            <div class="flex justify-between items-center py-1.5" style="border-bottom:1px solid var(--border);">
+                                <p class="text-xs" style="color:var(--muted);">{{ $lbl }}</p>
+                                <p class="text-sm font-bold" style="color:{{ $c }};">{{ $v }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                @else
+                    {{-- Morning-only: original combined layout --}}
+                    @foreach ([['Total Capacity', number_format($totalSeats), 'var(--text)'], ['Existing Students', number_format($totalExist), '#fb923c'], ['Newly Admitted', number_format($totalAdmit), '#60a5fa'], ['Seats Available', number_format($totalAvail), $totalAvail > 0 ? 'var(--green-text)' : '#fca5a5']] as [$label, $val, $color])
+                        <div class="flex justify-between items-center py-2.5" style="border-bottom:1px solid var(--border);">
+                            <p class="text-xs" style="color:var(--muted);">{{ $label }}</p>
+                            <p class="text-sm font-bold" style="color:{{ $color }};">{{ $val }}</p>
+                        </div>
+                    @endforeach
+                @endif
+
                 <div class="pt-1">
                     <div class="flex justify-between text-xs mb-1.5" style="color:var(--muted);">
                         <span>Capacity used</span>
@@ -768,6 +821,7 @@
                     <thead>
                         <tr>
                             <th>Class</th>
+                            @if ($hasEveningShift)<th>Shift</th>@endif
                             <th>Existing</th>
                             <th>Capacity</th>
                             <th style="color:var(--green-text);">Available</th>
@@ -778,52 +832,115 @@
                     <tbody>
                         @foreach ($seatData as $ic)
                             @php
-                                $admitted = $admissionTotal[$ic->class_id]?->total_admitted ?? 0;
-                                $available = max(0, $ic->total_seats - $ic->existing_enrollment - $admitted);
-                                $totalEnrl = $ic->existing_enrollment + $admitted;
-                                $rFill =
-                                    $ic->total_seats > 0
-                                        ? min(
-                                            100,
-                                            round((($ic->existing_enrollment + $admitted) / $ic->total_seats) * 100),
-                                        )
-                                        : 0;
+                                $shiftRow   = $admissionByShift[$ic->class_id]  ?? null;
+                                $mAdm = (int)($shiftRow?->morning_admitted ?? 0);
+                                $eAdm = (int)($shiftRow?->evening_admitted ?? 0);
+
+                                // Morning
+                                $mSeats = (int)($ic->morning_seats    ?? 0);
+                                $mExist = (int)($ic->morning_existing ?? 0);
+                                $mAvail = max(0, $mSeats - $mExist - $mAdm);
+                                $mTotal = $mExist + $mAdm;
+                                $mFill  = $mSeats > 0 ? min(100, round(($mTotal / $mSeats) * 100)) : 0;
+
+                                // Evening
+                                $eSeats = (int)($ic->evening_seats    ?? 0);
+                                $eExist = (int)($ic->evening_existing ?? 0);
+                                $eAvail = max(0, $eSeats - $eExist - $eAdm);
+                                $eTotal = $eExist + $eAdm;
+                                $eFill  = $eSeats > 0 ? min(100, round(($eTotal / $eSeats) * 100)) : 0;
+
+                                // Combined (for morning-only schools)
+                                $totalAdmitted = $admissionTotal[$ic->class_id]?->total_admitted ?? 0;
+                                $available     = max(0, $ic->total_seats - $ic->existing_enrollment - $totalAdmitted);
+                                $totalEnrl     = $ic->existing_enrollment + $totalAdmitted;
+                                $rFill         = $ic->total_seats > 0
+                                    ? min(100, round(($totalEnrl / $ic->total_seats) * 100))
+                                    : 0;
                             @endphp
-                            <tr>
-                                <td>
-                                    {{ $ic->classModel?->name }}
-                                    @if ($ic->classModel?->is_ece)
-                                        <span class="bdg bdg-pink ml-1" style="font-size:10px;">ECE</span>
-                                    @endif
-                                </td>
-                                <td class="font-semibold" style="color:#fb923c;">
-                                    {{ number_format($ic->existing_enrollment) }}</td>
-                                <td style="color:var(--muted);">{{ number_format($ic->total_seats) }}</td>
-                                <td>
-                                    <span class="bdg {{ $available > 0 ? 'bdg-open' : 'bdg-full' }}">
-                                        {{ $available > 0 ? number_format($available) : 'Full' }}
-                                    </span>
-                                </td>
-                                <td class="font-semibold" style="color:#60a5fa;">{{ number_format($admitted) }}</td>
-                                <td>
-                                    <p class="font-bold text-white">{{ number_format($totalEnrl) }}</p>
-                                    <div class="prog w-14 mx-auto">
-                                        <div class="prog-fill"
-                                            style="width:{{ $rFill }}%;background:{{ $rFill < 80 ? 'var(--green)' : ($rFill < 95 ? '#f97316' : '#ef4444') }};">
+
+                            @if ($hasEveningShift)
+                                {{-- Morning row --}}
+                                <tr style="border-bottom:none;">
+                                    <td rowspan="2" style="vertical-align:middle;border-right:1px solid rgba(255,255,255,0.05);">
+                                        {{ $ic->classModel?->name }}
+                                        @if ($ic->classModel?->is_ece)
+                                            <span class="bdg bdg-pink ml-1" style="font-size:10px;">ECE</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="text-xs font-semibold" style="color:#86efac;">🌅 Morning</span>
+                                    </td>
+                                    <td class="font-semibold" style="color:#fb923c;">{{ number_format($mExist) }}</td>
+                                    <td style="color:var(--muted);">{{ number_format($mSeats) }}</td>
+                                    <td>
+                                        <span class="bdg {{ $mAvail > 0 ? 'bdg-open' : 'bdg-full' }}" style="{{ $mAvail > 0 ? '' : '' }}">
+                                            {{ $mAvail > 0 ? number_format($mAvail) : 'Full' }}
+                                        </span>
+                                    </td>
+                                    <td class="font-semibold" style="color:#60a5fa;">{{ number_format($mAdm) }}</td>
+                                    <td>
+                                        <p class="font-bold text-white">{{ number_format($mTotal) }}</p>
+                                        <div class="prog w-14 mx-auto">
+                                            <div class="prog-fill" style="width:{{ $mFill }}%;background:{{ $mFill < 80 ? 'var(--green)' : ($mFill < 95 ? '#f97316' : '#ef4444') }};"></div>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
+                                    </td>
+                                </tr>
+                                {{-- Evening row --}}
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                                    <td>
+                                        <span class="text-xs font-semibold" style="color:#93c5fd;">🌙 Evening</span>
+                                    </td>
+                                    <td class="font-semibold" style="color:#fb923c;">{{ number_format($eExist) }}</td>
+                                    <td style="color:var(--muted);">{{ number_format($eSeats) }}</td>
+                                    <td>
+                                        <span class="bdg {{ $eAvail > 0 ? '' : 'bdg-full' }}" style="{{ $eAvail > 0 ? 'background:rgba(147,197,253,0.14);color:#93c5fd;border:1px solid rgba(147,197,253,0.28);' : '' }}">
+                                            {{ $eAvail > 0 ? number_format($eAvail) : 'Full' }}
+                                        </span>
+                                    </td>
+                                    <td class="font-semibold" style="color:#60a5fa;">{{ number_format($eAdm) }}</td>
+                                    <td>
+                                        <p class="font-bold text-white">{{ number_format($eTotal) }}</p>
+                                        <div class="prog w-14 mx-auto">
+                                            <div class="prog-fill" style="width:{{ $eFill }}%;background:{{ $eFill < 80 ? '#3b82f6' : ($eFill < 95 ? '#f97316' : '#ef4444') }};"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            @else
+                                {{-- Morning-only: single combined row --}}
+                                <tr>
+                                    <td>
+                                        {{ $ic->classModel?->name }}
+                                        @if ($ic->classModel?->is_ece)
+                                            <span class="bdg bdg-pink ml-1" style="font-size:10px;">ECE</span>
+                                        @endif
+                                    </td>
+                                    <td class="font-semibold" style="color:#fb923c;">{{ number_format($ic->existing_enrollment) }}</td>
+                                    <td style="color:var(--muted);">{{ number_format($ic->total_seats) }}</td>
+                                    <td>
+                                        <span class="bdg {{ $available > 0 ? 'bdg-open' : 'bdg-full' }}">
+                                            {{ $available > 0 ? number_format($available) : 'Full' }}
+                                        </span>
+                                    </td>
+                                    <td class="font-semibold" style="color:#60a5fa;">{{ number_format($totalAdmitted) }}</td>
+                                    <td>
+                                        <p class="font-bold text-white">{{ number_format($totalEnrl) }}</p>
+                                        <div class="prog w-14 mx-auto">
+                                            <div class="prog-fill" style="width:{{ $rFill }}%;background:{{ $rFill < 80 ? 'var(--green)' : ($rFill < 95 ? '#f97316' : '#ef4444') }};"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr>
                             <td style="color:var(--muted);">TOTAL</td>
+                            @if ($hasEveningShift)<td></td>@endif
                             <td style="color:#fb923c;">{{ number_format($totalExist) }}</td>
                             <td style="color:var(--muted);">{{ number_format($totalSeats) }}</td>
-                            <td><span
-                                    class="bdg {{ $totalAvail > 0 ? 'bdg-open' : 'bdg-full' }}">{{ number_format($totalAvail) }}</span>
-                            </td>
+                            <td><span class="bdg {{ $totalAvail > 0 ? 'bdg-open' : 'bdg-full' }}">{{ number_format($totalAvail) }}</span></td>
                             <td style="color:#60a5fa;">{{ number_format($totalAdmit) }}</td>
                             <td class="text-white">{{ number_format($totalExist + $totalAdmit) }}</td>
                         </tr>
