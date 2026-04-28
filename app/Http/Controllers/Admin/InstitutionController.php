@@ -72,6 +72,9 @@ class InstitutionController extends Controller
         $uc       = UnionCouncil::findOrFail($request->uc_id);
         $sectorId = $uc->sector_id;
 
+        // Derive has_evening_classes from shift — single source of truth
+        $hasEveningClasses = in_array($request->shift, ['evening', 'both']);
+
         $institution = Institution::create([
             'name'               => $request->name,
             'code'               => $request->code,
@@ -84,7 +87,7 @@ class InstitutionController extends Controller
             'has_matric_tech'    => $request->boolean('has_matric_tech'),
             'has_transport'      => $request->boolean('has_transport'),
             'has_meal_program'   => $request->boolean('has_meal_program'),
-            'has_evening_classes'=> $request->boolean('has_evening_classes'),
+            'has_evening_classes'=> $hasEveningClasses,
             'admission_status'   => 'not_started',
             'is_active'          => true,
         ]);
@@ -177,6 +180,9 @@ class InstitutionController extends Controller
 
         $old = $institution->toArray();
 
+        // Derive has_evening_classes from shift — single source of truth
+        $hasEveningClasses = in_array($request->shift, ['evening', 'both']);
+
         $institution->update([
             'name'               => $request->name,
             'code'               => $request->code,
@@ -189,7 +195,7 @@ class InstitutionController extends Controller
             'has_matric_tech'    => $request->boolean('has_matric_tech'),
             'has_transport'      => $request->boolean('has_transport'),
             'has_meal_program'   => $request->boolean('has_meal_program'),
-            'has_evening_classes'=> $request->boolean('has_evening_classes'),
+            'has_evening_classes'=> $hasEveningClasses,
         ]);
 
         AuditLog::record(

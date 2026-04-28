@@ -405,14 +405,19 @@ class DailyAdmissionController extends Controller
                 } elseif ($ic->total_seats > 0) {
                     // Unified check for non-evening schools (ECE and all regular classes).
                     // All admission types (regular + OOSC + P2P) consume seats.
+                    // Include evening columns defensively — prevents bypass if any
+                    // evening data was ever written for a non-evening school.
                     $priorDaysTotal = DailyAdmission::where('institution_id', $institution->id)
                         ->where('class_id', $classId)
                         ->where('admission_date', '!=', $selectedDate)
                         ->when($academicYear, fn($q) => $q->where('academic_year_id', $academicYear->id))
                         ->selectRaw('SUM(
                             morning_boys + morning_girls +
+                            evening_boys + evening_girls +
                             morning_oosc_boys + morning_oosc_girls +
-                            morning_p2p_boys + morning_p2p_girls
+                            morning_p2p_boys  + morning_p2p_girls +
+                            evening_oosc_boys + evening_oosc_girls +
+                            evening_p2p_boys  + evening_p2p_girls
                         ) as t')
                         ->value('t') ?? 0;
 

@@ -67,15 +67,17 @@ use App\Http\Controllers\Director\StaffStrengthController as DirectorStaffStreng
 
 Route::get('/', fn() => redirect()->route('login'));
 
-// ── Temporary utility routes (remove after use) ─────────────────────────────
-Route::get('/clear-cache', function () {
-    Artisan::call('optimize:clear');
-    return '<pre>' . Artisan::output() . '</pre><p>✅ Cache cleared. <a href="/">Go to site</a> | <a href="/run-seeder">Run Seeder</a></p>';
-});
+// ── Admin utility routes — FDE Cell only ────────────────────────────────────
+Route::middleware(['auth', 'role:fde_cell'])->group(function () {
+    Route::get('/clear-cache', function () {
+        Artisan::call('optimize:clear');
+        return '<pre>' . Artisan::output() . '</pre><p>✅ Cache cleared. <a href="/">Go to site</a> | <a href="/run-seeder">Run Seeder</a></p>';
+    });
 
-Route::get('/run-seeder', function () {
-    Artisan::call('db:seed', ['--class' => 'RolesSeeder', '--force' => true]);
-    return '<pre>' . Artisan::output() . '</pre><p>✅ Seeder done. <a href="/clear-cache">Clear Cache</a> | <a href="/">Go to site</a></p>';
+    Route::get('/run-seeder', function () {
+        Artisan::call('db:seed', ['--class' => 'RolesSeeder', '--force' => true]);
+        return '<pre>' . Artisan::output() . '</pre><p>✅ Seeder done. <a href="/clear-cache">Clear Cache</a> | <a href="/">Go to site</a></p>';
+    });
 });
 
 Route::get( '/login', [AuthController::class, 'showLogin'])->name('login');

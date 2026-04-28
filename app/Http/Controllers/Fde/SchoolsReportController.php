@@ -115,6 +115,7 @@ class SchoolsReportController extends Controller
                 SUM(morning_oosc_girls+evening_oosc_girls) as oosc_girls,
                 SUM(morning_p2p_boys+evening_p2p_boys)     as p2p_boys,
                 SUM(morning_p2p_girls+evening_p2p_girls)   as p2p_girls,
+                SUM(matric_tech_count)                     as matric_tech_count,
                 SUM(
                     morning_boys+evening_boys+morning_girls+evening_girls+
                     morning_oosc_boys+evening_oosc_boys+morning_oosc_girls+evening_oosc_girls+
@@ -187,16 +188,18 @@ class SchoolsReportController extends Controller
             ->get()
             ->keyBy('class_id');
 
-        $grandRegular = $classSummary->sum(fn($r) => $r->reg_boys + $r->reg_girls);
-        $grandOosc    = $classSummary->sum(fn($r) => $r->oosc_boys + $r->oosc_girls);
-        $grandP2p     = $classSummary->sum(fn($r) => $r->p2p_boys + $r->p2p_girls);
-        $grandTotal   = $classSummary->sum('total');
+        $grandRegular    = $classSummary->sum(fn($r) => $r->reg_boys + $r->reg_girls);
+        $grandOosc       = $classSummary->sum(fn($r) => $r->oosc_boys + $r->oosc_girls);
+        $grandP2p        = $classSummary->sum(fn($r) => $r->p2p_boys + $r->p2p_girls);
+        $grandTotal      = $classSummary->sum('total');
+        $grandMatricTech = (int) $classSummary->sum('matric_tech_count');
+        $hasMatricTech   = (bool) $institution->has_matric_tech;
 
         return view('fde.schools.show', compact(
             'institution', 'dailyRows', 'classSummary', 'classes',
-            'grandRegular', 'grandOosc', 'grandP2p', 'grandTotal',
+            'grandRegular', 'grandOosc', 'grandP2p', 'grandTotal', 'grandMatricTech',
             'from', 'to', 'academicYear', 'sectionCounts',
-            'hasEvening', 'classSummaryMorning', 'classSummaryEvening'
+            'hasEvening', 'classSummaryMorning', 'classSummaryEvening', 'hasMatricTech'
         ));
     }
 

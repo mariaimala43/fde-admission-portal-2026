@@ -126,7 +126,7 @@
                     <h3 class="text-sm font-bold text-gray-800 dark:text-gray-100">Sector-wise Admissions</h3>
                     <p class="text-xs text-gray-400 mt-0.5">Total admitted per sector</p>
                 </div>
-                <a href="{{ route('fde.reports.sector') }}" class="text-xs text-blue-700 hover:underline">Full Report →</a>
+                <a href="{{ route($exportPrefix . '.reports.sector') }}" class="text-xs text-blue-700 hover:underline">Full Report →</a>
             </div>
             <div class="relative h-64">
                 <canvas id="sectorChart"></canvas>

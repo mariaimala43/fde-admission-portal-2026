@@ -423,11 +423,14 @@ class PortalController extends Controller
         $seatData = InstitutionClass::where('institution_id', $institution->id)
             ->where('is_active', true)
             ->with('classModel')
-            ->orderBy('class_id')
+            ->join('classes', 'institution_classes.class_id', '=', 'classes.id')
+            ->orderBy('classes.order')
+            ->orderBy('classes.id')
+            ->select('institution_classes.*')
             ->get();
 
-        // Does any class row have evening seats configured?
-        $hasEveningShift = $seatData->sum('evening_seats') > 0;
+        // Use the canonical flag — not seat-sum (seats may be 0 before config)
+        $hasEveningShift = (bool) $institution->has_evening_classes;
 
         // Combined totals (all admitted including OOSC/P2P)
         $admissionTotal = DailyAdmission::where('institution_id', $institution->id)

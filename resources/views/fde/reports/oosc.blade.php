@@ -14,7 +14,7 @@
             </p>
         </div>
         <div class="flex gap-2 flex-wrap">
-            <a href="{{ route('fde.reports.dashboard') }}"
+            <a href="{{ route($exportPrefix . '.reports.dashboard') }}"
                 class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
                 Back
             </a>
@@ -53,7 +53,7 @@
             class="px-5 py-2 bg-blue-900 text-white text-sm font-medium rounded-lg hover:bg-blue-800 transition">
             Apply
         </button>
-        <a href="{{ route('fde.reports.oosc') }}" class="px-4 py-2 text-sm text-gray-400 hover:text-gray-600">Reset</a>
+        <a href="{{ route($exportPrefix . '.reports.oosc') }}" class="px-4 py-2 text-sm text-gray-400 hover:text-gray-600">Reset</a>
     </form>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

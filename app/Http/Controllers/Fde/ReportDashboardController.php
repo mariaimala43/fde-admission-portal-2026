@@ -340,6 +340,8 @@ class ReportDashboardController extends Controller
             'total_seats'     => NewConstructionRoom::sum('rooms_total') * 40,
         ];
 
+        $exportPrefix = $this->exportRoutePrefix();
+
         return view('fde.reports.dashboard', compact(
             'academicYear', 'grandTotals', 'todayTotals',
             'totalSeats', 'totalExisting', 'totalFilled', 'totalRemaining', 'totalAdmitted',
@@ -353,7 +355,7 @@ class ReportDashboardController extends Controller
             'today',
             'modelCollegeStats', 'exFgCollegeStats',
             'modelCollegeCount', 'exFgCollegeCount',
-             'newRooms'
+            'newRooms', 'exportPrefix'
         ));
     }
 
@@ -633,8 +635,10 @@ class ReportDashboardController extends Controller
                 ];
             })->filter(fn($r) => $r['boys'] + $r['girls'] > 0);
 
+        $exportPrefix = $this->exportRoutePrefix();
+
         return view('fde.reports.gender', compact(
-            'overall', 'bySector', 'byClass', 'from', 'to', 'academicYear'
+            'overall', 'bySector', 'byClass', 'from', 'to', 'academicYear', 'exportPrefix'
         ));
     }
 

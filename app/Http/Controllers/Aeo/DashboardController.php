@@ -13,11 +13,8 @@ use App\Models\AcademicYear;
 use App\Models\Sector;
 
 /**
- * SAVE AS: app/Http/Controllers/Aeo/DashboardController.php
- *
- * Handles TWO roles:
- *   AEO      → scoped to single sector via aeo_sectors pivot (sectors() belongsToMany)
- *   Director → sees ALL sectors system-wide (no sector restriction)
+ * AEO Dashboard — scoped to the AEO's assigned sector(s) via aeo_sectors pivot.
+ * Directors have their own DashboardController under Director namespace.
  */
 class DashboardController extends Controller
 {
@@ -25,37 +22,29 @@ class DashboardController extends Controller
     {
         $user         = Auth::user();
         $academicYear = AcademicYear::where('is_active', true)->first();
-        $isDirector   = $user->hasRole('director');
 
-        // ── Scope ─────────────────────────────────────────────────────
-        if ($isDirector) {
-            $sectors      = Sector::orderBy('name')->get();
-            $institutions = Institution::where('is_active', true)
-                ->with('sector')
-                ->orderBy('sector_id')
-                ->orderBy('name')
-                ->get();
+        // ── AEO sector scope — support multi-sector AEOs ──────────────
+        $assignedSectors = $user->sectors()->orderBy('name')->get();
 
-            $currentSector = null;
-        } else {
-            $currentSector = $user->sectors()->first();
+        if ($assignedSectors->isEmpty()) {
+            Auth::logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
 
-            if (! $currentSector) {
-                Auth::logout();
-                request()->session()->invalidate();
-                request()->session()->regenerateToken();
-
-                return redirect()->route('login')
-                    ->with('error', 'No sector assigned to your account. Please contact FDE Cell.');
-            }
-
-            $sectors      = collect([$currentSector]);
-            $institutions = Institution::where('sector_id', $currentSector->id)
-                ->where('is_active', true)
-                ->with('sector')
-                ->orderBy('name')
-                ->get();
+            return redirect()->route('login')
+                ->with('error', 'No sector assigned to your account. Please contact FDE Cell.');
         }
+
+        $currentSector = $assignedSectors->first(); // used for blade backwards-compat
+        $sectors       = $assignedSectors;
+        $sectorIds     = $assignedSectors->pluck('id');
+
+        $institutions = Institution::whereIn('sector_id', $sectorIds)
+            ->where('is_active', true)
+            ->with('sector')
+            ->orderBy('sector_id')
+            ->orderBy('name')
+            ->get();
 
         $institutionIds = $institutions->pluck('id');
 
@@ -174,7 +163,6 @@ class DashboardController extends Controller
         return view('aeo.dashboard', compact(
             'sectors',
             'currentSector',
-            'isDirector',
             'institutions',
             'seatData',
             'sectionCounts',

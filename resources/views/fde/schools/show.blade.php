@@ -185,6 +185,10 @@
                             Promoted Students</th>
                         <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Newly
                             Admitted</th>
+                        @if ($hasMatricTech)
+                        <th class="px-3 py-3 text-xs font-medium text-purple-600 uppercase tracking-wide text-left hidden sm:table-cell">
+                            Matric Tech</th>
+                        @endif
                         <th
                             class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
                             Seats Available</th>
@@ -330,6 +334,24 @@
                                     @endif
                                 @endif
                             </td>
+                            @if ($hasMatricTech)
+                            @php
+                                $isMatricClass = in_array($ic->classModel?->order, [9, 10]);
+                                $mtCount = $isMatricClass ? (int) ($classSummary[$ic->class_id]?->matric_tech_count ?? 0) : null;
+                            @endphp
+                            <td class="px-3 py-3 text-sm whitespace-nowrap text-center hidden sm:table-cell">
+                                @if ($isMatricClass)
+                                    <span class="font-bold text-purple-700">{{ number_format($mtCount) }}</span>
+                                    @if ($ic->matric_tech_existing > 0)
+                                        <div class="text-xs text-gray-400 font-normal mt-0.5">
+                                            Base: {{ number_format($ic->matric_tech_existing) }}
+                                        </div>
+                                    @endif
+                                @else
+                                    <span class="text-gray-300">—</span>
+                                @endif
+                            </td>
+                            @endif
                             <td
                                 class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-center font-bold hidden md:table-cell {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">
                                 @if ($hasEvening)
@@ -386,6 +408,11 @@
                                 {{ number_format($grandTotal) }}
                             @endif
                         </td>
+                        @if ($hasMatricTech)
+                        <td class="px-3 py-3 text-center text-purple-700 font-bold hidden sm:table-cell">
+                            {{ number_format($grandMatricTech) }}
+                        </td>
+                        @endif
                         <td
                             class="px-3 py-3 text-center hidden md:table-cell {{ max(0, $classes->sum('total_seats') - $classes->sum('existing_enrollment') - $grandTotal) > 0 ? 'text-green-600' : 'text-red-500' }}">
                             @if ($hasEvening)

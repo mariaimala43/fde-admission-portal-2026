@@ -9,9 +9,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('institution_classes', function (Blueprint $table) {
-            $table->unsignedBigInteger('overridden_by')->nullable()->after('enrollment_status');
-            $table->string('override_reason', 500)->nullable()->after('overridden_by');
-            $table->timestamp('overridden_at')->nullable()->after('override_reason');
+            if (!Schema::hasColumn('institution_classes', 'overridden_by')) {
+                $table->unsignedBigInteger('overridden_by')->nullable()->after('enrollment_status');
+            }
+            if (!Schema::hasColumn('institution_classes', 'override_reason')) {
+                $table->string('override_reason', 500)->nullable()->after('overridden_by');
+            }
+            if (!Schema::hasColumn('institution_classes', 'overridden_at')) {
+                $table->timestamp('overridden_at')->nullable()->after('override_reason');
+            }
         });
     }
 

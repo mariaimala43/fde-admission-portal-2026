@@ -70,7 +70,7 @@ class AdmissionCorrectionController extends Controller
     {
         $correction->load(['institution', 'classModel', 'requestedBy', 'reviewedBy']);
 
-        $hasEvening = in_array($correction->institution->shift, ['evening', 'both']);
+        $hasEvening = (bool) $correction->institution->has_evening_classes;
 
         return view('fde.corrections.show', compact('correction', 'hasEvening'));
     }

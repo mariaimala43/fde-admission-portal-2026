@@ -87,6 +87,16 @@
                     <span class="ico">📋</span> Admission Report
                 </a>
 
+                <a href="{{ route('hoi.monitoring.index') }}"
+                    class="sb-link {{ request()->routeIs('hoi.monitoring.*') ? 'active' : '' }}">
+                    <span class="ico">👁</span> Monitoring
+                </a>
+
+                <a href="{{ route('hoi.transfers.index') }}"
+                    class="sb-link {{ request()->routeIs('hoi.transfers.*') ? 'active' : '' }}">
+                    <span class="ico">🔄</span> Transfers
+                </a>
+
                 {{-- Referrals — with pending badge --}}
                 <a href="{{ route('hoi.referrals.index') }}"
                     class="sb-link {{ request()->routeIs('hoi.referrals.*') ? 'active' : '' }}">

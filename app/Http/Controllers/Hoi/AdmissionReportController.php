@@ -44,7 +44,7 @@ class AdmissionReportController extends Controller
             [$from, $to] = [$to->startOfDay(), $from->endOfDay()];
         }
 
-        $hasEvening = in_array($institution->shift, ['evening', 'both']);
+        $hasEvening = (bool) $institution->has_evening_classes;
 
         // ── Class-wise cumulative summary ─────────────────────────────
         $classSummary = DailyAdmission::where('institution_id', $institution->id)
@@ -165,7 +165,7 @@ class AdmissionReportController extends Controller
             [$from, $to] = [$to->startOfDay(), $from->endOfDay()];
         }
 
-        $hasEvening = in_array($institution->shift, ['evening', 'both']);
+        $hasEvening = (bool) $institution->has_evening_classes;
 
         $classSummary = DailyAdmission::where('institution_id', $institution->id)
             ->when($academicYear, fn($q) => $q->where('academic_year_id', $academicYear->id))

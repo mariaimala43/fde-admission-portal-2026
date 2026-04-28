@@ -115,7 +115,7 @@ class AdmissionCorrectionController extends Controller
                 ->with('warning', 'A correction request is already pending for this record.');
         }
 
-        $hasEvening = in_array($institution->shift, ['evening', 'both']);
+        $hasEvening = (bool) $institution->has_evening_classes;
 
         return view('hoi.corrections.create', compact('entry', 'institution', 'hasEvening'));
     }

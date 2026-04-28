@@ -832,34 +832,36 @@
                     <tbody>
                         @foreach ($seatData as $ic)
                             @php
-                                $shiftRow   = $admissionByShift[$ic->class_id]  ?? null;
+                                $shiftRow = $admissionByShift[$ic->class_id] ?? null;
                                 $mAdm = (int)($shiftRow?->morning_admitted ?? 0);
                                 $eAdm = (int)($shiftRow?->evening_admitted ?? 0);
 
-                                // Morning
+                                // Morning shift data
                                 $mSeats = (int)($ic->morning_seats    ?? 0);
                                 $mExist = (int)($ic->morning_existing ?? 0);
                                 $mAvail = max(0, $mSeats - $mExist - $mAdm);
                                 $mTotal = $mExist + $mAdm;
                                 $mFill  = $mSeats > 0 ? min(100, round(($mTotal / $mSeats) * 100)) : 0;
 
-                                // Evening
+                                // Evening shift data
                                 $eSeats = (int)($ic->evening_seats    ?? 0);
                                 $eExist = (int)($ic->evening_existing ?? 0);
                                 $eAvail = max(0, $eSeats - $eExist - $eAdm);
                                 $eTotal = $eExist + $eAdm;
                                 $eFill  = $eSeats > 0 ? min(100, round(($eTotal / $eSeats) * 100)) : 0;
 
-                                // Combined (for morning-only schools)
+                                // Combined (used for morning-only or classes with no shift data e.g. ECE)
                                 $totalAdmitted = $admissionTotal[$ic->class_id]?->total_admitted ?? 0;
                                 $available     = max(0, $ic->total_seats - $ic->existing_enrollment - $totalAdmitted);
                                 $totalEnrl     = $ic->existing_enrollment + $totalAdmitted;
                                 $rFill         = $ic->total_seats > 0
-                                    ? min(100, round(($totalEnrl / $ic->total_seats) * 100))
-                                    : 0;
+                                    ? min(100, round(($totalEnrl / $ic->total_seats) * 100)) : 0;
+
+                                // This class has shift-specific data only if at least one shift has seats
+                                $classHasShiftData = ($mSeats > 0 || $eSeats > 0);
                             @endphp
 
-                            @if ($hasEveningShift)
+                            @if ($hasEveningShift && $classHasShiftData)
                                 {{-- Morning row --}}
                                 <tr style="border-bottom:none;">
                                     <td rowspan="2" style="vertical-align:middle;border-right:1px solid rgba(255,255,255,0.05);">
@@ -908,7 +910,7 @@
                                 </tr>
 
                             @else
-                                {{-- Morning-only: single combined row --}}
+                                {{-- Combined row: morning-only school OR class without shift data (ECE etc.) --}}
                                 <tr>
                                     <td>
                                         {{ $ic->classModel?->name }}
@@ -916,6 +918,10 @@
                                             <span class="bdg bdg-pink ml-1" style="font-size:10px;">ECE</span>
                                         @endif
                                     </td>
+                                    {{-- Shift column spacer so columns align in dual-shift schools --}}
+                                    @if ($hasEveningShift && !$classHasShiftData)
+                                        <td><span class="text-xs" style="color:var(--muted);">—</span></td>
+                                    @endif
                                     <td class="font-semibold" style="color:#fb923c;">{{ number_format($ic->existing_enrollment) }}</td>
                                     <td style="color:var(--muted);">{{ number_format($ic->total_seats) }}</td>
                                     <td>
