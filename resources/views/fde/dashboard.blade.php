@@ -76,6 +76,25 @@
         </div>
     </div>
 
+    {{-- ── Matric Tech Breakdown ──────────────────────── --}}
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl border border-teal-200 shadow-sm p-5 text-center">
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">⚙️ Matric Tech Existing</p>
+            <p class="text-2xl font-bold text-teal-700">{{ number_format($matricTechExisting) }}</p>
+            <p class="text-xs text-gray-400 mt-1">Previous year baseline</p>
+        </div>
+        <div class="bg-teal-700 rounded-xl shadow-sm p-5 text-center text-white">
+            <p class="text-xs text-teal-100 uppercase tracking-wider mb-1">⚙️ Admitted This Year</p>
+            <p class="text-2xl font-bold">{{ number_format($cumulativeTotals->matric_tech ?? 0) }}</p>
+            <p class="text-xs text-teal-200 mt-1">Today: {{ number_format($todayTotals->matric_tech ?? 0) }}</p>
+        </div>
+        <div class="bg-teal-900 rounded-xl shadow-sm p-5 text-center text-white">
+            <p class="text-xs text-teal-200 uppercase tracking-wider mb-1">⚙️ Total Matric Tech</p>
+            <p class="text-2xl font-bold">{{ number_format($matricTechExisting + ($cumulativeTotals->matric_tech ?? 0)) }}</p>
+            <p class="text-xs text-teal-300 mt-1">Existing + This Year</p>
+        </div>
+    </div>
+
     {{-- ── New Construction Rooms ─────────────────────── --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">

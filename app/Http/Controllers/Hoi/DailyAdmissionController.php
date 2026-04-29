@@ -153,12 +153,19 @@ class DailyAdmissionController extends Controller
             $hasEveningInst = (bool) $institution->has_evening_classes;
 
             if ($hasEveningInst) {
-                $mSeats    = (int) $ic->morning_seats;
-                $eSeats    = (int) $ic->evening_seats;
-                $mExisting = (int) $ic->morning_existing;
-                $eExisting = (int) $ic->evening_existing;
-                $mAvail    = max(0, $ic->morning_seats - $ic->morning_existing - $cumMorning);
-                $eAvail    = max(0, $ic->evening_seats - $ic->evening_existing - $cumEvening);
+                // If per-shift seats were never entered (school enabled evening AFTER
+                // completing class setup), fall back to the combined totals so the form
+                // shows real data instead of zeros.
+                $perShiftSeats = ($ic->morning_seats > 0 || $ic->evening_seats > 0);
+                $mSeats        = $perShiftSeats ? (int) $ic->morning_seats : (int) $ic->total_seats;
+                $eSeats        = $perShiftSeats ? (int) $ic->evening_seats : 0;
+
+                $perShiftExist = ($ic->morning_existing > 0 || $ic->evening_existing > 0);
+                $mExisting     = $perShiftExist ? (int) $ic->morning_existing : (int) $ic->existing_enrollment;
+                $eExisting     = $perShiftExist ? (int) $ic->evening_existing : 0;
+
+                $mAvail        = max(0, $mSeats - $mExisting - $cumMorning);
+                $eAvail        = max(0, $eSeats - $eExisting - $cumEvening);
             } else {
                 $mSeats    = (int) $ic->total_seats;
                 $eSeats    = 0;
@@ -349,12 +356,21 @@ class DailyAdmissionController extends Controller
                 $hasEveningInst = (bool) $institution->has_evening_classes;
 
                 if ($hasEveningInst) {
-                    // Per-shift check for evening schools
+                    // Per-shift check for evening schools.
+                    // If per-shift columns were never populated, fall back to combined totals
+                    // so capacity is still enforced correctly.
+                    $perShiftSeats  = ($ic->morning_seats > 0 || $ic->evening_seats > 0);
+                    $effectiveMSeats = $perShiftSeats ? $ic->morning_seats : $ic->total_seats;
+                    $effectiveESeats = $perShiftSeats ? $ic->evening_seats : 0;
+                    $perShiftExist  = ($ic->morning_existing > 0 || $ic->evening_existing > 0);
+                    $effectiveMExist = $perShiftExist ? $ic->morning_existing : $ic->existing_enrollment;
+                    $effectiveEExist = $perShiftExist ? $ic->evening_existing : 0;
+
                     $className    = $ic->classModel?->name ?? "Class {$classId}";
                     $shiftBlocked = false;
 
                     // Morning shift check — all types (regular + OOSC + P2P) consume seats
-                    if ($ic->morning_seats > 0) {
+                    if ($effectiveMSeats > 0) {
                         $priorMorning = DailyAdmission::where('institution_id', $institution->id)
                             ->where('class_id', $classId)
                             ->where('admission_date', '!=', $selectedDate)
@@ -368,7 +384,7 @@ class DailyAdmissionController extends Controller
                         $morningAllTypes = $morningBoys + $morningGirls
                             + $morningOoscBoys + $morningOoscGirls
                             + $morningP2pBoys  + $morningP2pGirls;
-                        $mAvail = max(0, $ic->morning_seats - $ic->morning_existing - $priorMorning);
+                        $mAvail = max(0, $effectiveMSeats - $effectiveMExist - $priorMorning);
                         if ($morningAllTypes > $mAvail) {
                             $seatErrors[] = "{$className} (Morning): requested {$morningAllTypes}, "
                                 . ($mAvail > 0 ? "only {$mAvail} seat(s) available" : "shift is FULL");
@@ -377,7 +393,7 @@ class DailyAdmissionController extends Controller
                     }
 
                     // Evening shift check — all types (regular + OOSC + P2P) consume seats
-                    if ($ic->evening_seats > 0) {
+                    if ($effectiveESeats > 0) {
                         $priorEvening = DailyAdmission::where('institution_id', $institution->id)
                             ->where('class_id', $classId)
                             ->where('admission_date', '!=', $selectedDate)
@@ -391,7 +407,7 @@ class DailyAdmissionController extends Controller
                         $eveningAllTypes = $eveningBoys + $eveningGirls
                             + $eveningOoscBoys + $eveningOoscGirls
                             + $eveningP2pBoys  + $eveningP2pGirls;
-                        $eAvail = max(0, $ic->evening_seats - $ic->evening_existing - $priorEvening);
+                        $eAvail = max(0, $effectiveESeats - $effectiveEExist - $priorEvening);
                         if ($eveningAllTypes > $eAvail) {
                             $seatErrors[] = "{$className} (Evening): requested {$eveningAllTypes}, "
                                 . ($eAvail > 0 ? "only {$eAvail} seat(s) available" : "shift is FULL");

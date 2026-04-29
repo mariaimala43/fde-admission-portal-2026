@@ -51,14 +51,31 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
         {{-- Matric Tech --}}
-        <div class="bg-white rounded-xl border border-indigo-100 shadow-sm p-5">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-xl shrink-0">⚙️</div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Matric Tech Today</p>
-                    <p class="text-2xl font-bold text-indigo-700">{{ number_format($matricTechToday) }}</p>
-                    <p class="text-xs text-gray-500 mt-0.5">Year Total: <span
-                            class="font-semibold text-indigo-600">{{ number_format($matricTechYear) }}</span></p>
+        <div class="bg-white rounded-xl border border-teal-100 shadow-sm p-5">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-xl shrink-0">⚙️</div>
+                <div>
+                    <p class="text-xs text-gray-400 uppercase tracking-wider">Matric Tech Program</p>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                        Today: <span class="font-semibold text-teal-700">{{ number_format($matricTechToday) }}</span>
+                    </p>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-gray-50 rounded-lg p-2">
+                    <p class="text-xs text-gray-400 mb-0.5">Existing</p>
+                    <p class="text-lg font-bold text-teal-700">{{ number_format($matricTechExisting) }}</p>
+                    <p class="text-xs text-gray-400">Prev. Year</p>
+                </div>
+                <div class="bg-teal-50 rounded-lg p-2">
+                    <p class="text-xs text-gray-400 mb-0.5">This Year</p>
+                    <p class="text-lg font-bold text-teal-600">{{ number_format($matricTechYear) }}</p>
+                    <p class="text-xs text-gray-400">New Admits</p>
+                </div>
+                <div class="bg-teal-700 rounded-lg p-2 text-white">
+                    <p class="text-xs text-teal-200 mb-0.5">Total</p>
+                    <p class="text-lg font-bold">{{ number_format($matricTechExisting + $matricTechYear) }}</p>
+                    <p class="text-xs text-teal-300">Combined</p>
                 </div>
             </div>
         </div>

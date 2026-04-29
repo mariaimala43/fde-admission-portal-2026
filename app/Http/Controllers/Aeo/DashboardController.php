@@ -82,6 +82,12 @@ class DashboardController extends Controller
             ->map(fn($rows) => $rows->keyBy('class_id'));
 
         // ── Matric Tech totals (scoped to visible institutions) ───────
+        $matricTechExisting = (int) InstitutionClass::whereIn('institution_id', $institutionIds)
+            ->where('is_active', true)
+            ->whereHas('institution', fn($q) => $q->where('has_matric_tech', true))
+            ->whereHas('classModel',  fn($q) => $q->whereIn('order', [9, 10]))
+            ->sum('matric_tech_existing');
+
         $matricTechYear = (int) DailyAdmission::whereIn('institution_id', $institutionIds)
             ->where('academic_year_id', $academicYear?->id)
             ->sum('matric_tech_count');
@@ -170,6 +176,7 @@ class DashboardController extends Controller
             'sectorSummary',
             'grand',
             'academicYear',
+            'matricTechExisting',
             'matricTechToday',
             'matricTechYear',
             'newRoomsTotal',

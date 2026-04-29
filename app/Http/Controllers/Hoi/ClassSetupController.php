@@ -51,6 +51,26 @@ class ClassSetupController extends Controller
 
         $hasEvening = (bool) $institution->has_evening_classes;
 
+        // ── Evening school: pre-populate per-shift columns from combined data ──
+        // When a school enables evening AFTER already completing class setup as a
+        // morning-only school, the per-shift columns (morning_seats / morning_existing
+        // etc.) will all be 0 while total_seats / existing_enrollment have real data.
+        // Pre-fill morning fields from the combined totals so the form shows the
+        // existing data instead of all zeros. This is purely cosmetic — the DB is
+        // not changed here; the user can split the numbers across shifts and save.
+        if ($hasEvening) {
+            foreach ($configured as $ic) {
+                $perShiftSet = ($ic->morning_seats > 0 || $ic->evening_seats > 0);
+                if (! $perShiftSet && $ic->total_seats > 0) {
+                    $ic->morning_seats = $ic->total_seats;
+                }
+                $perShiftExistSet = ($ic->morning_existing > 0 || $ic->evening_existing > 0);
+                if (! $perShiftExistSet && $ic->existing_enrollment > 0) {
+                    $ic->morning_existing = $ic->existing_enrollment;
+                }
+            }
+        }
+
         return view('hoi.classes.setup', compact(
             'institution', 'classes', 'eceClasses',
             'configured', 'sections', 'hasEvening'

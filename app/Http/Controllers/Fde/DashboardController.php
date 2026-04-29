@@ -45,6 +45,12 @@ class DashboardController extends Controller
             ->selectRaw('SUM(total_seats) as seats, SUM(existing_enrollment) as existing')
             ->first();
 
+        // ── Matric Tech existing baseline (Class 9 & 10, matric-tech schools only) ──
+        $matricTechExisting = (int) InstitutionClass::where('is_active', true)
+            ->whereHas('institution', fn($q) => $q->where('is_active', true)->where('has_matric_tech', true))
+            ->whereHas('classModel',  fn($q) => $q->whereIn('order', [9, 10]))
+            ->sum('matric_tech_existing');
+
         $availableCapacity = max(
             0,
             (int) ($seatTotals?->seats ?? 0)
@@ -123,7 +129,7 @@ class DashboardController extends Controller
             'todayTotals', 'cumulativeTotals', 'sectorBreakdown',
             'notSubmitted', 'totalSchools', 'submittedToday',
             'notSubmittedCount', 'today', 'referralStats', 'newRoomsStats',
-            'availableCapacity'
+            'availableCapacity', 'matricTechExisting'
         ));
     }
 }

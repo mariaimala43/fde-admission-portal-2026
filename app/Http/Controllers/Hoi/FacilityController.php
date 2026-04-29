@@ -50,19 +50,31 @@ class FacilityController extends Controller
         ]);
 
         // ── Evening shift turned OFF ───────────────────────────────────
-        // Reset all per-shift columns back to morning-only values so the
-        // Class Setup form pre-populates correctly (total_seats / existing_enrollment
-        // were previously the combined morning+evening sum).
+        // Clear evening-specific columns. If per-shift seats were actually
+        // configured (morning_seats > 0), collapse morning_seats → total_seats
+        // so the Class Setup form reflects morning-only capacity. If per-shift
+        // columns were never filled (school set up classes before enabling
+        // evening), keep the existing total_seats / existing_enrollment intact
+        // so no morning data is lost.
         if ($wasEvening && ! $hasEvening) {
             InstitutionClass::where('institution_id', $institution->id)
                 ->each(function (InstitutionClass $ic) {
                     $ic->update([
-                        // Collapse combined fields back to morning-only
-                        'total_seats'         => $ic->morning_seats,
-                        'existing_enrollment' => $ic->morning_existing,
-                        'promoted_count'      => $ic->morning_promoted,
-                        'failed_count'        => $ic->morning_failed,
-                        // Zero out all evening-specific columns
+                        // Use morning-specific value when available; otherwise
+                        // preserve the existing combined value to avoid data loss.
+                        'total_seats'         => $ic->morning_seats > 0
+                                                    ? $ic->morning_seats
+                                                    : $ic->total_seats,
+                        'existing_enrollment' => $ic->morning_existing > 0
+                                                    ? $ic->morning_existing
+                                                    : $ic->existing_enrollment,
+                        'promoted_count'      => $ic->morning_promoted > 0
+                                                    ? $ic->morning_promoted
+                                                    : $ic->promoted_count,
+                        'failed_count'        => $ic->morning_failed > 0
+                                                    ? $ic->morning_failed
+                                                    : $ic->failed_count,
+                        // Zero out all per-shift columns (both shifts)
                         'morning_seats'       => 0,
                         'evening_seats'       => 0,
                         'morning_existing'    => 0,
