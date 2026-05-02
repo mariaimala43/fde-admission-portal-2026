@@ -548,7 +548,7 @@
                     style="color:var(--green-text);"
                     onmouseover="this.style.color='#fff'"
                     onmouseout="this.style.color='var(--green-text)'">
-                    🪑 Seats Available
+                    Seats Available
                 </a>
                 <a href="#staff-section" class="text-sm font-medium text-white/60 hover:text-white transition">Staff
                     Portal</a>
@@ -619,7 +619,7 @@
                         x-show="lang === 'en'">
                         Discover <strong class="text-white">{{ $openInstitutions }}</strong> government schools with
                         open admissions across Islamabad Capital Territory. Free quality education
-                        from ECE to Class XII — no tuition fee.
+                        from ECE to Class X — no tuition fee.
                         @if ($academicYear && !empty($academicYear->admission_end))
                             <br><span class="text-white/70 text-sm">Applications close
                                 <strong
