@@ -420,8 +420,8 @@ class PortalController extends Controller
             ->latest()
             ->get();
 
-        $seatData = InstitutionClass::where('institution_id', $institution->id)
-            ->where('is_active', true)
+        $seatData = InstitutionClass::where('institution_classes.institution_id', $institution->id)
+            ->where('institution_classes.is_active', true)
             ->with('classModel')
             ->join('classes', 'institution_classes.class_id', '=', 'classes.id')
             ->orderBy('classes.order')
