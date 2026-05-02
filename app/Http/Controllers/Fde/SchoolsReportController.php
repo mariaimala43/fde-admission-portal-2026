@@ -195,11 +195,28 @@ class SchoolsReportController extends Controller
         $grandMatricTech = (int) $classSummary->sum('matric_tech_count');
         $hasMatricTech   = (bool) $institution->has_matric_tech;
 
+        // ── Full-year regular admissions (seat-consuming only) ──────────
+        // Used for correct available-seats calculation regardless of the
+        // date-range filter applied to $classSummary above.
+        // OOSC / P2P do NOT consume seats — only morning/evening regular counts.
+        $yearlyRegular = DailyAdmission::where('institution_id', $institution->id)
+            ->when($academicYear, fn($q) => $q->where('academic_year_id', $academicYear->id))
+            ->selectRaw('
+                class_id,
+                SUM(morning_boys + morning_girls + evening_boys + evening_girls) as regular,
+                SUM(morning_boys + morning_girls)                                as morning_regular,
+                SUM(evening_boys + evening_girls)                                as evening_regular
+            ')
+            ->groupBy('class_id')
+            ->get()
+            ->keyBy('class_id');
+
         return view('fde.schools.show', compact(
             'institution', 'dailyRows', 'classSummary', 'classes',
             'grandRegular', 'grandOosc', 'grandP2p', 'grandTotal', 'grandMatricTech',
             'from', 'to', 'academicYear', 'sectionCounts',
-            'hasEvening', 'classSummaryMorning', 'classSummaryEvening', 'hasMatricTech'
+            'hasEvening', 'classSummaryMorning', 'classSummaryEvening', 'hasMatricTech',
+            'yearlyRegular'
         ));
     }
 

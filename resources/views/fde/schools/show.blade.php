@@ -203,15 +203,22 @@
                             $s = $classSummary[$ic->class_id] ?? null;
                             $sMorning = $classSummaryMorning[$ic->class_id] ?? null;
                             $sEvening = $classSummaryEvening[$ic->class_id] ?? null;
-                            $admitted = $s?->total ?? 0;
+                            // Display counts — period-filtered, include OOSC+P2P for reporting
+                            $admitted   = $s?->total ?? 0;
                             $admMorning = $sMorning?->total ?? 0;
                             $admEvening = $sEvening?->total ?? 0;
-                            $available = max(0, $ic->total_seats - $ic->existing_enrollment - $admitted);
-                            $availableMorning = max(0, ($ic->morning_seats ?? 0) - ($ic->morning_existing ?? 0) - $admMorning);
-                            $availableEvening = max(0, ($ic->evening_seats ?? 0) - ($ic->evening_existing ?? 0) - $admEvening);
-                            $totalEnrl = $ic->existing_enrollment + $admitted;
-                            $totalMorning = ($ic->morning_existing ?? 0) + $admMorning;
-                            $totalEvening = ($ic->evening_existing ?? 0) + $admEvening;
+                            // Seat calculation — full academic year, regular only (morning/evening boys+girls)
+                            // OOSC and P2P do NOT consume seats per system design
+                            $yr = $yearlyRegular[$ic->class_id] ?? null;
+                            $yrRegular         = (int) ($yr?->regular         ?? 0);
+                            $yrMorningRegular  = (int) ($yr?->morning_regular ?? 0);
+                            $yrEveningRegular  = (int) ($yr?->evening_regular ?? 0);
+                            $available        = max(0, $ic->total_seats - $ic->existing_enrollment - $yrRegular);
+                            $availableMorning = max(0, ($ic->morning_seats ?? 0) - ($ic->morning_existing ?? 0) - $yrMorningRegular);
+                            $availableEvening = max(0, ($ic->evening_seats ?? 0) - ($ic->evening_existing ?? 0) - $yrEveningRegular);
+                            $totalEnrl    = $ic->existing_enrollment + $yrRegular;
+                            $totalMorning = ($ic->morning_existing ?? 0) + $yrMorningRegular;
+                            $totalEvening = ($ic->evening_existing ?? 0) + $yrEveningRegular;
                         @endphp
                         <tr class="hover:bg-gray-50">
                             <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap font-semibold">
