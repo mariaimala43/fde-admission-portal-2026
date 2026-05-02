@@ -237,6 +237,9 @@ class DailyAdmissionController extends Controller
         // ── Has evening shift ──────────────────────────────────────────
         $hasEvening = (bool) $institution->has_evening_classes;
 
+        // Preserve active shift across date navigation (evening schools only)
+        $defaultShift = ($hasEvening && request('shift') === 'evening') ? 'evening' : 'morning';
+
         return view('hoi.admissions.daily', compact(
             'institution', 'classes', 'classesData', 'todayEntries',
             'academicYear', 'isPastCutoff', 'activeGrant',
@@ -244,7 +247,7 @@ class DailyAdmissionController extends Controller
             'selectedDate', 'isToday',
             'anyVerified', 'anyLocked', 'anySubmitted', 'anyDraft', 'admissionStatus',
             'newRoomsTotal', 'newRoomsAllocated', 'newRoomsRemaining',
-            'matricTechToday', 'matricTechYear', 'hasEvening'
+            'matricTechToday', 'matricTechYear', 'hasEvening', 'defaultShift'
         ));
     }
 

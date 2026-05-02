@@ -137,72 +137,48 @@
                             rowspan="2">Seats<br>Avail.</th>
                         --}}
 
-                        {{-- Regular — always Boys/Girls (2 cols) --}}
+                        {{-- Regular (2 cols — Boys/Girls OR Morning/Evening) --}}
                         <th class="px-3 py-2 text-center text-xs font-semibold text-blue-700 uppercase bg-blue-50" colspan="2">
                             Regular New Admitted</th>
-                        {{-- HIDDEN: old hasEvening conditional (colspan 3 vs 2)
-                        @if ($hasEvening)
-                            <th ... colspan="3">Regular</th>
-                        @else
-                            <th ... colspan="2">Regular</th>
-                        @endif
-                        --}}
 
-                        {{-- OOSC — always Boys/Girls (2 cols) --}}
+                        {{-- OOSC (2 cols) --}}
                         <th class="px-3 py-2 text-center text-xs font-semibold text-purple-700 uppercase bg-purple-50" colspan="2">
                             OOSC Out-of-School</th>
-                        {{-- HIDDEN: old hasEvening conditional --}}
 
-                        {{-- P2G — always Boys/Girls (2 cols) --}}
+                        {{-- P2G (2 cols) --}}
                         <th class="px-3 py-2 text-center text-xs font-semibold text-orange-700 uppercase bg-orange-50" colspan="2">
                             P2G Private to Govt</th>
-                        {{-- HIDDEN: old hasEvening conditional --}}
 
                         <th class="px-3 py-2 text-center text-xs font-semibold text-blue-900 uppercase bg-blue-100" rowspan="2">
                             Total</th>
                     </tr>
                     <tr class="text-xs text-gray-400 border-b border-gray-100">
-                        {{-- Regular: always Boys/Girls --}}
-                        <th class="px-3 py-1 text-center bg-blue-50 text-blue-500">Boys</th>
-                        <th class="px-3 py-1 text-center bg-blue-50 text-pink-500">Girls</th>
-                        {{-- HIDDEN: old morning/evening sub-headers
+                        {{-- Regular sub-headers: Morning/Evening for evening schools, Boys/Girls otherwise --}}
                         @if ($hasEvening)
-                            <th class="px-3 py-1 text-center bg-blue-50 text-blue-500">🌅 Morn</th>
-                            <th class="px-3 py-1 text-center bg-indigo-50 text-indigo-500">🌆 Eve</th>
+                            <th class="px-3 py-1 text-center bg-blue-50 text-blue-500">🌅 Morning</th>
+                            <th class="px-3 py-1 text-center bg-indigo-50 text-indigo-500">🌆 Evening</th>
                         @else
                             <th class="px-3 py-1 text-center bg-blue-50 text-blue-500">Boys</th>
                             <th class="px-3 py-1 text-center bg-blue-50 text-pink-500">Girls</th>
                         @endif
-                        <th class="px-3 py-1 text-center bg-blue-50 font-semibold text-blue-700">Total</th>
-                        --}}
 
-                        {{-- OOSC: always Boys/Girls --}}
-                        <th class="px-3 py-1 text-center bg-purple-50 text-blue-500">Boys</th>
-                        <th class="px-3 py-1 text-center bg-purple-50 text-pink-500">Girls</th>
-                        {{-- HIDDEN: old morning/evening sub-headers
+                        {{-- OOSC sub-headers --}}
                         @if ($hasEvening)
-                            <th class="px-3 py-1 text-center bg-purple-50 text-blue-500">🌅 Morn</th>
-                            <th class="px-3 py-1 text-center bg-purple-50 text-indigo-500">🌆 Eve</th>
+                            <th class="px-3 py-1 text-center bg-purple-50 text-blue-500">🌅 Morning</th>
+                            <th class="px-3 py-1 text-center bg-purple-50 text-indigo-500">🌆 Evening</th>
                         @else
                             <th class="px-3 py-1 text-center bg-purple-50 text-blue-500">Boys</th>
                             <th class="px-3 py-1 text-center bg-purple-50 text-pink-500">Girls</th>
                         @endif
-                        <th class="px-3 py-1 text-center bg-purple-100 font-semibold text-purple-700">Total</th>
-                        --}}
 
-                        {{-- P2G: always Boys/Girls --}}
-                        <th class="px-3 py-1 text-center bg-orange-50 text-blue-500">Boys</th>
-                        <th class="px-3 py-1 text-center bg-orange-50 text-pink-500">Girls</th>
-                        {{-- HIDDEN: old morning/evening sub-headers
+                        {{-- P2G sub-headers --}}
                         @if ($hasEvening)
-                            <th class="px-3 py-1 text-center bg-orange-50 text-blue-500">🌅 Morn</th>
-                            <th class="px-3 py-1 text-center bg-orange-50 text-indigo-500">🌆 Eve</th>
+                            <th class="px-3 py-1 text-center bg-orange-50 text-blue-500">🌅 Morning</th>
+                            <th class="px-3 py-1 text-center bg-orange-50 text-indigo-500">🌆 Evening</th>
                         @else
                             <th class="px-3 py-1 text-center bg-orange-50 text-blue-500">Boys</th>
                             <th class="px-3 py-1 text-center bg-orange-50 text-pink-500">Girls</th>
                         @endif
-                        <th class="px-3 py-1 text-center bg-orange-100 font-semibold text-orange-700">Total</th>
-                        --}}
                     </tr>
                 </thead>
 
@@ -266,13 +242,7 @@
                             </td>
                             --}}
 
-                            {{-- Regular Boys (morning + evening) --}}
-                            <td class="px-3 py-3 text-center text-blue-700 bg-blue-50">
-                                {{ number_format($regBoys) }}</td>
-                            {{-- Regular Girls (morning + evening) --}}
-                            <td class="px-3 py-3 text-center text-pink-700 bg-blue-50">
-                                {{ number_format($regGirls) }}</td>
-                            {{-- HIDDEN: old hasEvening conditional (morning_regular/evening_regular vs boys/girls)
+                            {{-- Regular: Morning/Evening for evening schools, Boys/Girls otherwise --}}
                             @if ($hasEvening)
                                 <td class="px-3 py-3 text-center text-blue-700 bg-blue-50">
                                     {{ number_format($s?->morning_regular ?? 0) }}</td>
@@ -280,47 +250,36 @@
                                     {{ number_format($s?->evening_regular ?? 0) }}</td>
                             @else
                                 <td class="px-3 py-3 text-center text-blue-700 bg-blue-50">
-                                    {{ number_format($s?->morning_boys ?? 0) }}</td>
+                                    {{ number_format($regBoys) }}</td>
                                 <td class="px-3 py-3 text-center text-pink-700 bg-blue-50">
-                                    {{ number_format($s?->morning_girls ?? 0) }}</td>
+                                    {{ number_format($regGirls) }}</td>
                             @endif
-                            <td class="px-3 py-3 text-center font-semibold text-blue-900 bg-blue-50">
-                                {{ number_format($s?->regular_total ?? 0) }}</td>
-                            --}}
 
-                            {{-- OOSC Boys (morning + evening) --}}
-                            <td class="px-3 py-3 text-center text-purple-700 bg-purple-50">
-                                {{ number_format($ooscBoys) }}</td>
-                            {{-- OOSC Girls (morning + evening) --}}
-                            <td class="px-3 py-3 text-center text-purple-600 bg-purple-50">
-                                {{ number_format($ooscGirls) }}</td>
-                            {{-- HIDDEN: old hasEvening conditional
+                            {{-- OOSC: Morning/Evening for evening schools, Boys/Girls otherwise --}}
                             @if ($hasEvening)
-                                <td ...>{{ number_format($s?->morning_oosc ?? 0) }}</td>
-                                <td ...>{{ number_format($s?->evening_oosc ?? 0) }}</td>
+                                <td class="px-3 py-3 text-center text-purple-700 bg-purple-50">
+                                    {{ number_format($s?->morning_oosc ?? 0) }}</td>
+                                <td class="px-3 py-3 text-center text-purple-600 bg-purple-50">
+                                    {{ number_format($s?->evening_oosc ?? 0) }}</td>
                             @else
-                                <td ...>{{ number_format($s?->morning_oosc_boys ?? 0) }}</td>
-                                <td ...>{{ number_format($s?->morning_oosc_girls ?? 0) }}</td>
+                                <td class="px-3 py-3 text-center text-purple-700 bg-purple-50">
+                                    {{ number_format($ooscBoys) }}</td>
+                                <td class="px-3 py-3 text-center text-purple-600 bg-purple-50">
+                                    {{ number_format($ooscGirls) }}</td>
                             @endif
-                            <td ...>{{ number_format($s?->oosc_total ?? 0) }}</td>
-                            --}}
 
-                            {{-- P2G Boys (morning + evening) --}}
-                            <td class="px-3 py-3 text-center text-orange-700 bg-orange-50">
-                                {{ number_format($p2pBoys) }}</td>
-                            {{-- P2G Girls (morning + evening) --}}
-                            <td class="px-3 py-3 text-center text-orange-600 bg-orange-50">
-                                {{ number_format($p2pGirls) }}</td>
-                            {{-- HIDDEN: old hasEvening conditional
+                            {{-- P2G: Morning/Evening for evening schools, Boys/Girls otherwise --}}
                             @if ($hasEvening)
-                                <td ...>{{ number_format($s?->morning_p2p ?? 0) }}</td>
-                                <td ...>{{ number_format($s?->evening_p2p ?? 0) }}</td>
+                                <td class="px-3 py-3 text-center text-orange-700 bg-orange-50">
+                                    {{ number_format($s?->morning_p2p ?? 0) }}</td>
+                                <td class="px-3 py-3 text-center text-orange-600 bg-orange-50">
+                                    {{ number_format($s?->evening_p2p ?? 0) }}</td>
                             @else
-                                <td ...>{{ number_format($s?->morning_p2p_boys ?? 0) }}</td>
-                                <td ...>{{ number_format($s?->morning_p2p_girls ?? 0) }}</td>
+                                <td class="px-3 py-3 text-center text-orange-700 bg-orange-50">
+                                    {{ number_format($p2pBoys) }}</td>
+                                <td class="px-3 py-3 text-center text-orange-600 bg-orange-50">
+                                    {{ number_format($p2pGirls) }}</td>
                             @endif
-                            <td ...>{{ number_format($s?->p2p_total ?? 0) }}</td>
-                            --}}
 
                             {{-- Total = grand_total (same as Newly Admitted) --}}
                             <td class="px-3 py-3 text-center font-bold text-blue-900 bg-blue-100">
@@ -347,35 +306,38 @@
                         </td>
                         --}}
 
-                        {{-- Regular totals: Boys/Girls combined --}}
-                        <td class="px-3 py-3 text-center">
-                            {{ number_format($classSummary->sum('morning_boys') + $classSummary->sum('evening_boys')) }}</td>
-                        <td class="px-3 py-3 text-center">
-                            {{ number_format($classSummary->sum('morning_girls') + $classSummary->sum('evening_girls')) }}</td>
-                        {{-- HIDDEN: old hasEvening conditional footer cells
+                        {{-- Regular totals --}}
                         @if ($hasEvening)
-                            <td ...>{{ number_format($grandMorningRegular) }}</td>
-                            <td ...>{{ number_format($grandEveningRegular) }}</td>
+                            <td class="px-3 py-3 text-center">{{ number_format($grandMorningRegular) }}</td>
+                            <td class="px-3 py-3 text-center">{{ number_format($grandEveningRegular) }}</td>
                         @else
-                            <td ...>{{ number_format($classSummary->sum('morning_boys')) }}</td>
-                            <td ...>{{ number_format($classSummary->sum('morning_girls')) }}</td>
+                            <td class="px-3 py-3 text-center">
+                                {{ number_format($classSummary->sum('morning_boys') + $classSummary->sum('evening_boys')) }}</td>
+                            <td class="px-3 py-3 text-center">
+                                {{ number_format($classSummary->sum('morning_girls') + $classSummary->sum('evening_girls')) }}</td>
                         @endif
-                        <td ...>{{ number_format($grandRegular) }}</td>
-                        --}}
 
-                        {{-- OOSC totals: Boys/Girls combined --}}
-                        <td class="px-3 py-3 text-center bg-purple-800">
-                            {{ number_format($classSummary->sum('morning_oosc_boys') + $classSummary->sum('evening_oosc_boys')) }}</td>
-                        <td class="px-3 py-3 text-center bg-purple-800">
-                            {{ number_format($classSummary->sum('morning_oosc_girls') + $classSummary->sum('evening_oosc_girls')) }}</td>
-                        {{-- HIDDEN: old conditional footer cells --}}
+                        {{-- OOSC totals --}}
+                        @if ($hasEvening)
+                            <td class="px-3 py-3 text-center bg-purple-800">{{ number_format($grandMorningOosc) }}</td>
+                            <td class="px-3 py-3 text-center bg-purple-800">{{ number_format($grandEveningOosc) }}</td>
+                        @else
+                            <td class="px-3 py-3 text-center bg-purple-800">
+                                {{ number_format($classSummary->sum('morning_oosc_boys') + $classSummary->sum('evening_oosc_boys')) }}</td>
+                            <td class="px-3 py-3 text-center bg-purple-800">
+                                {{ number_format($classSummary->sum('morning_oosc_girls') + $classSummary->sum('evening_oosc_girls')) }}</td>
+                        @endif
 
-                        {{-- P2G totals: Boys/Girls combined --}}
-                        <td class="px-3 py-3 text-center bg-orange-800">
-                            {{ number_format($classSummary->sum('morning_p2p_boys') + $classSummary->sum('evening_p2p_boys')) }}</td>
-                        <td class="px-3 py-3 text-center bg-orange-800">
-                            {{ number_format($classSummary->sum('morning_p2p_girls') + $classSummary->sum('evening_p2p_girls')) }}</td>
-                        {{-- HIDDEN: old conditional footer cells --}}
+                        {{-- P2G totals --}}
+                        @if ($hasEvening)
+                            <td class="px-3 py-3 text-center bg-orange-800">{{ number_format($grandMorningP2p) }}</td>
+                            <td class="px-3 py-3 text-center bg-orange-800">{{ number_format($grandEveningP2p) }}</td>
+                        @else
+                            <td class="px-3 py-3 text-center bg-orange-800">
+                                {{ number_format($classSummary->sum('morning_p2p_boys') + $classSummary->sum('evening_p2p_boys')) }}</td>
+                            <td class="px-3 py-3 text-center bg-orange-800">
+                                {{ number_format($classSummary->sum('morning_p2p_girls') + $classSummary->sum('evening_p2p_girls')) }}</td>
+                        @endif
 
                         <td class="px-3 py-3 text-center bg-blue-800">{{ number_format($grandTotal) }}</td>
                     </tr>
@@ -410,61 +372,55 @@
                         <tr>
                             <th class="px-4 py-3 text-left font-semibold" rowspan="2">Date</th>
                             <th class="px-4 py-3 text-left font-semibold" rowspan="2">Class</th>
-                            {{-- Regular (combined Boys/Girls across shifts) --}}
-                            <th class="px-3 py-2 text-center font-semibold bg-blue-50 text-blue-700" colspan="2">Regular</th>
-                            {{-- HIDDEN: old separate morning / evening Regular headers
-                            <th class="px-3 py-2 text-center font-semibold bg-blue-50 text-blue-700" colspan="2">🌅 Morning Regular</th>
+                            {{-- Regular --}}
                             @if ($hasEvening)
-                                <th class="px-3 py-2 text-center font-semibold bg-indigo-50 text-indigo-700" colspan="2">🌆 Evening Regular</th>
+                                <th class="px-3 py-2 text-center font-semibold bg-blue-50 text-blue-700" colspan="2">🌅 Morning Reg.</th>
+                                <th class="px-3 py-2 text-center font-semibold bg-indigo-50 text-indigo-700" colspan="2">🌆 Evening Reg.</th>
+                            @else
+                                <th class="px-3 py-2 text-center font-semibold bg-blue-50 text-blue-700" colspan="2">Regular</th>
                             @endif
-                            --}}
 
-                            {{-- OOSC (combined) --}}
-                            <th class="px-3 py-2 text-center font-semibold bg-purple-50 text-purple-700" colspan="2">OOSC</th>
-                            {{-- HIDDEN: old separate morning / evening OOSC headers
-                            <th class="px-3 py-2 text-center font-semibold bg-purple-50 text-purple-700" colspan="2">🌅 Morning OOSC</th>
+                            {{-- OOSC --}}
                             @if ($hasEvening)
+                                <th class="px-3 py-2 text-center font-semibold bg-purple-50 text-purple-700" colspan="2">🌅 Morning OOSC</th>
                                 <th class="px-3 py-2 text-center font-semibold bg-purple-50 text-purple-600" colspan="2">🌆 Evening OOSC</th>
+                            @else
+                                <th class="px-3 py-2 text-center font-semibold bg-purple-50 text-purple-700" colspan="2">OOSC</th>
                             @endif
-                            --}}
 
-                            {{-- P2G (combined) --}}
-                            <th class="px-3 py-2 text-center font-semibold bg-orange-50 text-orange-700" colspan="2">P2G</th>
-                            {{-- HIDDEN: old separate morning / evening P2G headers
-                            <th class="px-3 py-2 text-center font-semibold bg-orange-50 text-orange-700" colspan="2">🌅 Morning P2G</th>
+                            {{-- P2G --}}
                             @if ($hasEvening)
+                                <th class="px-3 py-2 text-center font-semibold bg-orange-50 text-orange-700" colspan="2">🌅 Morning P2G</th>
                                 <th class="px-3 py-2 text-center font-semibold bg-orange-50 text-orange-600" colspan="2">🌆 Evening P2G</th>
+                            @else
+                                <th class="px-3 py-2 text-center font-semibold bg-orange-50 text-orange-700" colspan="2">P2G</th>
                             @endif
-                            --}}
 
                             <th class="px-3 py-2 text-center font-semibold bg-blue-100 text-blue-900" rowspan="2">Total</th>
                             <th class="px-3 py-2 text-center font-semibold text-gray-500" rowspan="2">Status</th>
                         </tr>
                         <tr class="text-xs text-gray-400 border-b border-gray-100">
+                            {{-- Regular sub-headers --}}
                             <th class="px-3 py-1 text-center bg-blue-50 text-blue-500">Boys</th>
                             <th class="px-3 py-1 text-center bg-blue-50 text-pink-500">Girls</th>
-                            {{-- HIDDEN: evening regular sub-headers
                             @if ($hasEvening)
                                 <th class="px-3 py-1 text-center bg-indigo-50 text-blue-500">Boys</th>
                                 <th class="px-3 py-1 text-center bg-indigo-50 text-pink-500">Girls</th>
                             @endif
-                            --}}
+                            {{-- OOSC sub-headers --}}
                             <th class="px-3 py-1 text-center bg-purple-50 text-blue-500">Boys</th>
                             <th class="px-3 py-1 text-center bg-purple-50 text-pink-500">Girls</th>
-                            {{-- HIDDEN: evening oosc sub-headers
                             @if ($hasEvening)
                                 <th class="px-3 py-1 text-center bg-purple-50 text-blue-500">Boys</th>
                                 <th class="px-3 py-1 text-center bg-purple-50 text-pink-500">Girls</th>
                             @endif
-                            --}}
+                            {{-- P2G sub-headers --}}
                             <th class="px-3 py-1 text-center bg-orange-50 text-blue-500">Boys</th>
                             <th class="px-3 py-1 text-center bg-orange-50 text-pink-500">Girls</th>
-                            {{-- HIDDEN: evening p2g sub-headers
                             @if ($hasEvening)
                                 <th class="px-3 py-1 text-center bg-orange-50 text-blue-500">Boys</th>
                                 <th class="px-3 py-1 text-center bg-orange-50 text-pink-500">Girls</th>
                             @endif
-                            --}}
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -493,41 +449,29 @@
                                     {{ $row->classModel?->name }}
                                 </td>
 
-                                {{-- Regular Boys/Girls (combined) --}}
-                                <td class="px-3 py-2.5 text-center text-blue-700 bg-blue-50">{{ $dRegBoys }}</td>
-                                <td class="px-3 py-2.5 text-center text-pink-700 bg-blue-50">{{ $dRegGirls }}</td>
-                                {{-- HIDDEN: separate morning_boys, morning_girls, evening_boys, evening_girls cells
-                                <td ...>{{ $row->morning_boys }}</td>
-                                <td ...>{{ $row->morning_girls }}</td>
+                                {{-- Regular --}}
+                                <td class="px-3 py-2.5 text-center text-blue-700 bg-blue-50">{{ $row->morning_boys }}</td>
+                                <td class="px-3 py-2.5 text-center text-pink-700 bg-blue-50">{{ $row->morning_girls }}</td>
                                 @if ($hasEvening)
-                                    <td ...>{{ $row->evening_boys }}</td>
-                                    <td ...>{{ $row->evening_girls }}</td>
+                                    <td class="px-3 py-2.5 text-center text-blue-700 bg-indigo-50">{{ $row->evening_boys }}</td>
+                                    <td class="px-3 py-2.5 text-center text-pink-700 bg-indigo-50">{{ $row->evening_girls }}</td>
                                 @endif
-                                --}}
 
-                                {{-- OOSC Boys/Girls (combined) --}}
-                                <td class="px-3 py-2.5 text-center text-purple-700 bg-purple-50">{{ $dOoscBoys }}</td>
-                                <td class="px-3 py-2.5 text-center text-purple-600 bg-purple-50">{{ $dOoscGirls }}</td>
-                                {{-- HIDDEN: separate morning/evening oosc cells
-                                <td ...>{{ $row->morning_oosc_boys }}</td>
-                                <td ...>{{ $row->morning_oosc_girls }}</td>
+                                {{-- OOSC --}}
+                                <td class="px-3 py-2.5 text-center text-purple-700 bg-purple-50">{{ $row->morning_oosc_boys }}</td>
+                                <td class="px-3 py-2.5 text-center text-purple-600 bg-purple-50">{{ $row->morning_oosc_girls }}</td>
                                 @if ($hasEvening)
-                                    <td ...>{{ $row->evening_oosc_boys }}</td>
-                                    <td ...>{{ $row->evening_oosc_girls }}</td>
+                                    <td class="px-3 py-2.5 text-center text-purple-700 bg-purple-50">{{ $row->evening_oosc_boys }}</td>
+                                    <td class="px-3 py-2.5 text-center text-purple-600 bg-purple-50">{{ $row->evening_oosc_girls }}</td>
                                 @endif
-                                --}}
 
-                                {{-- P2G Boys/Girls (combined) --}}
-                                <td class="px-3 py-2.5 text-center text-orange-700 bg-orange-50">{{ $dP2pBoys }}</td>
-                                <td class="px-3 py-2.5 text-center text-orange-600 bg-orange-50">{{ $dP2pGirls }}</td>
-                                {{-- HIDDEN: separate morning/evening p2p cells
-                                <td ...>{{ $row->morning_p2p_boys }}</td>
-                                <td ...>{{ $row->morning_p2p_girls }}</td>
+                                {{-- P2G --}}
+                                <td class="px-3 py-2.5 text-center text-orange-700 bg-orange-50">{{ $row->morning_p2p_boys }}</td>
+                                <td class="px-3 py-2.5 text-center text-orange-600 bg-orange-50">{{ $row->morning_p2p_girls }}</td>
                                 @if ($hasEvening)
-                                    <td ...>{{ $row->evening_p2p_boys }}</td>
-                                    <td ...>{{ $row->evening_p2p_girls }}</td>
+                                    <td class="px-3 py-2.5 text-center text-orange-700 bg-orange-50">{{ $row->evening_p2p_boys }}</td>
+                                    <td class="px-3 py-2.5 text-center text-orange-600 bg-orange-50">{{ $row->evening_p2p_girls }}</td>
                                 @endif
-                                --}}
 
                                 <td class="px-3 py-2.5 text-center font-bold text-blue-900 bg-blue-100">
                                     {{ $rowTotal }}</td>

@@ -172,13 +172,15 @@
     {{-- ── Date Picker Navigation ─────────────────────────────────── --}}
     <div class="flex flex-wrap items-center gap-3 mb-4 bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-2.5">
         <span class="text-sm font-medium text-gray-500">📅 Date:</span>
-        <form method="GET" action="{{ route('hoi.admissions.daily') }}" class="flex items-center gap-2">
+        <form method="GET" action="{{ route('hoi.admissions.daily') }}" class="flex items-center gap-2" id="dateNavForm">
             <input type="date" name="date" value="{{ $selectedDate }}" max="{{ $today }}"
                 @if ($academicYear) min="{{ $academicYear->start_date }}" @endif
                 onchange="this.form.submit()"
                 class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            {{-- Preserve active shift when navigating dates (updated by shift buttons below) --}}
+            <input type="hidden" name="shift" id="dateNavShift" value="{{ $defaultShift }}">
             @if (!$isToday)
-                <a href="{{ route('hoi.admissions.daily') }}"
+                <a href="{{ route('hoi.admissions.daily', ['shift' => $defaultShift]) }}"
                     class="px-3 py-1.5 rounded-lg text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition font-medium whitespace-nowrap">
                     ↩ Today
                 </a>
@@ -374,13 +376,15 @@
                 @if ($hasEvening)
                     <div
                         class="flex items-center gap-1 mb-3 bg-white rounded-xl border border-gray-100 shadow-sm p-1 w-fit">
-                        <button type="button" @click="activeShift='morning'"
+                        <button type="button"
+                            @click="activeShift='morning'; document.getElementById('dateNavShift') && (document.getElementById('dateNavShift').value='morning')"
                             :class="activeShift === 'morning' ? 'bg-blue-900 text-white shadow-sm' :
                                 'text-gray-500 hover:bg-gray-100'"
                             class="px-5 py-2 rounded-lg text-sm font-semibold transition">
                             🌅 Morning Shift
                         </button>
-                        <button type="button" @click="activeShift='evening'"
+                        <button type="button"
+                            @click="activeShift='evening'; document.getElementById('dateNavShift') && (document.getElementById('dateNavShift').value='evening')"
                             :class="activeShift === 'evening' ? 'bg-indigo-800 text-white shadow-sm' :
                                 'text-gray-500 hover:bg-gray-100'"
                             class="px-5 py-2 rounded-lg text-sm font-semibold transition">
@@ -1247,7 +1251,7 @@
                     evening_available: parseInt(cls.evening_available) || 0,
                 })),
                 submitAction: 'draft',
-                activeShift: 'morning',
+                activeShift: '{{ $defaultShift }}',
 
                 // Total entered today for a row (all 12 fields — used for capacity checks & Matric Tech)
                 rowTotal(cls) {
