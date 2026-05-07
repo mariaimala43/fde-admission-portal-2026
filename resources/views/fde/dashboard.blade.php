@@ -49,7 +49,7 @@
     </div>
 
     {{-- ── Cumulative Totals ───────────────────────────── --}}
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <div class="bg-blue-900 rounded-xl p-5 text-center text-white">
             <p class="text-xs text-blue-200 uppercase tracking-wider mb-1">Total Admitted (Year)</p>
             <p class="text-3xl font-bold">{{ number_format($cumulativeTotals->total ?? 0) }}</p>
@@ -65,10 +65,6 @@
         <div class="bg-orange-600 rounded-xl p-5 text-center text-white">
             <p class="text-xs text-orange-100 uppercase tracking-wider mb-1">Private to Government</p>
             <p class="text-3xl font-bold">{{ number_format($cumulativeTotals->p2p ?? 0) }}</p>
-        </div>
-        <div class="bg-teal-700 rounded-xl p-5 text-center text-white">
-            <p class="text-xs text-teal-100 uppercase tracking-wider mb-1">⚙️ Matric Tech (Year)</p>
-            <p class="text-3xl font-bold">{{ number_format($cumulativeTotals->matric_tech ?? 0) }}</p>
         </div>
         <div class="bg-emerald-700 rounded-xl p-5 text-center text-white">
             <p class="text-xs text-emerald-100 uppercase tracking-wider mb-1">Available Capacity</p>

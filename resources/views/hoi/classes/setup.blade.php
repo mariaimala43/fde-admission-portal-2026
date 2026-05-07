@@ -575,8 +575,8 @@
                                                     name="classes[{{ $class->id }}][matric_tech_existing]"
                                                     x-model.number="matricTech"
                                                     :class="matricTech > existing ?
-                                                        'border-red-400 ring-2 ring-red-200 bg-red-50' :
-                                                        'border-teal-300'"
+                                                        'border-red-400 ring-2 ring-red-200 bg-red-50 text-red-900' :
+                                                        'border-teal-300 bg-white text-gray-900'"
                                                     class="w-24 text-center rounded-lg px-2 py-1.5 text-sm border focus:outline-none focus:ring-2 focus:ring-teal-400" />
                                                 <p x-show="matricTech > existing"
                                                     class="text-xs text-red-500 mt-1 font-medium">
@@ -610,8 +610,8 @@
                                                     name="classes[{{ $class->id }}][matric_tech_existing]"
                                                     x-model.number="matricTech"
                                                     :class="matricTech > (mExisting + eExisting) ?
-                                                        'border-red-400 ring-2 ring-red-200 bg-red-50' :
-                                                        'border-teal-300'"
+                                                        'border-red-400 ring-2 ring-red-200 bg-red-50 text-red-900' :
+                                                        'border-teal-300 bg-white text-gray-900'"
                                                     class="w-24 text-center rounded-lg px-2 py-1.5 text-sm border focus:outline-none focus:ring-2 focus:ring-teal-400" />
                                                 <p x-show="matricTech > (mExisting + eExisting)"
                                                     class="text-xs text-red-500 mt-1 font-medium">

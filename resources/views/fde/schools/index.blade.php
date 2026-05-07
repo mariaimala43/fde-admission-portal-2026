@@ -2,18 +2,19 @@
 @section('title', 'All Schools Report')
 @section('content')
 
-@php
-    $indexRoute = auth()->user()->hasRole('director')
-        ? route('director.schools.index')
-        : route('fde.schools.index');
-@endphp
+    @php
+        $indexRoute = auth()->user()->hasRole('director')
+            ? route('director.schools.index')
+            : route('fde.schools.index');
+    @endphp
 
+    {{-- ── Header ──────────────────────────────────────────────────────── --}}
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">All Schools</h2>
             <p class="text-sm text-gray-500 mt-1">
                 {{ $institutions->total() }} schools found
-                · showing {{ $institutions->firstItem() }}–{{ $institutions->lastItem() }}
+                &middot; showing {{ $institutions->firstItem() }}–{{ $institutions->lastItem() }}
             </p>
         </div>
         @role('director')
@@ -23,26 +24,27 @@
         @endrole
     </div>
 
-    {{-- Filters --}}
-    <form method="GET" action="{{ $indexRoute }}"
-        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+    {{-- ── Filters ──────────────────────────────────────────────────────── --}}
+    <form method="GET" action="{{ $indexRoute }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
 
-        {{-- Search by name --}}
+        {{-- Search --}}
         <div class="mb-4">
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Search School</label>
             <div class="relative">
                 <span class="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
                     </svg>
                 </span>
-                <input type="text" name="search" value="{{ request('search') }}"
-                    placeholder="Type school name or code…"
-                    class="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Type school name or code…"
+                    class="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 items-end">
+            {{-- Sector --}}
             <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Sector</label>
                 <select name="sector_id"
@@ -60,6 +62,8 @@
                     @endforeach
                 </select>
             </div>
+
+            {{-- School Type --}}
             <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">School Type</label>
                 <select name="type"
@@ -67,11 +71,13 @@
                            focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Types</option>
                     @foreach (['I-V', 'I-VIII', 'I-X', 'I-XII', 'VI-VIII', 'VI-X', 'VI-XII', 'XI-XII', 'XI-XIV', 'Model College'] as $t)
-                        <option value="{{ $t }}" {{ $type == $t ? 'selected' : '' }}>{{ $t }}</option>
+                        <option value="{{ $t }}" {{ $type == $t ? 'selected' : '' }}>{{ $t }}
+                        </option>
                     @endforeach
                 </select>
             </div>
 
+            {{-- Class --}}
             <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Class</label>
                 <select name="class_id"
@@ -85,6 +91,8 @@
                     @endforeach
                 </select>
             </div>
+
+            {{-- Gender --}}
             <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Gender</label>
                 <select name="gender"
@@ -96,6 +104,8 @@
                     <option value="co_education" {{ $gender == 'co_education' ? 'selected' : '' }}>Co-Education</option>
                 </select>
             </div>
+
+            {{-- Actions --}}
             <div class="flex gap-2">
                 <button type="submit"
                     class="flex-1 bg-blue-900 text-white px-4 py-2 rounded-lg text-sm
@@ -104,7 +114,7 @@
                 </button>
                 <a href="{{ $indexRoute }}"
                     class="px-4 py-2 rounded-lg text-sm border border-gray-300
-                      text-gray-600 hover:bg-gray-50 transition">
+                           text-gray-600 hover:bg-gray-50 transition">
                     Reset
                 </a>
             </div>
@@ -129,32 +139,61 @@
         </div>
     </form>
 
-    {{-- Schools Table --}}
+    {{-- ── Schools Table ────────────────────────────────────────────────── --}}
     <p class="block sm:hidden text-xs text-gray-400 mb-2 flex items-center gap-1">
         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
         Swipe right to see all columns
     </p>
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="overflow-x-auto -mx-4 sm:mx-0 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
-            <table class="min-w-full text-sm">
-                <thead class="bg-gray-50 text-xs uppercase text-gray-400">
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">EMIS</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">School</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Sector</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Type</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Gender</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Total Seats</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden lg:table-cell">Enrolled</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Regular</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">OOSC</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">P2G</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Total Admitted</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">Available</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">Facilities</th>
-                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Status</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
+                            Code</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">School
+                        </th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
+                            Sector</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
+                            Type</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
+                            Gender</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">
+                            Seats</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden lg:table-cell">
+                            Existing</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
+                            Regular</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
+                            OOSC</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
+                            P2G</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Total
+                            Admitted</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden sm:table-cell">
+                            Available</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-teal-600 uppercase tracking-wide text-left hidden md:table-cell">
+                            ⚙️ Matric Tech</th>
+                        <th
+                            class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left hidden md:table-cell">
+                            Facilities</th>
+                        <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left">Status
+                        </th>
                         <th class="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-left"></th>
                     </tr>
                 </thead>
@@ -166,53 +205,76 @@
                             $seats = $seat?->seats ?? 0;
                             $enrolled = $seat?->enrolled ?? 0;
                             $admitted = $adm?->total ?? 0;
+                            // All types (regular, OOSC, P2G) consume seats — consistent with HOI logic
                             $available = max(0, $seats - $enrolled - $admitted);
                             $instUrl = auth()->user()->hasRole('director')
                                 ? route('director.schools.show', $inst)
                                 : route('fde.schools.show', $inst);
                         @endphp
                         <tr class="hover:bg-gray-50">
-                            <td class="px-3 py-3 whitespace-nowrap text-xs font-mono text-gray-500">
+                            <td class="px-3 py-3 whitespace-nowrap text-xs font-mono text-gray-500 hidden md:table-cell">
                                 {{ $inst->code ?? '—' }}
                             </td>
                             <td class="px-3 py-3 max-w-[128px] sm:max-w-none">
                                 <div class="truncate font-medium text-gray-900 max-w-[120px] sm:max-w-none"
                                     title="{{ $inst->name }}">
                                     <a href="{{ $instUrl }}"
-                                       class="hover:text-blue-600 hover:underline">{{ $inst->name }}</a>
+                                        class="hover:text-blue-600 hover:underline">{{ $inst->name }}</a>
                                 </div>
                                 @if ($inst->is_cambridge)
                                     <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">CAM</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden md:table-cell">{{ $inst->sector?->name }}</td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden md:table-cell">{{ $inst->type }}</td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden md:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-gray-700 hidden md:table-cell">
+                                {{ $inst->sector?->name }}
+                            </td>
+                            <td class="px-3 py-3 whitespace-nowrap text-gray-700 hidden md:table-cell">
+                                {{ $inst->type }}
+                            </td>
+                            <td class="px-3 py-3 whitespace-nowrap text-gray-700 hidden md:table-cell">
                                 {{ ucfirst(str_replace('_', ' ', $inst->gender)) }}
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden sm:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-gray-700 hidden sm:table-cell">
                                 {{ number_format($seats) }}
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-orange-600 hidden lg:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-orange-600 hidden lg:table-cell">
                                 {{ number_format($enrolled) }}
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-blue-700 hidden md:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-blue-700 hidden md:table-cell">
                                 {{ number_format($adm?->regular ?? 0) }}
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-purple-700 hidden md:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-purple-700 hidden md:table-cell">
                                 {{ number_format($adm?->oosc ?? 0) }}
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap text-orange-700 hidden md:table-cell">
+                            {{-- p2p in DB → displayed as P2G on front-end --}}
+                            <td class="px-3 py-3 whitespace-nowrap text-orange-700 hidden md:table-cell">
                                 {{ number_format($adm?->p2p ?? 0) }}
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap font-bold">
+                            <td class="px-3 py-3 whitespace-nowrap font-bold text-gray-900">
                                 {{ number_format($admitted) }}
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap font-bold hidden sm:table-cell
+                            <td
+                                class="px-3 py-3 whitespace-nowrap font-bold hidden sm:table-cell
                                 {{ $available > 0 ? 'text-green-600' : 'text-red-500' }}">
                                 {{ number_format($available) }}
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap hidden md:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap hidden md:table-cell">
+                                @if ($inst->has_matric_tech)
+                                    @php
+                                        $mtBase  = (int) ($matricTechBaseSummary[$inst->id]?->matric_tech_base ?? 0);
+                                        $mtNew   = (int) ($adm?->matric_tech ?? 0);
+                                        $mtTotal = $mtBase + $mtNew;
+                                    @endphp
+                                    <div class="text-xs leading-5">
+                                        <span class="text-gray-500">Base: <span class="font-semibold text-gray-700">{{ number_format($mtBase) }}</span></span><br>
+                                        <span class="text-teal-600">New: <span class="font-semibold">{{ number_format($mtNew) }}</span></span><br>
+                                        <span class="font-bold text-teal-800">Total: {{ number_format($mtTotal) }}</span>
+                                    </div>
+                                @else
+                                    <span class="text-xs text-gray-300">—</span>
+                                @endif
+                            </td>
+                            <td class="px-3 py-3 whitespace-nowrap hidden md:table-cell">
                                 <div class="flex flex-wrap gap-1 justify-center">
                                     @if ($inst->has_transport)
                                         <span class="text-base" title="Transport">🚌</span>
@@ -239,22 +301,25 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
+                            <td class="px-3 py-3 whitespace-nowrap">
                                 <span
                                     class="px-2 py-1 rounded-full text-xs font-medium
-                            {{ $inst->admission_status === 'open'
-                                ? 'bg-green-100 text-green-700'
-                                : ($inst->admission_status === 'closed'
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-yellow-100 text-yellow-700') }}">
+                                    {{ $inst->admission_status === 'open'
+                                        ? 'bg-green-100 text-green-700'
+                                        : ($inst->admission_status === 'closed'
+                                            ? 'bg-red-100 text-red-700'
+                                            : 'bg-yellow-100 text-yellow-700') }}">
                                     {{ ucfirst(str_replace('_', ' ', $inst->admission_status)) }}
                                 </span>
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
+                            <td class="px-3 py-3 whitespace-nowrap">
                                 <a href="{{ $instUrl }}" title="View"
-                                    class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-3 text-xs sm:text-sm rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
-                                    <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-3 text-xs sm:text-sm
+                                           rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
+                                    <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                     <span class="hidden sm:inline">View</span>
                                 </a>
@@ -262,12 +327,50 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="14" class="px-4 py-10 text-center text-gray-400">
+                            <td colspan="16" class="px-4 py-10 text-center text-gray-400">
                                 No schools found.
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
+                <tfoot class="bg-gray-50 border-t-2 border-gray-200 text-sm font-semibold">
+                    @php
+                        $footSeats      = $seatSummary->sum('seats');
+                        $footEnrolled   = $seatSummary->sum('enrolled');
+                        $footAdmitted   = $admissionSummary->sum('total');
+                        $footRegular    = $admissionSummary->sum('regular');
+                        $footOosc       = $admissionSummary->sum('oosc');
+                        $footP2p        = $admissionSummary->sum('p2p');
+                        $footAvailable  = max(0, $footSeats - $footEnrolled - $footAdmitted);
+                        $footMtBase     = $matricTechBaseSummary->sum('matric_tech_base');
+                        $footMtNew      = $admissionSummary->sum('matric_tech');
+                        $footMtTotal    = $footMtBase + $footMtNew;
+                    @endphp
+                    <tr>
+                        <td class="px-3 py-3 text-gray-500 hidden md:table-cell">—</td>
+                        <td class="px-3 py-3 text-gray-800">Page Total ({{ $institutions->count() }} schools)</td>
+                        <td class="px-3 py-3 hidden md:table-cell">—</td>
+                        <td class="px-3 py-3 hidden md:table-cell">—</td>
+                        <td class="px-3 py-3 hidden md:table-cell">—</td>
+                        <td class="px-3 py-3 text-gray-800 hidden sm:table-cell">{{ number_format($footSeats) }}</td>
+                        <td class="px-3 py-3 text-orange-600 hidden lg:table-cell">{{ number_format($footEnrolled) }}</td>
+                        <td class="px-3 py-3 text-blue-700 hidden md:table-cell">{{ number_format($footRegular) }}</td>
+                        <td class="px-3 py-3 text-purple-700 hidden md:table-cell">{{ number_format($footOosc) }}</td>
+                        <td class="px-3 py-3 text-orange-700 hidden md:table-cell">{{ number_format($footP2p) }}</td>
+                        <td class="px-3 py-3 text-gray-900">{{ number_format($footAdmitted) }}</td>
+                        <td class="px-3 py-3 {{ $footAvailable > 0 ? 'text-green-600' : 'text-red-500' }} hidden sm:table-cell">{{ number_format($footAvailable) }}</td>
+                        <td class="px-3 py-3 hidden md:table-cell">
+                            <div class="text-xs leading-5">
+                                <span class="text-gray-500">Base: <span class="font-semibold text-gray-700">{{ number_format($footMtBase) }}</span></span><br>
+                                <span class="text-teal-600">New: <span class="font-semibold">{{ number_format($footMtNew) }}</span></span><br>
+                                <span class="font-bold text-teal-800">Total: {{ number_format($footMtTotal) }}</span>
+                            </div>
+                        </td>
+                        <td class="px-3 py-3 hidden md:table-cell">—</td>
+                        <td class="px-3 py-3">—</td>
+                        <td class="px-3 py-3">—</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
 

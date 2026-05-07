@@ -258,7 +258,9 @@ class PortalController extends Controller
                 ->selectRaw('
                     institution_id,
                     SUM(morning_boys + morning_girls) as morning_filled,
-                    SUM(evening_boys + evening_girls) as evening_filled
+                    SUM(evening_boys + evening_girls) as evening_filled,
+                    SUM(oosc_boys + oosc_girls + p2p_boys + p2p_girls) as oosc_p2p_filled,
+                    SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total_filled
                 ')
                 ->groupBy('institution_id')
                 ->get()
@@ -268,19 +270,25 @@ class PortalController extends Controller
                 $seats = $seatTotals[$inst->id]      ?? null;
                 $adm   = $admissionTotals[$inst->id] ?? null;
 
-                // Morning shift
-                $morningTotal    = (int)($seats?->morning_seats    ?? 0);
-                $morningExisting = (int)($seats?->morning_existing ?? 0);
-                $morningAdmitted = (int)($adm?->morning_filled     ?? 0);
-                $morningFilled   = $morningExisting + $morningAdmitted;
-                $morningAvail    = max(0, $morningTotal - $morningFilled);
+                $totalSeatsAll   = (int)($seats?->total_seats         ?? 0);
+                $existingAll     = (int)($seats?->existing_enrollment ?? 0);
+                $totalAdmitted   = (int)($adm?->total_filled          ?? 0);
+                $totalAvailAll   = max(0, $totalSeatsAll - $existingAll - $totalAdmitted);
 
-                // Evening shift
+                // Evening available: only shift-specific admissions consume evening seats
                 $eveningTotal    = (int)($seats?->evening_seats    ?? 0);
                 $eveningExisting = (int)($seats?->evening_existing ?? 0);
                 $eveningAdmitted = (int)($adm?->evening_filled     ?? 0);
                 $eveningFilled   = $eveningExisting + $eveningAdmitted;
                 $eveningAvail    = max(0, $eveningTotal - $eveningFilled);
+
+                // Morning available = total available − evening available
+                // (OOSC/P2P absorbed into morning, keeping morning + evening = total)
+                $morningTotal    = (int)($seats?->morning_seats    ?? 0);
+                $morningExisting = (int)($seats?->morning_existing ?? 0);
+                $morningAdmitted = (int)($adm?->morning_filled     ?? 0) + (int)($adm?->oosc_p2p_filled ?? 0);
+                $morningFilled   = $morningExisting + $morningAdmitted;
+                $morningAvail    = max(0, $totalAvailAll - $eveningAvail);
 
                 $inst->morning_total     = $morningTotal;
                 $inst->morning_existing  = $morningExisting;
@@ -360,12 +368,14 @@ class PortalController extends Controller
         $eveningAvail = max(0, $et - $ee - $ea);
 
         // Grand total — uses total_seats (all schools) so the big number is always correct
+        // (includes ALL admitted: regular morning/evening + OOSC + P2P)
         $totalAll    = (int)($totals->ts ?? 0);
         $existingAll = (int)($totals->xe ?? 0);
         $admittedAll = (int)($admitted->total ?? 0);
         $totalAvail  = max(0, $totalAll - $existingAll - $admittedAll);
 
         // Morning = total minus evening — ensures morning + evening always equals the total
+        // (OOSC/P2P are absorbed into morning since they have no shift attribution)
         $morningAvail = max(0, $totalAvail - $eveningAvail);
         $mt = $totalAll - $et;   // morning total seats = all seats minus evening seats
         $me = $existingAll - $ee; // morning existing  = all existing minus evening existing
@@ -441,12 +451,15 @@ class PortalController extends Controller
             ->get()
             ->keyBy('class_id');
 
-        // Per-shift admitted (morning/evening only — no OOSC/P2P shift attribution)
+        // Per-shift admitted — morning/evening regular + OOSC/P2P (no shift attribution,
+        // so they are passed separately and added to morning in the blade, since they
+        // reduce the total seat pool and morning = total − evening by convention)
         $admissionByShift = DailyAdmission::where('institution_id', $institution->id)
             ->where('academic_year_id', $academicYear?->id)
             ->selectRaw('class_id,
                 SUM(morning_boys + morning_girls) as morning_admitted,
-                SUM(evening_boys + evening_girls) as evening_admitted')
+                SUM(evening_boys + evening_girls) as evening_admitted,
+                SUM(oosc_boys + oosc_girls + p2p_boys + p2p_girls) as oosc_p2p_admitted')
             ->groupBy('class_id')
             ->get()
             ->keyBy('class_id');

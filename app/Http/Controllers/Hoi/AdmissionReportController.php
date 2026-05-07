@@ -89,7 +89,10 @@ class AdmissionReportController extends Controller
                   + morning_oosc_boys + morning_oosc_girls
                   + evening_oosc_boys + evening_oosc_girls
                   + morning_p2p_boys  + morning_p2p_girls
-                  + evening_p2p_boys  + evening_p2p_girls)              AS grand_total
+                  + evening_p2p_boys  + evening_p2p_girls)              AS grand_total,
+
+                -- Matric Tech (subset of regular Class 9 & 10)
+                SUM(matric_tech_count)                                  AS matric_tech_count
             ')
             ->groupBy('class_id')
             ->get()
@@ -125,10 +128,13 @@ class AdmissionReportController extends Controller
         $grandP2p            = $classSummary->sum('p2p_total');
 
         $grandTotal          = $classSummary->sum('grand_total');
+        $grandMatricTech     = (int) $classSummary->sum('matric_tech_count');
 
         // Kept for backward compat with any existing views
         $grandMorning = $grandMorningRegular;
         $grandEvening = $grandEveningRegular;
+
+        $hasMatricTech = (bool) $institution->has_matric_tech;
 
         return view('hoi.admissions.report', compact(
             'institution', 'academicYear',
@@ -137,8 +143,8 @@ class AdmissionReportController extends Controller
             'grandMorningRegular', 'grandEveningRegular',
             'grandMorningOosc', 'grandEveningOosc', 'grandOosc',
             'grandMorningP2p', 'grandEveningP2p', 'grandP2p',
-            'grandTotal',
-            'from', 'to', 'hasEvening'
+            'grandTotal', 'grandMatricTech',
+            'from', 'to', 'hasEvening', 'hasMatricTech'
         ));
     }
 
@@ -195,7 +201,8 @@ class AdmissionReportController extends Controller
                 SUM(morning_p2p_boys  + morning_p2p_girls + evening_p2p_boys + evening_p2p_girls) AS p2p_total,
                 SUM(morning_boys + morning_girls + evening_boys + evening_girls
                   + morning_oosc_boys + morning_oosc_girls + evening_oosc_boys + evening_oosc_girls
-                  + morning_p2p_boys  + morning_p2p_girls  + evening_p2p_boys  + evening_p2p_girls) AS grand_total
+                  + morning_p2p_boys  + morning_p2p_girls  + evening_p2p_boys  + evening_p2p_girls) AS grand_total,
+                SUM(matric_tech_count) AS matric_tech_count
             ')
             ->groupBy('class_id')
             ->get()
@@ -217,13 +224,16 @@ class AdmissionReportController extends Controller
         $grandEveningP2p     = $classSummary->sum('evening_p2p');
         $grandP2p            = $classSummary->sum('p2p_total');
         $grandTotal          = $classSummary->sum('grand_total');
+        $grandMatricTech     = (int) $classSummary->sum('matric_tech_count');
+        $hasMatricTech       = (bool) $institution->has_matric_tech;
 
         return compact(
             'institution', 'academicYear', 'classSummary', 'classes',
             'grandMorningRegular', 'grandEveningRegular', 'grandRegular',
             'grandMorningOosc', 'grandEveningOosc', 'grandOosc',
             'grandMorningP2p', 'grandEveningP2p', 'grandP2p',
-            'grandTotal', 'from', 'to', 'hasEvening'
+            'grandTotal', 'grandMatricTech',
+            'from', 'to', 'hasEvening', 'hasMatricTech'
         );
     }
 

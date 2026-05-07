@@ -307,24 +307,24 @@
 </head>
 
 @php
-    $bannerEnabled  = !empty($settings['banner_enabled']);
-    $bannerMsg      = $settings['banner_text'] ?? null;
-    $defaultBanner  = 'Admissions are open for Academic Year ' .
+    $bannerEnabled = !empty($settings['banner_enabled']);
+    $bannerMsg = $settings['banner_text'] ?? null;
+    $defaultBanner =
+        'Admissions are open for Academic Year ' .
         ($academicYear?->name ?? '2026–27') .
         '. Visit the school directly to complete enrollment.';
-    $bannerDisplay  = $bannerMsg ?: $defaultBanner;
-    $bannerColour   = $settings['banner_colour'] ?? 'amber';
-    $bannerImageUrl = !empty($settings['banner_image'])
-        ? asset('storage/' . $settings['banner_image']) : null;
-    $bannerBg       = $bannerImageUrl
+    $bannerDisplay = $bannerMsg ?: $defaultBanner;
+    $bannerColour = $settings['banner_colour'] ?? 'amber';
+    $bannerImageUrl = !empty($settings['banner_image']) ? asset('storage/' . $settings['banner_image']) : null;
+    $bannerBg = $bannerImageUrl
         ? "background:url('{$bannerImageUrl}') center/cover no-repeat;background-color:#000;"
-        : match($bannerColour) {
-            'blue'  => 'background:#2563EB;',
+        : match ($bannerColour) {
+            'blue' => 'background:#2563EB;',
             'green' => 'background:#16a34a;',
-            'red'   => 'background:#dc2626;',
-            'navy'  => 'background:#1B3A6B;',
+            'red' => 'background:#dc2626;',
+            'navy' => 'background:#1B3A6B;',
             default => 'background:#f59e0b;',
-          };
+        };
 @endphp
 
 <body class="page-bg" x-data="{
@@ -348,69 +348,66 @@
     @endif
 
     {{-- ── Full-page Banner Overlay ── --}}
-    <div x-show="bannerOpen" x-cloak
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-         @click.self="dismissBanner()"
-         style="position:fixed;inset:0;z-index:50;{{ $bannerBg }};
+    <div x-show="bannerOpen" x-cloak x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0" @click.self="dismissBanner()"
+        style="position:fixed;inset:0;z-index:50;{{ $bannerBg }};
                 display:flex;flex-direction:column;align-items:center;justify-content:center;">
 
-        @if($bannerImageUrl)
+        @if ($bannerImageUrl)
             {{-- Image banner: full-screen image with dismiss bar at bottom --}}
             <div style="position:absolute;inset:0;overflow:hidden;">
                 <img src="{{ $bannerImageUrl }}" alt="Banner"
-                     style="width:100%;height:100%;object-fit:contain;background:#000;">
+                    style="width:100%;height:100%;object-fit:contain;background:#000;">
             </div>
-            <div style="position:absolute;bottom:0;left:0;right:0;
+            <div
+                style="position:absolute;bottom:0;left:0;right:0;
                         background:linear-gradient(transparent,rgba(0,0,0,0.75));
                         padding:1.5rem 2rem;display:flex;flex-direction:column;align-items:center;gap:0.75rem;">
-                @if(!empty($settings['banner_link_text']) && !empty($settings['banner_link_url']))
-                <a href="{{ $settings['banner_link_url'] }}" target="_blank" rel="noopener"
-                   class="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full text-sm font-semibold"
-                   style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.35);">
-                    {{ $settings['banner_link_text'] }}
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
+                @if (!empty($settings['banner_link_text']) && !empty($settings['banner_link_url']))
+                    <a href="{{ $settings['banner_link_url'] }}" target="_blank" rel="noopener"
+                        class="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full text-sm font-semibold"
+                        style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.35);">
+                        {{ $settings['banner_link_text'] }}
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
                 @endif
-                <button @click="dismissBanner()"
-                        class="px-8 py-2.5 rounded-full font-bold text-sm transition"
-                        style="background:#fff;color:#1f2937;"
-                        onmouseover="this.style.background='#f3f4f6'"
-                        onmouseout="this.style.background='#fff'">
+                <button @click="dismissBanner()" class="px-8 py-2.5 rounded-full font-bold text-sm transition"
+                    style="background:#fff;color:#1f2937;" onmouseover="this.style.background='#f3f4f6'"
+                    onmouseout="this.style.background='#fff'">
                     Continue to Portal →
                 </button>
                 <p style="font-size:0.65rem;color:rgba(255,255,255,0.4);">Tap anywhere on image to dismiss</p>
             </div>
         @else
             {{-- Text/colour banner: centred card --}}
-            <div style="max-width:560px;width:100%;margin:1.5rem;background:rgba(0,0,0,0.2);
+            <div
+                style="max-width:560px;width:100%;margin:1.5rem;background:rgba(0,0,0,0.2);
                         border:1px solid rgba(255,255,255,0.2);border-radius:1.5rem;
                         padding:2.5rem;text-align:center;">
                 <div style="font-size:2.5rem;margin-bottom:1rem;">📢</div>
                 <p class="text-white font-bold text-xl leading-snug" style="margin-bottom:1.25rem;">
                     {{ $bannerDisplay }}
                 </p>
-                @if(!empty($settings['banner_link_text']) && !empty($settings['banner_link_url']))
-                <div style="margin-bottom:1rem;">
-                    <a href="{{ $settings['banner_link_url'] }}" target="_blank" rel="noopener"
-                       class="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold"
-                       style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);">
-                        {{ $settings['banner_link_text'] }}
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </a>
-                </div>
+                @if (!empty($settings['banner_link_text']) && !empty($settings['banner_link_url']))
+                    <div style="margin-bottom:1rem;">
+                        <a href="{{ $settings['banner_link_url'] }}" target="_blank" rel="noopener"
+                            class="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold"
+                            style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);">
+                            {{ $settings['banner_link_text'] }}
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
                 @endif
-                <button @click="dismissBanner()"
-                        class="px-8 py-3 rounded-full font-bold text-sm transition"
-                        style="background:#fff;color:#1f2937;"
-                        onmouseover="this.style.background='#f3f4f6'"
-                        onmouseout="this.style.background='#fff'">
+                <button @click="dismissBanner()" class="px-8 py-3 rounded-full font-bold text-sm transition"
+                    style="background:#fff;color:#1f2937;" onmouseover="this.style.background='#f3f4f6'"
+                    onmouseout="this.style.background='#fff'">
                     Continue to Portal →
                 </button>
                 <p style="font-size:0.7rem;margin-top:0.75rem;color:rgba(255,255,255,0.45);">
@@ -457,7 +454,8 @@
                     style="border-color:var(--border);color:var(--text);"
                     onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'"
                     onmouseout="this.style.borderColor='var(--border)'">Sign In</a>
-                <a href="{{ route('login') }}" class="btn-g" style="padding:8px 20px;font-size:13px;">Get Access</a>
+                <a href="{{ route('login') }}" class="btn-g" style="padding:8px 20px;font-size:13px;">Get
+                    Access</a>
             </div>
         </div>
     </nav>
@@ -469,17 +467,29 @@
         $totalExist = $seatData->sum('existing_enrollment');
         $totalAdmit = $admissionTotal->sum('total_admitted');
         $totalAvail = max(0, $totalSeats - $totalExist - $totalAdmit);
-        $fillPct    = $totalSeats > 0 ? min(100, round((($totalExist + $totalAdmit) / $totalSeats) * 100)) : 0;
+        $fillPct = $totalSeats > 0 ? min(100, round((($totalExist + $totalAdmit) / $totalSeats) * 100)) : 0;
 
         // Morning / Evening totals (only used when $hasEveningShift)
+        // Each shift calculated independently — OOSC/P2P not subtracted from either shift.
+        // Hero big number = mornAvail + evenAvail (sum of both shifts).
         $mornSeats = $seatData->sum('morning_seats');
         $evenSeats = $seatData->sum('evening_seats');
         $mornExist = $seatData->sum('morning_existing');
         $evenExist = $seatData->sum('evening_existing');
         $mornAdmit = $admissionByShift->sum('morning_admitted');
         $evenAdmit = $admissionByShift->sum('evening_admitted');
+        $ooScP2pTotal = $admissionByShift->sum('oosc_p2p_admitted');
         $mornAvail = max(0, $mornSeats - $mornExist - $mornAdmit);
         $evenAvail = max(0, $evenSeats - $evenExist - $evenAdmit);
+        // Hero total = morning + evening available (no OOSC/P2P deduction)
+        if ($hasEveningShift) {
+            $totalAvail = $mornAvail + $evenAvail;
+            $totalSeats = $mornSeats + $evenSeats;
+            $fillPct =
+                $totalSeats > 0
+                    ? min(100, round((($mornExist + $evenExist + $mornAdmit + $evenAdmit) / $totalSeats) * 100))
+                    : 0;
+        }
     @endphp
 
     <section class="hero">
@@ -510,11 +520,13 @@
                 <div class="flex-1 au">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="dot"></span>
-                        <span class="text-xs font-semibold tracking-widest uppercase" style="color:var(--green-text);">
+                        <span class="text-xs font-semibold tracking-widest uppercase"
+                            style="color:var(--green-text);">
                             {{ $institution->sector?->name }} Sector
                         </span>
                     </div>
-                    <h1 class="font-extrabold text-white leading-tight mb-5" style="font-size:clamp(1.8rem,4vw,3rem);">
+                    <h1 class="font-extrabold text-white leading-tight mb-5"
+                        style="font-size:clamp(1.8rem,4vw,3rem);">
                         {{ $institution->name }}
                     </h1>
                     <div class="flex flex-wrap gap-2">
@@ -542,19 +554,26 @@
                         style="font-size:3.6rem;color:{{ $totalAvail > 0 ? 'var(--green-text)' : '#fca5a5' }};">
                         {{ number_format($totalAvail) }}
                     </p>
-                    <p class="text-xs mb-4" style="color:var(--muted);">of {{ number_format($totalSeats) }} total seats</p>
+                    <p class="text-xs mb-4" style="color:var(--muted);">of {{ number_format($totalSeats) }} total
+                        seats</p>
 
                     @if ($hasEveningShift)
                         {{-- Morning / Evening split --}}
                         <div class="grid grid-cols-2 gap-2 mb-4">
-                            <div style="background:rgba(134,239,172,0.07);border:1px solid rgba(134,239,172,0.18);border-radius:8px;padding:7px 8px;">
+                            <div
+                                style="background:rgba(134,239,172,0.07);border:1px solid rgba(134,239,172,0.18);border-radius:8px;padding:7px 8px;">
                                 <p class="text-xs mb-0.5" style="color:var(--muted);">🌅 Morning</p>
-                                <p class="text-base font-bold" style="color:{{ $mornAvail > 0 ? '#86efac' : '#fca5a5' }};">{{ number_format($mornAvail) }}</p>
+                                <p class="text-base font-bold"
+                                    style="color:{{ $mornAvail > 0 ? '#86efac' : '#fca5a5' }};">
+                                    {{ number_format($mornAvail) }}</p>
                                 <p class="text-xs" style="color:var(--muted);">/ {{ number_format($mornSeats) }}</p>
                             </div>
-                            <div style="background:rgba(147,197,253,0.07);border:1px solid rgba(147,197,253,0.18);border-radius:8px;padding:7px 8px;">
+                            <div
+                                style="background:rgba(147,197,253,0.07);border:1px solid rgba(147,197,253,0.18);border-radius:8px;padding:7px 8px;">
                                 <p class="text-xs mb-0.5" style="color:var(--muted);">🌙 Evening</p>
-                                <p class="text-base font-bold" style="color:{{ $evenAvail > 0 ? '#93c5fd' : '#fca5a5' }};">{{ number_format($evenAvail) }}</p>
+                                <p class="text-base font-bold"
+                                    style="color:{{ $evenAvail > 0 ? '#93c5fd' : '#fca5a5' }};">
+                                    {{ number_format($evenAvail) }}</p>
                                 <p class="text-xs" style="color:var(--muted);">/ {{ number_format($evenSeats) }}</p>
                             </div>
                         </div>
@@ -582,60 +601,63 @@
     </section>
 
     {{-- ── Per-school Merit List Files ─────────────────────────────────────── --}}
-    @if($meritLists->isNotEmpty())
-    <div class="max-w-5xl mx-auto px-5 pt-6">
-        <div class="rounded-xl overflow-hidden"
-             style="background:linear-gradient(90deg,#1e3a8a 0%,#2563eb 100%);
+    @if ($meritLists->isNotEmpty())
+        <div class="max-w-5xl mx-auto px-5 pt-6">
+            <div class="rounded-xl overflow-hidden"
+                style="background:linear-gradient(90deg,#1e3a8a 0%,#2563eb 100%);
                     box-shadow:0 4px 16px rgba(37,99,235,0.35);">
-            <div class="px-5 py-4">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="text-lg">📋</span>
-                    <p class="font-bold text-white text-sm">Merit List</p>
-                </div>
-                @foreach($meritLists as $ml)
-                <div class="flex items-center justify-between gap-3 py-2.5
-                            border-b border-white/10 last:border-0">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <span class="flex-shrink-0 text-base">{{ $ml->fileIcon() }}</span>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <p class="text-sm text-white font-medium leading-snug">
-                                    {{ $ml->title ?: $ml->original_name }}
-                                </p>
-                                @if($ml->isNew())
-                                    <span class="text-xs font-semibold px-1.5 rounded"
-                                          style="background:rgba(74,222,128,0.2);color:#86efac;
-                                                 border:1px solid rgba(74,222,128,0.3);line-height:1.6;">
-                                        New
-                                    </span>
-                                @endif
-                            </div>
-                            <p class="text-xs mt-0.5" style="color:#bfdbfe;">
-                                {{ $ml->fileType() }}
-                                @if($ml->file_size) &middot; {{ $ml->formattedSize() }} @endif
-                                &middot; {{ $ml->created_at->format('d M Y') }}
-                                @if($ml->title) &middot; {{ $ml->original_name }} @endif
-                            </p>
-                        </div>
+                <div class="px-5 py-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-lg">📋</span>
+                        <p class="font-bold text-white text-sm">Merit List</p>
                     </div>
-                    <a href="{{ $ml->downloadUrl() }}"
-                       target="_blank" rel="noopener"
-                       class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5
+                    @foreach ($meritLists as $ml)
+                        <div
+                            class="flex items-center justify-between gap-3 py-2.5
+                            border-b border-white/10 last:border-0">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="flex-shrink-0 text-base">{{ $ml->fileIcon() }}</span>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <p class="text-sm text-white font-medium leading-snug">
+                                            {{ $ml->title ?: $ml->original_name }}
+                                        </p>
+                                        @if ($ml->isNew())
+                                            <span class="text-xs font-semibold px-1.5 rounded"
+                                                style="background:rgba(74,222,128,0.2);color:#86efac;
+                                                 border:1px solid rgba(74,222,128,0.3);line-height:1.6;">
+                                                New
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs mt-0.5" style="color:#bfdbfe;">
+                                        {{ $ml->fileType() }}
+                                        @if ($ml->file_size)
+                                            &middot; {{ $ml->formattedSize() }}
+                                        @endif
+                                        &middot; {{ $ml->created_at->format('d M Y') }}
+                                        @if ($ml->title)
+                                            &middot; {{ $ml->original_name }}
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ $ml->downloadUrl() }}" target="_blank" rel="noopener"
+                                class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5
                               rounded-lg text-xs font-semibold transition"
-                       style="background:#fff;color:#1d4ed8;"
-                       onmouseover="this.style.background='#eff6ff'"
-                       onmouseout="this.style.background='#fff'">
-                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        Download
-                    </a>
+                                style="background:#fff;color:#1d4ed8;" onmouseover="this.style.background='#eff6ff'"
+                                onmouseout="this.style.background='#fff'">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download
+                            </a>
+                        </div>
+                    @endforeach
                 </div>
-                @endforeach
             </div>
         </div>
-    </div>
     @endif
 
     {{-- ── Main Content ── --}}
@@ -731,31 +753,37 @@
 
                 @if ($hasEveningShift)
                     {{-- Morning block --}}
-                    <div style="background:rgba(134,239,172,0.05);border:1px solid rgba(134,239,172,0.15);border-radius:10px;padding:10px 12px;">
+                    <div
+                        style="background:rgba(134,239,172,0.05);border:1px solid rgba(134,239,172,0.15);border-radius:10px;padding:10px 12px;">
                         <p class="text-xs font-semibold mb-2" style="color:#86efac;">🌅 Morning Shift</p>
                         @foreach ([['Capacity', number_format($mornSeats), 'var(--text)'], ['Existing', number_format($mornExist), '#fb923c'], ['Admitted', number_format($mornAdmit), '#60a5fa'], ['Available', number_format($mornAvail), $mornAvail > 0 ? '#86efac' : '#fca5a5']] as [$lbl, $v, $c])
-                            <div class="flex justify-between items-center py-1.5" style="border-bottom:1px solid var(--border);">
+                            <div class="flex justify-between items-center py-1.5"
+                                style="border-bottom:1px solid var(--border);">
                                 <p class="text-xs" style="color:var(--muted);">{{ $lbl }}</p>
-                                <p class="text-sm font-bold" style="color:{{ $c }};">{{ $v }}</p>
+                                <p class="text-sm font-bold" style="color:{{ $c }};">{{ $v }}
+                                </p>
                             </div>
                         @endforeach
                     </div>
 
                     {{-- Evening block --}}
-                    <div style="background:rgba(147,197,253,0.05);border:1px solid rgba(147,197,253,0.15);border-radius:10px;padding:10px 12px;">
+                    <div
+                        style="background:rgba(147,197,253,0.05);border:1px solid rgba(147,197,253,0.15);border-radius:10px;padding:10px 12px;">
                         <p class="text-xs font-semibold mb-2" style="color:#93c5fd;">🌙 Evening Shift</p>
                         @foreach ([['Capacity', number_format($evenSeats), 'var(--text)'], ['Existing', number_format($evenExist), '#fb923c'], ['Admitted', number_format($evenAdmit), '#60a5fa'], ['Available', number_format($evenAvail), $evenAvail > 0 ? '#93c5fd' : '#fca5a5']] as [$lbl, $v, $c])
-                            <div class="flex justify-between items-center py-1.5" style="border-bottom:1px solid var(--border);">
+                            <div class="flex justify-between items-center py-1.5"
+                                style="border-bottom:1px solid var(--border);">
                                 <p class="text-xs" style="color:var(--muted);">{{ $lbl }}</p>
-                                <p class="text-sm font-bold" style="color:{{ $c }};">{{ $v }}</p>
+                                <p class="text-sm font-bold" style="color:{{ $c }};">{{ $v }}
+                                </p>
                             </div>
                         @endforeach
                     </div>
-
                 @else
                     {{-- Morning-only: original combined layout --}}
                     @foreach ([['Total Capacity', number_format($totalSeats), 'var(--text)'], ['Existing Students', number_format($totalExist), '#fb923c'], ['Newly Admitted', number_format($totalAdmit), '#60a5fa'], ['Seats Available', number_format($totalAvail), $totalAvail > 0 ? 'var(--green-text)' : '#fca5a5']] as [$label, $val, $color])
-                        <div class="flex justify-between items-center py-2.5" style="border-bottom:1px solid var(--border);">
+                        <div class="flex justify-between items-center py-2.5"
+                            style="border-bottom:1px solid var(--border);">
                             <p class="text-xs" style="color:var(--muted);">{{ $label }}</p>
                             <p class="text-sm font-bold" style="color:{{ $color }};">{{ $val }}</p>
                         </div>
@@ -779,188 +807,218 @@
 
         {{-- HOI section (only shown when hoi_name or hoi_contact is set) --}}
         @if ($institution->hoi_name || $institution->hoi_contact)
-        <div class="glass p-6 au au1">
-            <div class="flex items-center gap-2 mb-5">
-                <div class="icon-box" style="width:36px;height:36px;border-radius:10px;font-size:16px;">👤</div>
-                <p class="text-sm font-semibold text-white">Head of Institution</p>
-            </div>
-            <div class="grid grid-cols-2 gap-5">
-                @if ($institution->hoi_name)
-                <div>
-                    <p class="info-lbl">Name</p>
-                    <p class="info-val">{{ $institution->hoi_name }}</p>
+            <div class="glass p-6 au au1">
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="icon-box" style="width:36px;height:36px;border-radius:10px;font-size:16px;">👤</div>
+                    <p class="text-sm font-semibold text-white">Head of Institution</p>
                 </div>
-                @endif
-                @if ($institution->hoi_contact)
-                <div>
-                    <p class="info-lbl">Contact</p>
-                    <p class="info-val">
-                        <a href="tel:{{ $institution->hoi_contact }}" style="color:var(--green-text);">
-                            {{ $institution->hoi_contact }}
-                        </a>
-                    </p>
+                <div class="grid grid-cols-2 gap-5">
+                    @if ($institution->hoi_name)
+                        <div>
+                            <p class="info-lbl">Name</p>
+                            <p class="info-val">{{ $institution->hoi_name }}</p>
+                        </div>
+                    @endif
+                    @if ($institution->hoi_contact)
+                        <div>
+                            <p class="info-lbl">Contact</p>
+                            <p class="info-val">
+                                <a href="tel:{{ $institution->hoi_contact }}" style="color:var(--green-text);">
+                                    {{ $institution->hoi_contact }}
+                                </a>
+                            </p>
+                        </div>
+                    @endif
                 </div>
-                @endif
             </div>
-        </div>
         @endif
 
         {{-- Class table --}}
         @if ($seatData->isNotEmpty())
-        <div class="glass overflow-hidden au au1">
-            <div class="px-6 py-4 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
-                <div class="icon-box" style="width:36px;height:36px;border-radius:10px;font-size:16px;">📋</div>
-                <div>
-                    <p class="text-sm font-semibold text-white">Class-wise Enrollment &amp; Availability</p>
-                    <p class="text-xs mt-0.5" style="color:var(--muted);">Live data for {{ $academicYear?->name }}
-                    </p>
+            <div class="glass overflow-hidden au au1">
+                <div class="px-6 py-4 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+                    <div class="icon-box" style="width:36px;height:36px;border-radius:10px;font-size:16px;">📋</div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Class-wise Enrollment &amp; Availability</p>
+                        <p class="text-xs mt-0.5" style="color:var(--muted);">Live data for
+                            {{ $academicYear?->name }}
+                        </p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="dt">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                @if ($hasEveningShift)
+                                    <th>Shift</th>
+                                @endif
+                                <th>Existing</th>
+                                <th>Capacity</th>
+                                <th style="color:var(--green-text);">Available</th>
+                                <th style="color:#60a5fa;">Newly Admitted</th>
+                                <th style="color:var(--text);">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($seatData as $ic)
+                                @php
+                                    $shiftRow = $admissionByShift[$ic->class_id] ?? null;
+                                    $mAdm = (int) ($shiftRow?->morning_admitted ?? 0);
+                                    $eAdm = (int) ($shiftRow?->evening_admitted ?? 0);
+                                    $ooscP2pAdm = (int) ($shiftRow?->oosc_p2p_admitted ?? 0);
+
+                                    // Morning shift data
+                                    $mSeats = (int) ($ic->morning_seats ?? 0);
+                                    $mExist = (int) ($ic->morning_existing ?? 0);
+                                    // Evening available: only shift-specific admissions consume evening seats
+                                    $eSeats = (int) ($ic->evening_seats ?? 0);
+                                    $eExist = (int) ($ic->evening_existing ?? 0);
+                                    $eAvail = max(0, $eSeats - $eExist - $eAdm);
+                                    $eTotal = $eExist + $eAdm;
+                                    $eFill = $eSeats > 0 ? min(100, round(($eTotal / $eSeats) * 100)) : 0;
+
+                                    // Combined (used for morning-only or classes with no shift data e.g. ECE)
+                                    $totalAdmitted = $admissionTotal[$ic->class_id]?->total_admitted ?? 0;
+                                    $available = max(0, $ic->total_seats - $ic->existing_enrollment - $totalAdmitted);
+
+                                    // Morning available: independent calculation (OOSC/P2P not deducted from shift)
+                                    $mAvail = max(0, $mSeats - $mExist - $mAdm);
+                                    $mAdmDisplay = $mAdm + $ooscP2pAdm;
+                                    $mTotal = $mExist + $mAdmDisplay;
+                                    $mFill = $mSeats > 0 ? min(100, round(($mTotal / $mSeats) * 100)) : 0;
+
+                                    $totalEnrl = $ic->existing_enrollment + $totalAdmitted;
+                                    $rFill =
+                                        $ic->total_seats > 0
+                                            ? min(100, round(($totalEnrl / $ic->total_seats) * 100))
+                                            : 0;
+
+                                    // This class has shift-specific data only if at least one shift has seats
+                                    $classHasShiftData = $mSeats > 0 || $eSeats > 0;
+                                @endphp
+
+                                @if ($hasEveningShift && $classHasShiftData)
+                                    {{-- Morning row --}}
+                                    <tr style="border-bottom:none;">
+                                        <td rowspan="2"
+                                            style="vertical-align:middle;border-right:1px solid rgba(255,255,255,0.05);">
+                                            {{ $ic->classModel?->name }}
+                                            @if ($ic->classModel?->is_ece)
+                                                <span class="bdg bdg-pink ml-1" style="font-size:10px;">ECE</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="text-xs font-semibold" style="color:#86efac;">🌅
+                                                Morning</span>
+                                        </td>
+                                        <td class="font-semibold" style="color:#fb923c;">{{ number_format($mExist) }}
+                                        </td>
+                                        <td style="color:var(--muted);">{{ number_format($mSeats) }}</td>
+                                        <td>
+                                            <span class="bdg {{ $mAvail > 0 ? 'bdg-open' : 'bdg-full' }}"
+                                                style="{{ $mAvail > 0 ? '' : '' }}">
+                                                {{ $mAvail > 0 ? number_format($mAvail) : 'Full' }}
+                                            </span>
+                                        </td>
+                                        <td class="font-semibold" style="color:#60a5fa;">
+                                            {{ number_format($mAdmDisplay) }}</td>
+                                        <td>
+                                            <p class="font-bold text-white">{{ number_format($mTotal) }}</p>
+                                            <div class="prog w-14 mx-auto">
+                                                <div class="prog-fill"
+                                                    style="width:{{ $mFill }}%;background:{{ $mFill < 80 ? 'var(--green)' : ($mFill < 95 ? '#f97316' : '#ef4444') }};">
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {{-- Evening row --}}
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                                        <td>
+                                            <span class="text-xs font-semibold" style="color:#93c5fd;">🌙
+                                                Evening</span>
+                                        </td>
+                                        <td class="font-semibold" style="color:#fb923c;">{{ number_format($eExist) }}
+                                        </td>
+                                        <td style="color:var(--muted);">{{ number_format($eSeats) }}</td>
+                                        <td>
+                                            <span class="bdg {{ $eAvail > 0 ? '' : 'bdg-full' }}"
+                                                style="{{ $eAvail > 0 ? 'background:rgba(147,197,253,0.14);color:#93c5fd;border:1px solid rgba(147,197,253,0.28);' : '' }}">
+                                                {{ $eAvail > 0 ? number_format($eAvail) : 'Full' }}
+                                            </span>
+                                        </td>
+                                        <td class="font-semibold" style="color:#60a5fa;">{{ number_format($eAdm) }}
+                                        </td>
+                                        <td>
+                                            <p class="font-bold text-white">{{ number_format($eTotal) }}</p>
+                                            <div class="prog w-14 mx-auto">
+                                                <div class="prog-fill"
+                                                    style="width:{{ $eFill }}%;background:{{ $eFill < 80 ? '#3b82f6' : ($eFill < 95 ? '#f97316' : '#ef4444') }};">
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @else
+                                    {{-- Combined row: morning-only school OR class without shift data (ECE etc.) --}}
+                                    <tr>
+                                        <td>
+                                            {{ $ic->classModel?->name }}
+                                            @if ($ic->classModel?->is_ece)
+                                                <span class="bdg bdg-pink ml-1" style="font-size:10px;">ECE</span>
+                                            @endif
+                                        </td>
+                                        {{-- Shift column spacer so columns align in dual-shift schools --}}
+                                        @if ($hasEveningShift && !$classHasShiftData)
+                                            <td><span class="text-xs" style="color:var(--muted);">—</span></td>
+                                        @endif
+                                        <td class="font-semibold" style="color:#fb923c;">
+                                            {{ number_format($ic->existing_enrollment) }}</td>
+                                        <td style="color:var(--muted);">{{ number_format($ic->total_seats) }}</td>
+                                        <td>
+                                            <span class="bdg {{ $available > 0 ? 'bdg-open' : 'bdg-full' }}">
+                                                {{ $available > 0 ? number_format($available) : 'Full' }}
+                                            </span>
+                                        </td>
+                                        <td class="font-semibold" style="color:#60a5fa;">
+                                            {{ number_format($totalAdmitted) }}</td>
+                                        <td>
+                                            <p class="font-bold text-white">{{ number_format($totalEnrl) }}</p>
+                                            <div class="prog w-14 mx-auto">
+                                                <div class="prog-fill"
+                                                    style="width:{{ $rFill }}%;background:{{ $rFill < 80 ? 'var(--green)' : ($rFill < 95 ? '#f97316' : '#ef4444') }};">
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td style="color:var(--muted);">TOTAL</td>
+                                @if ($hasEveningShift)
+                                    <td></td>
+                                @endif
+                                <td style="color:#fb923c;">{{ number_format($totalExist) }}</td>
+                                <td style="color:var(--muted);">{{ number_format($totalSeats) }}</td>
+                                <td><span
+                                        class="bdg {{ $totalAvail > 0 ? 'bdg-open' : 'bdg-full' }}">{{ number_format($totalAvail) }}</span>
+                                </td>
+                                <td style="color:#60a5fa;">{{ number_format($totalAdmit) }}</td>
+                                <td class="text-white">{{ number_format($totalExist + $totalAdmit) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="dt">
-                    <thead>
-                        <tr>
-                            <th>Class</th>
-                            @if ($hasEveningShift)<th>Shift</th>@endif
-                            <th>Existing</th>
-                            <th>Capacity</th>
-                            <th style="color:var(--green-text);">Available</th>
-                            <th style="color:#60a5fa;">Newly Admitted</th>
-                            <th style="color:var(--text);">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($seatData as $ic)
-                            @php
-                                $shiftRow = $admissionByShift[$ic->class_id] ?? null;
-                                $mAdm = (int)($shiftRow?->morning_admitted ?? 0);
-                                $eAdm = (int)($shiftRow?->evening_admitted ?? 0);
-
-                                // Morning shift data
-                                $mSeats = (int)($ic->morning_seats    ?? 0);
-                                $mExist = (int)($ic->morning_existing ?? 0);
-                                $mAvail = max(0, $mSeats - $mExist - $mAdm);
-                                $mTotal = $mExist + $mAdm;
-                                $mFill  = $mSeats > 0 ? min(100, round(($mTotal / $mSeats) * 100)) : 0;
-
-                                // Evening shift data
-                                $eSeats = (int)($ic->evening_seats    ?? 0);
-                                $eExist = (int)($ic->evening_existing ?? 0);
-                                $eAvail = max(0, $eSeats - $eExist - $eAdm);
-                                $eTotal = $eExist + $eAdm;
-                                $eFill  = $eSeats > 0 ? min(100, round(($eTotal / $eSeats) * 100)) : 0;
-
-                                // Combined (used for morning-only or classes with no shift data e.g. ECE)
-                                $totalAdmitted = $admissionTotal[$ic->class_id]?->total_admitted ?? 0;
-                                $available     = max(0, $ic->total_seats - $ic->existing_enrollment - $totalAdmitted);
-                                $totalEnrl     = $ic->existing_enrollment + $totalAdmitted;
-                                $rFill         = $ic->total_seats > 0
-                                    ? min(100, round(($totalEnrl / $ic->total_seats) * 100)) : 0;
-
-                                // This class has shift-specific data only if at least one shift has seats
-                                $classHasShiftData = ($mSeats > 0 || $eSeats > 0);
-                            @endphp
-
-                            @if ($hasEveningShift && $classHasShiftData)
-                                {{-- Morning row --}}
-                                <tr style="border-bottom:none;">
-                                    <td rowspan="2" style="vertical-align:middle;border-right:1px solid rgba(255,255,255,0.05);">
-                                        {{ $ic->classModel?->name }}
-                                        @if ($ic->classModel?->is_ece)
-                                            <span class="bdg bdg-pink ml-1" style="font-size:10px;">ECE</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <span class="text-xs font-semibold" style="color:#86efac;">🌅 Morning</span>
-                                    </td>
-                                    <td class="font-semibold" style="color:#fb923c;">{{ number_format($mExist) }}</td>
-                                    <td style="color:var(--muted);">{{ number_format($mSeats) }}</td>
-                                    <td>
-                                        <span class="bdg {{ $mAvail > 0 ? 'bdg-open' : 'bdg-full' }}" style="{{ $mAvail > 0 ? '' : '' }}">
-                                            {{ $mAvail > 0 ? number_format($mAvail) : 'Full' }}
-                                        </span>
-                                    </td>
-                                    <td class="font-semibold" style="color:#60a5fa;">{{ number_format($mAdm) }}</td>
-                                    <td>
-                                        <p class="font-bold text-white">{{ number_format($mTotal) }}</p>
-                                        <div class="prog w-14 mx-auto">
-                                            <div class="prog-fill" style="width:{{ $mFill }}%;background:{{ $mFill < 80 ? 'var(--green)' : ($mFill < 95 ? '#f97316' : '#ef4444') }};"></div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {{-- Evening row --}}
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
-                                    <td>
-                                        <span class="text-xs font-semibold" style="color:#93c5fd;">🌙 Evening</span>
-                                    </td>
-                                    <td class="font-semibold" style="color:#fb923c;">{{ number_format($eExist) }}</td>
-                                    <td style="color:var(--muted);">{{ number_format($eSeats) }}</td>
-                                    <td>
-                                        <span class="bdg {{ $eAvail > 0 ? '' : 'bdg-full' }}" style="{{ $eAvail > 0 ? 'background:rgba(147,197,253,0.14);color:#93c5fd;border:1px solid rgba(147,197,253,0.28);' : '' }}">
-                                            {{ $eAvail > 0 ? number_format($eAvail) : 'Full' }}
-                                        </span>
-                                    </td>
-                                    <td class="font-semibold" style="color:#60a5fa;">{{ number_format($eAdm) }}</td>
-                                    <td>
-                                        <p class="font-bold text-white">{{ number_format($eTotal) }}</p>
-                                        <div class="prog w-14 mx-auto">
-                                            <div class="prog-fill" style="width:{{ $eFill }}%;background:{{ $eFill < 80 ? '#3b82f6' : ($eFill < 95 ? '#f97316' : '#ef4444') }};"></div>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                            @else
-                                {{-- Combined row: morning-only school OR class without shift data (ECE etc.) --}}
-                                <tr>
-                                    <td>
-                                        {{ $ic->classModel?->name }}
-                                        @if ($ic->classModel?->is_ece)
-                                            <span class="bdg bdg-pink ml-1" style="font-size:10px;">ECE</span>
-                                        @endif
-                                    </td>
-                                    {{-- Shift column spacer so columns align in dual-shift schools --}}
-                                    @if ($hasEveningShift && !$classHasShiftData)
-                                        <td><span class="text-xs" style="color:var(--muted);">—</span></td>
-                                    @endif
-                                    <td class="font-semibold" style="color:#fb923c;">{{ number_format($ic->existing_enrollment) }}</td>
-                                    <td style="color:var(--muted);">{{ number_format($ic->total_seats) }}</td>
-                                    <td>
-                                        <span class="bdg {{ $available > 0 ? 'bdg-open' : 'bdg-full' }}">
-                                            {{ $available > 0 ? number_format($available) : 'Full' }}
-                                        </span>
-                                    </td>
-                                    <td class="font-semibold" style="color:#60a5fa;">{{ number_format($totalAdmitted) }}</td>
-                                    <td>
-                                        <p class="font-bold text-white">{{ number_format($totalEnrl) }}</p>
-                                        <div class="prog w-14 mx-auto">
-                                            <div class="prog-fill" style="width:{{ $rFill }}%;background:{{ $rFill < 80 ? 'var(--green)' : ($rFill < 95 ? '#f97316' : '#ef4444') }};"></div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endif
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td style="color:var(--muted);">TOTAL</td>
-                            @if ($hasEveningShift)<td></td>@endif
-                            <td style="color:#fb923c;">{{ number_format($totalExist) }}</td>
-                            <td style="color:var(--muted);">{{ number_format($totalSeats) }}</td>
-                            <td><span class="bdg {{ $totalAvail > 0 ? 'bdg-open' : 'bdg-full' }}">{{ number_format($totalAvail) }}</span></td>
-                            <td style="color:#60a5fa;">{{ number_format($totalAdmit) }}</td>
-                            <td class="text-white">{{ number_format($totalExist + $totalAdmit) }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
         @else
-        {{-- Model Colleges without configured seats yet --}}
-        <div class="glass p-8 text-center au au1">
-            <div class="text-4xl mb-3">📋</div>
-            <p class="text-sm font-semibold text-white mb-1">Seat details coming soon</p>
-            <p class="text-xs" style="color:var(--muted);">Admission seat configuration will be published when available.</p>
-        </div>
+            {{-- Model Colleges without configured seats yet --}}
+            <div class="glass p-8 text-center au au1">
+                <div class="text-4xl mb-3">📋</div>
+                <p class="text-sm font-semibold text-white mb-1">Seat details coming soon</p>
+                <p class="text-xs" style="color:var(--muted);">Admission seat configuration will be published when
+                    available.</p>
+            </div>
         @endif
 
         {{-- Back button --}}

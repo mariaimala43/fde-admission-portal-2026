@@ -72,7 +72,7 @@
             $academicYear = \App\Models\AcademicYear::where('is_active', true)->first();
             $hasEvening   = (bool) ($institution?->has_evening_classes ?? false);
 
-            // ── All morning admissions per class (regular + OOSC + P2P) — ALL consume seats
+            // ── All admissions per class — all types consume seats
             $morningAdmitted = \App\Models\DailyAdmission::where('institution_id', $institution->id)
                 ->where('academic_year_id', $academicYear?->id)
                 ->selectRaw('class_id, SUM(
@@ -83,7 +83,6 @@
                 ->groupBy('class_id')
                 ->pluck('total', 'class_id');
 
-            // ── All evening admissions per class (regular + OOSC + P2P) — ALL consume seats
             $eveningAdmitted = \App\Models\DailyAdmission::where('institution_id', $institution->id)
                 ->where('academic_year_id', $academicYear?->id)
                 ->selectRaw('class_id, SUM(
@@ -114,12 +113,12 @@
                 $perShiftSeatsSet   = ($rawMorningSeats > 0 || $rawEveningSeats > 0);
                 $perShiftExistSet   = ($rawMorningExisting > 0 || $rawEveningExisting > 0);
 
-                // If per-shift was never populated, treat combined total as morning-only
                 $totalMorningSeats    = $perShiftSeatsSet ? $rawMorningSeats   : $totalSeats;
                 $totalEveningSeats    = $perShiftSeatsSet ? $rawEveningSeats   : 0;
                 $totalMorningExisting = $perShiftExistSet ? $rawMorningExisting : $totalEnrolled;
                 $totalEveningExisting = $perShiftExistSet ? $rawEveningExisting : 0;
 
+                // All types consume seats
                 $totalMorningAvailable = max(0, $totalMorningSeats - $totalMorningExisting - $totalMorningAdmit);
                 $totalEveningAvailable = max(0, $totalEveningSeats - $totalEveningExisting - $totalEveningAdmit);
                 $totalAvailable        = $totalMorningAvailable + $totalEveningAvailable;
@@ -127,7 +126,7 @@
                 $totalMorningEnrollment = $totalMorningExisting + $totalMorningAdmit;
                 $totalEveningEnrollment = $totalEveningExisting + $totalEveningAdmit;
             } else {
-                // Morning-only: single pool of seats
+                // Morning-only — all types consume seats
                 $totalAvailable = max(0, $totalSeats - $totalEnrolled - $totalMorningAdmit);
 
                 $totalMorningSeats      = $totalSeats;
@@ -286,6 +285,7 @@
                         <p class="text-xs text-teal-200 mt-1">
                             Today: {{ number_format($matricTechToday) }}
                         </p>
+                        <p class="text-xs text-teal-300 mt-1 italic">Subset of New Students above</p>
                     </div>
                     <div class="bg-teal-900 rounded-xl shadow-sm p-5 text-center text-white">
                         <p class="text-xs text-teal-200 uppercase tracking-wider mb-1">⚙️ Total Matric Tech</p>

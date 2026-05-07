@@ -105,6 +105,17 @@
 
     </div>
 
+    @if ($hasMatricTech)
+    <div class="bg-white rounded-xl p-4 border border-teal-200 shadow-sm mb-6 flex items-center gap-4">
+        <div class="text-3xl">⚙️</div>
+        <div>
+            <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Matric Tech Program (Class 9 &amp; 10)</p>
+            <p class="text-2xl font-bold text-teal-700">{{ number_format($grandMatricTech) }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Subset of Regular — already counted in total above</p>
+        </div>
+    </div>
+    @endif
+
 
     {{-- ── Class-wise Summary ───────────────────────────────────────── --}}
     <p class="block sm:hidden text-xs text-gray-400 mb-2 flex items-center gap-1">
@@ -148,6 +159,11 @@
                         {{-- P2G (2 cols) --}}
                         <th class="px-3 py-2 text-center text-xs font-semibold text-orange-700 uppercase bg-orange-50" colspan="2">
                             P2G Private to Govt</th>
+
+                        @if ($hasMatricTech)
+                        <th class="px-3 py-2 text-center text-xs font-semibold text-teal-700 uppercase bg-teal-50" rowspan="2">
+                            Matric<br>Tech ⚙️</th>
+                        @endif
 
                         <th class="px-3 py-2 text-center text-xs font-semibold text-blue-900 uppercase bg-blue-100" rowspan="2">
                             Total</th>
@@ -281,6 +297,20 @@
                                     {{ number_format($p2pGirls) }}</td>
                             @endif
 
+                            {{-- Matric Tech (only for matric tech schools, only Class 9 & 10) --}}
+                            @if ($hasMatricTech)
+                                @php $isMatricClass = in_array($ic->classModel?->order, [9, 10]); @endphp
+                                <td class="px-3 py-3 text-center bg-teal-50">
+                                    @if ($isMatricClass)
+                                        <span class="font-semibold text-teal-700">
+                                            {{ number_format((int)($s?->matric_tech_count ?? 0)) }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-300">—</span>
+                                    @endif
+                                </td>
+                            @endif
+
                             {{-- Total = grand_total (same as Newly Admitted) --}}
                             <td class="px-3 py-3 text-center font-bold text-blue-900 bg-blue-100">
                                 {{ number_format($admitted) }}
@@ -339,6 +369,10 @@
                                 {{ number_format($classSummary->sum('morning_p2p_girls') + $classSummary->sum('evening_p2p_girls')) }}</td>
                         @endif
 
+                        @if ($hasMatricTech)
+                        <td class="px-3 py-3 text-center bg-teal-800">{{ number_format($grandMatricTech) }}</td>
+                        @endif
+
                         <td class="px-3 py-3 text-center bg-blue-800">{{ number_format($grandTotal) }}</td>
                     </tr>
                 </tfoot>
@@ -394,6 +428,10 @@
                                 <th class="px-3 py-2 text-center font-semibold bg-orange-50 text-orange-600" colspan="2">🌆 Evening P2G</th>
                             @else
                                 <th class="px-3 py-2 text-center font-semibold bg-orange-50 text-orange-700" colspan="2">P2G</th>
+                            @endif
+
+                            @if ($hasMatricTech)
+                            <th class="px-3 py-2 text-center font-semibold bg-teal-50 text-teal-700" rowspan="2">Matric<br>Tech ⚙️</th>
                             @endif
 
                             <th class="px-3 py-2 text-center font-semibold bg-blue-100 text-blue-900" rowspan="2">Total</th>
@@ -471,6 +509,12 @@
                                 @if ($hasEvening)
                                     <td class="px-3 py-2.5 text-center text-orange-700 bg-orange-50">{{ $row->evening_p2p_boys }}</td>
                                     <td class="px-3 py-2.5 text-center text-orange-600 bg-orange-50">{{ $row->evening_p2p_girls }}</td>
+                                @endif
+
+                                @if ($hasMatricTech)
+                                <td class="px-3 py-2.5 text-center text-teal-700 bg-teal-50">
+                                    {{ $row->matric_tech_count > 0 ? $row->matric_tech_count : '—' }}
+                                </td>
                                 @endif
 
                                 <td class="px-3 py-2.5 text-center font-bold text-blue-900 bg-blue-100">

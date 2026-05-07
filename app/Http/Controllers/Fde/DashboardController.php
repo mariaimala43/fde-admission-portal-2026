@@ -31,7 +31,7 @@ class DashboardController extends Controller
             ->first();
 
         // ── Cumulative grand totals ────────────────────────
-        $cumulativeTotals = DailyAdmission::where('academic_year_id', $academicYear?->id)
+        $cumulativeTotals = DailyAdmission::when($academicYear, fn($q) => $q->where('academic_year_id', $academicYear->id))
             ->selectRaw('
                 SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total,
                 SUM(morning_boys+evening_boys+morning_girls+evening_girls)     as regular,
@@ -65,7 +65,7 @@ class DashboardController extends Controller
                 $institutionIds = $sector->institutions()->pluck('id');
 
                 $cumul = DailyAdmission::whereIn('institution_id', $institutionIds)
-                    ->where('academic_year_id', $academicYear?->id)
+                    ->when($academicYear, fn($q) => $q->where('academic_year_id', $academicYear->id))
                     ->selectRaw('
                         SUM(morning_boys+evening_boys+morning_girls+evening_girls+oosc_boys+oosc_girls+p2p_boys+p2p_girls) as total,
                         SUM(oosc_boys + oosc_girls) as oosc,
