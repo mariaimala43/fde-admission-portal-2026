@@ -45,13 +45,15 @@ class SyncStatusToNfemisJob implements ShouldQueue
                 return;
             }
 
+            // NFEMIS table: StudentAdmissionRegister
+            // Remarks column stores our fde_ref_id (written during pickup)
+            // Status column updated to reflect FDE's final decision
             DB::connection('nfemis')
-                ->table('school_referrals')
-                ->where('fde_ref_id', $admission->ref_id)
+                ->table('StudentAdmissionRegister')
+                ->where('Remarks', $admission->ref_id)
                 ->update([
-                    'enrollment_status' => $enrollmentStatus,
-                    'enrolled_at'       => $admission->status === 'confirmed' ? now() : null,
-                    'status'            => 'processed',
+                    'Status'      => $enrollmentStatus,   // 'Enrolled' or 'Rejected'
+                    'LastUpdated' => now(),
                 ]);
 
             $admission->update(['nfemis_synced_at' => now()]);
