@@ -76,16 +76,16 @@ class ProcessNfemisReferralsJob implements ShouldQueue
                         continue;
                     }
 
-                    // b. Look up FDE institution by EMIS code
-                    $institution = Institution::where('emis_code', trim($referral->emis_code))
+                    // b. Look up FDE institution by NFEMIS SchoolID (unique integer — reliable match)
+                    $institution = Institution::where('nfemis_school_id', $referral->nfemis_school_id)
                         ->where('is_active', true)
                         ->first();
 
                     if (!$institution) {
-                        Log::channel('nfemis_sync')->warning('ProcessNfemisReferralsJob: FDE institution not found', [
-                            'enrollment_id' => $referral->StudentEnrollmentID,
-                            'emis_code'     => $referral->emis_code,
-                            'school_name'   => $referral->school_name,
+                        Log::channel('nfemis_sync')->warning('ProcessNfemisReferralsJob: FDE institution not found for NFEMIS school', [
+                            'enrollment_id'    => $referral->StudentEnrollmentID,
+                            'nfemis_school_id' => $referral->nfemis_school_id,
+                            'school_name'      => $referral->school_name,
                         ]);
                         continue;
                     }
@@ -118,7 +118,7 @@ class ProcessNfemisReferralsJob implements ShouldQueue
                         'child_gender'       => $referral->child_gender,
                         'parent_name'        => $referral->parent_name,
                         'parent_contact'     => $referral->parent_contact,
-                        'school_id'          => $institution->id,
+                        'institution_id'     => $institution->id,
                         'class_name'         => $referral->ClassID,
                         'referral_date'      => $referral->DateOfAdmission,
                         'status'             => 'pending',

@@ -20,7 +20,7 @@ class Admission extends Model
         'child_gender',
         'parent_name',
         'parent_contact',
-        'school_id',
+        'institution_id',
         'class_name',
         'referral_date',
         'status',
@@ -54,9 +54,9 @@ class Admission extends Model
         return 'FDE-' . now()->format('Ymd') . '-' . strtoupper(Str::random(8));
     }
 
-    public function school(): BelongsTo
+    public function institution(): BelongsTo
     {
-        return $this->belongsTo(School::class);
+        return $this->belongsTo(Institution::class);
     }
 
     public function smsLogs(): HasMany

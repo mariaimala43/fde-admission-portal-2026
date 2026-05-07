@@ -56,10 +56,17 @@ class SyncNfemisSchools extends Command
             }
 
             if ($inst) {
+                // Skip if already assigned to a different NFEMIS school
+                if ($inst->nfemis_school_id && $inst->nfemis_school_id !== $ns->SchoolID) {
+                    $this->line("SKIP (already mapped): [{$ns->SchoolCode}] {$ns->SchoolName}  =>  [{$inst->id}] {$inst->name}");
+                    continue;
+                }
+
                 $matched++;
-                $this->line("MATCH: [{$ns->SchoolCode}] {$ns->SchoolName}  =>  [{$inst->id}] {$inst->name}");
+                $this->line("MATCH: [ID:{$ns->SchoolID}|{$ns->SchoolCode}] {$ns->SchoolName}  =>  [{$inst->id}] {$inst->name}");
                 if ($write) {
-                    $inst->update(['emis_code' => trim($ns->SchoolCode)]);
+                    // Store only SchoolID (unique) — SchoolCode has duplicates in NFEMIS
+                    $inst->update(['nfemis_school_id' => $ns->SchoolID]);
                 }
             } else {
                 $unmatched[] = "[{$ns->SchoolCode}] {$ns->SchoolName}";

@@ -36,6 +36,7 @@ class Institution extends Model
         'hoi_name',
         'hoi_contact',
         'emis_code',
+        'nfemis_school_id',
         'is_active',
         // is_cambridge is NOT in fillable — protected
     ];
