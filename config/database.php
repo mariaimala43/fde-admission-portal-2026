@@ -113,6 +113,20 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        // NFEMIS (National EMIS) SQL Server connection
+        // NOTE: sqlsrv PHP driver may not be installed — connection defined but not activated at boot.
+        'nfemis' => [
+            'driver'         => 'sqlsrv',
+            'host'           => env('NFEMIS_DB_HOST', ''),
+            'port'           => env('NFEMIS_DB_PORT', '1433'),
+            'database'       => env('NFEMIS_DB_NAME', ''),
+            'username'       => env('NFEMIS_DB_USER', ''),
+            'password'       => env('NFEMIS_DB_PASS', ''),
+            'charset'        => 'utf8',
+            'prefix'         => '',
+            'prefix_schema'  => '',
+        ],
+
     ],
 
     /*

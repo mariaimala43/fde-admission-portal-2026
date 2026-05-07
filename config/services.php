@@ -40,5 +40,16 @@ return [
             // 'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
     ],
 
+    'nfemis' => [
+        'api_key' => env('NFEMIS_API_KEY'),
+    ],
+
+    'sms' => [
+        'gateway'       => env('SMS_GATEWAY', 'zong'),
+        'zong_api_url'  => env('ZONG_API_URL'),
+        'zong_username' => env('ZONG_USERNAME'),
+        'zong_password' => env('ZONG_PASSWORD'),
+        'zong_sender'   => env('ZONG_SENDER_ID', 'FDE-Portal'),
+    ],
 
 ];

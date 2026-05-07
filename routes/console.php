@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\ProcessNfemisReferralsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -15,6 +16,10 @@ Schedule::command('grants:expire')->hourly()->withoutOverlapping();
 
 // Daily 3:00 PM PKT reminder to HOI users who have not yet submitted.
 // App timezone is UTC; PKT = UTC+5, so 15:00 PKT = 10:00 UTC.
+// NFEMIS → FDE: poll for newly-approved referrals every 5 minutes.
+// Wrapped internally — NFEMIS unavailability will NOT crash the scheduler.
+Schedule::job(new ProcessNfemisReferralsJob)->everyFiveMinutes();
+
 Schedule::command('admissions:send-reminders')
     ->dailyAt('10:00')
     ->withoutOverlapping()

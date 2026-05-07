@@ -127,6 +127,12 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'nfemis_sync' => [
+            'driver' => 'single',
+            'path'   => storage_path('logs/nfemis_sync.log'),
+            'level'  => 'debug',
+        ],
+
     ],
 
 ];

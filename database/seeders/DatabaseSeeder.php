@@ -29,6 +29,9 @@ class DatabaseSeeder extends Seeder
             NewConstructionRoomsSeeder::class,
             UcControlRoomSeeder::class,
             ModelCollegeSeeder::class,
+            // NFEMIS integration: FDE schools and seat allocations
+            SchoolSeeder::class,
+            SchoolSeatSeeder::class,
         ]);
     }
 }
