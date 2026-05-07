@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\NfemisStatus;
 use App\Models\Admission;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,8 +33,8 @@ class SyncStatusToNfemisJob implements ShouldQueue
 
         try {
             $enrollmentStatus = match ($admission->status) {
-                'confirmed' => 'Enrolled',
-                'rejected'  => 'Rejected',
+                'confirmed' => NfemisStatus::ENROLLED,   // 22
+                'rejected'  => NfemisStatus::REJECTED,   // 23
                 default     => null,
             };
 
@@ -45,14 +46,12 @@ class SyncStatusToNfemisJob implements ShouldQueue
                 return;
             }
 
-            // NFEMIS table: StudentAdmissionRegister
-            // Remarks column stores our fde_ref_id (written during pickup)
-            // Status column updated to reflect FDE's final decision
+            // Update NFEMIS: find by our ref_id stored in Remarks, write numeric status back
             DB::connection('nfemis')
                 ->table('StudentAdmissionRegister')
                 ->where('Remarks', $admission->ref_id)
                 ->update([
-                    'Status'      => $enrollmentStatus,   // 'Enrolled' or 'Rejected'
+                    'Status'      => $enrollmentStatus,   // 22 = Enrolled, 23 = Rejected
                     'LastUpdated' => now(),
                 ]);
 

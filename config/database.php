@@ -114,17 +114,18 @@ return [
         ],
 
         // NFEMIS (National EMIS) SQL Server connection
-        // NOTE: sqlsrv PHP driver may not be installed — connection defined but not activated at boot.
         'nfemis' => [
-            'driver'         => 'sqlsrv',
-            'host'           => env('NFEMIS_DB_HOST', ''),
-            'port'           => env('NFEMIS_DB_PORT', '1433'),
-            'database'       => env('NFEMIS_DB_NAME', ''),
-            'username'       => env('NFEMIS_DB_USER', ''),
-            'password'       => env('NFEMIS_DB_PASS', ''),
-            'charset'        => 'utf8',
-            'prefix'         => '',
-            'prefix_schema'  => '',
+            'driver'                   => 'sqlsrv',
+            'host'                     => env('NFEMIS_DB_HOST', '(local)'),
+            // No 'port' key — omitting port lets sqlsrv use shared memory on local installs.
+            // For remote SQL Server, set NFEMIS_DB_PORT=1433 and add: 'port' => env('NFEMIS_DB_PORT')
+            'database'                 => env('NFEMIS_DB_DATABASE', 'NFEMIS'),
+            'username'                 => env('NFEMIS_DB_USERNAME', ''),
+            'password'                 => env('NFEMIS_DB_PASSWORD', ''),
+            'charset'                  => 'utf8',
+            'prefix'                   => '',
+            'prefix_schema'            => '',
+            'trust_server_certificate' => true,
         ],
 
     ],
