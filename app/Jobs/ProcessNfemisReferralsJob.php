@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Enums\NfemisStatus;
 use App\Models\Admission;
-use App\Models\School;
-use App\Models\SchoolSeat;
+use App\Models\Institution;
+use App\Models\InstitutionClass;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -76,10 +76,13 @@ class ProcessNfemisReferralsJob implements ShouldQueue
                         continue;
                     }
 
-                    // b. Look up FDE school by EMIS code
-                    $school = School::where('emis_code', $referral->emis_code)->first();
-                    if (!$school) {
-                        Log::channel('nfemis_sync')->warning('ProcessNfemisReferralsJob: FDE school not found', [
+                    // b. Look up FDE institution by EMIS code
+                    $institution = Institution::where('emis_code', trim($referral->emis_code))
+                        ->where('is_active', true)
+                        ->first();
+
+                    if (!$institution) {
+                        Log::channel('nfemis_sync')->warning('ProcessNfemisReferralsJob: FDE institution not found', [
                             'enrollment_id' => $referral->StudentEnrollmentID,
                             'emis_code'     => $referral->emis_code,
                             'school_name'   => $referral->school_name,
@@ -87,17 +90,18 @@ class ProcessNfemisReferralsJob implements ShouldQueue
                         continue;
                     }
 
-                    // c. Check vacancy
-                    $seat = SchoolSeat::where('school_id', $school->id)
-                        ->where('class_name', $referral->ClassID)
-                        ->vacant()
+                    // c. Check vacancy via institution_classes (available seats)
+                    $activeYear = \App\Models\AcademicYear::where('is_active', true)->first();
+                    $instClass  = InstitutionClass::where('institution_id', $institution->id)
+                        ->where('is_active', true)
+                        ->whereHas('classModel', fn($q) => $q->where('name', 'like', '%' . $referral->ClassID . '%'))
                         ->first();
 
-                    if (!$seat) {
+                    if (!$instClass || ($instClass->total_seats - $instClass->existing_enrollment) <= 0) {
                         Log::channel('nfemis_sync')->warning('ProcessNfemisReferralsJob: no vacancy', [
-                            'enrollment_id' => $referral->StudentEnrollmentID,
-                            'school_id'     => $school->id,
-                            'class_id'      => $referral->ClassID,
+                            'enrollment_id'  => $referral->StudentEnrollmentID,
+                            'institution_id' => $institution->id,
+                            'class_id'       => $referral->ClassID,
                         ]);
                         continue;
                     }
@@ -114,14 +118,11 @@ class ProcessNfemisReferralsJob implements ShouldQueue
                         'child_gender'       => $referral->child_gender,
                         'parent_name'        => $referral->parent_name,
                         'parent_contact'     => $referral->parent_contact,
-                        'school_id'          => $school->id,
+                        'school_id'          => $institution->id,
                         'class_name'         => $referral->ClassID,
                         'referral_date'      => $referral->DateOfAdmission,
                         'status'             => 'pending',
                     ]);
-
-                    // e. Increment occupied seats
-                    $seat->increment('occupied_seats');
 
                     // f. Dispatch SMS to principal + parent
                     SendAdmissionSmsJob::dispatch($admission);
